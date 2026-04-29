@@ -179,17 +179,14 @@ Use `split_groups()` to obtain group-specific `SummarizedExperiment` objects and
 
 ```{r split}
 data_obj_list <- split_groups(data_obj)
-data_obj_list
 ```
 
 ```{r merge-rep}
 data_obj_merged_list <- merge_replicates(data_obj_list)
-data_obj_merged_list
 ```
 
 ```{r merge-groups}
 data_obj_merged <- merge_groups(data_obj_merged_list)
-data_obj_merged
 ```
 
 ### Sample relationships (correlation, PCA, UMAP)
@@ -227,7 +224,7 @@ PC <- plot_pca(data_obj,
 )
 ```
 
-```{r pca-3D, dpi = 100}
+```{r pca-3D}
 plot_pca_3D(PC, pcs = 1:3)
 ```
 
@@ -557,8 +554,6 @@ go_list <- enrichGO_list(
     qvalueCutoff = 0.9,
     simplify = FALSE,
     keyType = "SYMBOL"
-    # default for clusterProfiler::enrichGO()
-    # minGSSize = 10, maxGSSize = 500, 
 )
 plot_GO(go_list$all, plot_dotplot = TRUE, 
     plot_emapplot = FALSE,

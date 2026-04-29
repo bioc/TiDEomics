@@ -83,7 +83,7 @@
 #' # plot_GO(example_go_list$all, plot_dotplot = TRUE,
 #' #     plot_emapplot = FALSE, plot_cnetplot = FALSE)
 #'
-#' plot_modules_h(example_module,
+#' plot_modules_h(example_module %>% filter(Module != '0'),
 #'     example_obj_merged, scale = TRUE,
 #'     ylabel = "Z-score of log2 expression",
 #'     go_list = example_go_list$all, go_category = "BP",
