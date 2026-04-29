@@ -77,16 +77,12 @@ plot_DE_between_time <- function(
         c("#4575B4", "#FFFFBF", "#D73027")
     )
 
-    # plot heatmap with same scale
+    # plot heatmap with same color scale
     p_list <- list()
     for (i in names(de_list)) {
         de_num <- de_num_list[[i]]
 
-        if (i == names(de_list)[length(names(de_list))]) {
-            legend <- TRUE
-        } else {
-            legend <- FALSE
-        }
+        legend <- FALSE
 
         if (value) {
             p <- ComplexHeatmap::Heatmap(de_num,
@@ -95,6 +91,7 @@ plot_DE_between_time <- function(
                 show_row_names = TRUE, show_column_names = TRUE,
                 show_heatmap_legend = legend,
                 column_names_rot = 0,
+                column_names_centered = TRUE,
                 cell_fun = function(j, i, x, y, width, height, fill) {
                     if (!is.na(de_num[i, j])) {
                         grid::grid.text(sprintf("%.0f", de_num[i, j]), x, y,
@@ -114,6 +111,7 @@ plot_DE_between_time <- function(
                 show_row_names = TRUE, show_column_names = TRUE,
                 show_heatmap_legend = legend,
                 column_names_rot = 0,
+                column_names_centered = TRUE,
                 heatmap_width = unit(heatmap_width, heatmap_unit),
                 col = col_fun,
                 na_col = "white"
@@ -124,28 +122,40 @@ plot_DE_between_time <- function(
             ggplotify::as.ggplot()
     }
 
-    # heatmap width
+    # heatmap legend as a separate ggplot object
     lgd <- ComplexHeatmap::Legend(
         col_fun = col_fun,
         title = "DE number"
     )
 
-    legend_w_mm <- grid::convertWidth(
-        ComplexHeatmap:::width(lgd),
-        "cm",
-        valueOnly = TRUE
-    )
+    legend_grob <- grid::grid.grabExpr(
+        grid::grid.draw(ComplexHeatmap::packLegend(lgd))
+    ) %>%
+        ggplotify::as.ggplot()
 
+    # arrange heatmaps
     ncol <- ceiling(length(p_list) / nrow)
 
-    print(ggpubr::ggarrange(
-        plotlist = p_list, labels = names(p_list),
+    heatmap_grid <- ggpubr::ggarrange(
+        plotlist = p_list,
+        labels = names(p_list),
+        nrow = nrow,
+        ncol = ncol,
         hjust = 0, vjust = 0.5,
-        nrow = nrow, ncol = ncol,
-        font.label = list(size = fontsize + 2),
-        widths = c(rep(1, (ncol - 1)), (1 + legend_w_mm / heatmap_width))
-    ) %>%
+        font.label = list(size = fontsize + 2)
+    )
+
+    # combine heatmaps and legend, to ensure legend is on the side
+    final_plot <- ggpubr::ggarrange(
+        heatmap_grid,
+        legend_grob,
+        ncol = 2,
+        widths = c(length(p_list), 0.8)
+    )
+
+    print(final_plot %>%
         ggpubr::annotate_figure(top = ggpubr::text_grob(paste0(
             "Number of DE features between time points\n" 
-        ), face = "bold", size = fontsize + 4)))
+        ), face = "bold", size = fontsize + 4))
+    )
 }

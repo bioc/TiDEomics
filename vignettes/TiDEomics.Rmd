@@ -300,7 +300,7 @@ DE_between_time_out$all_list$IFNbeta$`t2-t0` %>% head()
 DE_between_time_out$de_list$IFNbeta$`t2-t0` %>% head()
 ```
 
-```{r de-between-time-plot, fig.width = 8, fig.height = 2}
+```{r de-between-time-plot, fig.width = 7, fig.height = 2}
 plot_DE_between_time(data_obj,
     de_list = DE_between_time_out$de_list,
     fontsize = 8, value = FALSE, nrow = 1, heatmap_width = 3
