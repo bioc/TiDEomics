@@ -24,17 +24,26 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 
 `TiDEomics` is designed to streamline **Ti**me-course **D**ifferential
 **E**xpression analysis of **omics** data with **multiple experimental
-groups / conditions** (for example, different cell lines or different
-treatments sampled at several time points). The package’s main goals
-are:
+groups / conditions**, for example, different cell lines or different
+treatments sampled at several time points.
 
-- Compare **multiple time courses** side-by-side (e.g. multiple mutants
-  vs control).
-- Identify differential expression by **time**, **group**, and **both**
-  (time × group interactions).
-- Provide utilities for QC, breakpoint detection (segmented regression),
-  variance decomposition, and module detection (WGCNA) that are tailored
-  for time-course multi-sample data.
+The package’s main goals are:
+
+- Compare multiple time courses systematically.
+- Identify features (e.g. genes, proteins) and pathways differentially
+  expressed by **time**, **condition**, and **both** factors (time ×
+  condition interactions).
+- Provide utilities for quality control, data processing, sample-level
+  and feature-level analysis, tailored for time-course multi-condition
+  data.
+- Output high-quality tables and figures to facilitate interpretation
+  and reporting.
+
+<img src="man/figures/TiDEomics_workflow_v1.png" style="width:70.0%" />
+
+The package supports datasets with missing values, and operates on
+SummarizedExperiment objects to ensure compatibility with the
+Bioconductor ecosystem.
 
 ## Installation
 
@@ -111,7 +120,7 @@ contributing to this project, you agree to abide by its terms.
   *[rcmdcheck](https://CRAN.R-project.org/package=rcmdcheck)* customized
   to use [Bioconductor’s docker
   containers](https://www.bioconductor.org/help/docker/) and
-  *[BiocCheck](https://bioconductor.org/packages/3.23/BiocCheck)*.
+  *[BiocCheck](https://bioconductor.org/packages/3.24/BiocCheck)*.
 - Code coverage assessment is possible thanks to
   [codecov](https://codecov.io/gh) and
   *[covr](https://CRAN.R-project.org/package=covr)*.
@@ -127,4 +136,4 @@ contributing to this project, you agree to abide by its terms.
 <!-- For more details, check the `dev` directory. -->
 
 This package was developed using
-*[biocthis](https://bioconductor.org/packages/3.23/biocthis)*.
+*[biocthis](https://bioconductor.org/packages/3.24/biocthis)*.

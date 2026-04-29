@@ -5,7 +5,7 @@ Date: 2026-04-29
 Authors@R: 
     person("Tianen", "He", email = "tianen.he@ndm.ox.ac.uk", role = c("aut", "cre"),
             comment = c(ORCID = "0000-0001-6864-0723"))
-Description: TiDEomics provides tools for time-course omics data analysis, focusing on differential expression across multiple experimental groups (>2 conditions). The package implements workflows for quality control, data processing, and analysis of temporal patterns, enabling simultaneous analysis of all groups in addition to pairwise comparisons. It supports datasets with missing values, including mass spectrometry-based proteomics, and operates on SummarizedExperiment objects to ensure compatibility with the Bioconductor ecosystem.
+Description: TiDEomics provides tools for time-course omics data analysis, focusing on differential expression across multiple experimental groups (>2 conditions). The package implements workflows for quality control, data processing, and analysis of temporal patterns, enabling integrated analysis of all groups in addition to pairwise comparisons. It supports datasets with missing values, including mass spectrometry-based proteomics, and operates on SummarizedExperiment objects to ensure compatibility with the Bioconductor ecosystem.
 License: GPL (>= 2)
 URL: https://github.com/hte123/TiDEomics, http://hte123.github.io/TiDEomics
 BugReports: https://github.com/hte123/TiDEomics/issues
