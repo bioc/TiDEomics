@@ -46,7 +46,9 @@
 #' data(example_net)
 #' example_module <- data.frame(Module = as.factor(example_net$colors)) %>%
 #'     tibble::rownames_to_column("Feature") %>% arrange(Module)
-#' example_module_list <- example_module %>% filter(Module != 0) %>%
+#' # select two modules for demonstration
+#' example_module_list <- example_module %>% 
+#'     filter(Module %in% c(1, 2)) %>%
 #'     split(as.character(.$Module)) %>%
 #'     lapply(`[[`, "Feature")
 #' # set cutoff to 1 to show all results for demonstration
@@ -54,8 +56,8 @@
 #'     universe = example_module$Feature,
 #'     pvalueCutoff = 1, qvalueCutoff = 1,
 #'     category = "BP", simplify = FALSE)
-#' plot_GO(example_go_list$all, plot_dotplot = TRUE,
-#'     plot_emapplot = FALSE, plot_cnetplot = FALSE)
+#' # plot_GO(example_go_list$all, plot_dotplot = TRUE,
+#' #     plot_emapplot = FALSE, plot_cnetplot = FALSE)
 enrichGO_list <- function(gene_list, keyType = "SYMBOL",
     OrgDb,
     universe = NULL,

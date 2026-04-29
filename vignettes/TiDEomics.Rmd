@@ -175,7 +175,7 @@ data_obj <- normalise_to_start(data_obj)
 
 ### Splitting groups and merging replicates
 
-Use `split_groups()` to obtain group-specific `SummarizedExperiment` objects and `merge_replicates()` to average replicates for analyses / visualisation that require single time series for features, including `calc_feature_property()`, `run_Trendy()`, and `plot_modules_input()`.
+Use `split_groups()` to obtain group-specific `SummarizedExperiment` objects and `merge_replicates()` to average replicates for analyses / visualisation that require single time series for features, including `calc_feature_property()`, `run_Trendy()`, `plot_modules_v()` and `plot_modules_h()`.
 
 ```{r split}
 data_obj_list <- split_groups(data_obj)

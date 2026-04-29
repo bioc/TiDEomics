@@ -46,7 +46,7 @@ UMAP y)}
 UMAP y)}
 
 \item{umap_neighbors}{UMAP n_neighbors parameter (default is selected by
-\code{umap_n_neighbors()} function based on the number of samples)}
+\code{.umap_n_neighbors()} function based on the number of samples)}
 
 \item{fontsize}{Font size for the plot (default is 8)}
 

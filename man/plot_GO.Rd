@@ -56,7 +56,9 @@ library(org.Mm.eg.db)
 data(example_net)
 example_module <- data.frame(Module = as.factor(example_net$colors)) \%>\%
     tibble::rownames_to_column("Feature") \%>\% arrange(Module)
-example_module_list <- example_module \%>\% filter(Module != 0) \%>\%
+# select two modules for demonstration
+example_module_list <- example_module \%>\% 
+    filter(Module \%in\% c(1, 2)) \%>\%
     split(as.character(.$Module)) \%>\%
     lapply(`[[`, "Feature")
 # set cutoff to 1 to show all results for demonstration

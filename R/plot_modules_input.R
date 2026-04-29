@@ -24,7 +24,7 @@
 #' @returns A long-format data frame suitable for ggplot2, with columns
 #' "Feature", "Module", "Abundance", "Group", and "Time"
 #' @keywords internal
-plot_modules_input <- function(module, se_obj_merged, assay, scale) {
+.plot_modules_input <- function(module, se_obj_merged, assay, scale) {
     # sample annotation
     sp_info <- colData(se_obj_merged) %>%
         as.data.frame() %>%

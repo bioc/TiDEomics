@@ -52,7 +52,7 @@ prepare_WGCNA <- function(
     powers = NULL, ...
 ) {
     WGCNA::allowWGCNAThreads()
-    data_wgcna <- WGCNA_input(se_obj, assay = assay)
+    data_wgcna <- .WGCNA_input(se_obj, assay = assay)
 
     if (is.null(powers)) {
         powers <- c(seq(1, 10, by = 1), seq(12, 20, by = 2))

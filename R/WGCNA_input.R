@@ -19,7 +19,7 @@
 #' @returns A data frame with samples in rows and features in columns, filtered 
 #' to remove bad samples and features, ready for use in `prepare_WGCNA()`.
 #' @keywords internal
-WGCNA_input <- function(se_obj, assay) {
+.WGCNA_input <- function(se_obj, assay) {
     if (assay > length(assays(se_obj))) {
         stop("The input object does not have assay 2: time 0 normalised ", 
         "data. Please run `normalise_to_start()` to create the time 0 ", 

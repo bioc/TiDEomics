@@ -22,7 +22,7 @@
 #' @param ylim_max Maximum y-axis limit when drawing ellipses (default 1.5*max
 #' UMAP y)
 #' @param umap_neighbors UMAP n_neighbors parameter (default is selected by
-#' `umap_n_neighbors()` function based on the number of samples)
+#' `.umap_n_neighbors()` function based on the number of samples)
 #' @param fontsize Font size for the plot (default is 8)
 #' @param assay Assay index to use, where 1 is the original data and 2 is
 #' normalised to time 0 (if available) (default is 1)
@@ -60,7 +60,7 @@ plot_umap <- function(
     sp_info <- as.data.frame(colData(se_obj))
 
     n_neighbors <- ifelse(is.null(umap_neighbors),
-        umap_n_neighbors(ncol(M)),
+        .umap_n_neighbors(ncol(M)),
         umap_neighbors)
 
     message("Using n_neighbors = ", n_neighbors)
@@ -176,7 +176,7 @@ plot_umap <- function(
 #'
 #' @returns UMAP n_neighbors parameter
 #' @keywords internal
-umap_n_neighbors <- function (sample_n) {
+.umap_n_neighbors <- function (sample_n) {
     if (sample_n <= 5) {
         return(sample_n - 1)
     } else {

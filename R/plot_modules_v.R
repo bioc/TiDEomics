@@ -74,7 +74,7 @@ plot_modules_v <- function(
     fontsize = 8,
     res = 300
 ) {
-    data_module_long <- plot_modules_input(module = module,
+    data_module_long <- .plot_modules_input(module = module,
         se_obj_merged = se_obj_merged, scale = scale, assay = assay)
 
     p <- data_module_long %>%

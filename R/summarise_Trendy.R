@@ -75,7 +75,7 @@ summarise_Trendy <- function(res_list, ...) {
 #' @returns A data frame of summary results of Trendy, including breakpoints,
 #' segment slopes and p-values for each fitted feature.
 #' @keywords internal
-summarise_Trendy_one_group <- function(res, ...) {
+.summarise_Trendy_one_group <- function(res, ...) {
     res.top <- Trendy::topTrendy(res, ...)
     trendy.summary <- Trendy::formatResults(res.top)
 

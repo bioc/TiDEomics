@@ -55,7 +55,7 @@ plot_segments <- function(se_obj_imp_list, res_list, feature,
 
     for (i in group) {
         message("Plotting segmented regression for group: ", i)
-        plot_segments_one_group(se_obj_imp_list[[i]], res_list[[i]],
+        .plot_segments_one_group(se_obj_imp_list[[i]], res_list[[i]],
             feature, group = i, nrow = NULL, ...)
     }
 }
@@ -81,7 +81,7 @@ plot_segments <- function(se_obj_imp_list, res_list, feature,
 #'
 #' @returns A plot of the segmented regression fits for the specified features.
 #' @keywords internal
-plot_segments_one_group <- function(se_obj_imp, res, feature,
+.plot_segments_one_group <- function(se_obj_imp, res, feature,
     group, nrow = NULL, ...) {
     if (length(feature) > 1) {
         if (is.null(nrow)) {

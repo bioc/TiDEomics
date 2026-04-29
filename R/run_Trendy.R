@@ -59,11 +59,11 @@
 #'     minNumInSeg = 2, meanCut = 0)
 #' # usethis::use_data(example_res_list)
 #'
-#' plot_segments(example_obj_merged_imp_list, example_res_list,
-#'     feature = c("Mctp1"))
-#' plot_breakpoints(example_res_list)
-#' trendy_summary <- summarise_Trendy(example_res_list)
-#' trendy_list <- extract_segment_trends(trendy_summary)
+#' # plot_segments(example_obj_merged_imp_list, example_res_list,
+#' #     feature = c("Mctp1"))
+#' # plot_breakpoints(example_res_list)
+#' # trendy_summary <- summarise_Trendy(example_res_list)
+#' # trendy_list <- extract_segment_trends(trendy_summary)
 run_Trendy <- function(se_obj_imp_list, group = NULL,
     feature = NULL, minExp = 0.5, maxK = 1,
     meanCut = 0, minNumInSeg = 3, NCores = 2, ...) {
@@ -95,7 +95,7 @@ run_Trendy <- function(se_obj_imp_list, group = NULL,
     for (i in group) {
         message("Running Trendy for group: ", i)
         se_obj_imp <- se_obj_imp_list[[i]]
-        res <- run_Trendy_one_group(se_obj_imp,
+        res <- .run_Trendy_one_group(se_obj_imp,
             minExp = minExp, feature = feature,
             maxK = maxK, meanCut = meanCut,
             minNumInSeg = minNumInSeg, NCores = NCores, ...
@@ -140,7 +140,7 @@ run_Trendy <- function(se_obj_imp_list, group = NULL,
 #' @returns Trendy analysis result, including the fitted model parameters
 #' and statistics for each feature.
 #' @keywords internal
-run_Trendy_one_group <- function(se_obj_imp,
+.run_Trendy_one_group <- function(se_obj_imp,
     minExp = 0.5, feature = NULL, maxK = 1,
     meanCut = 0, minNumInSeg = 3, NCores = 2, ...) {
 
