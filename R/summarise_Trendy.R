@@ -36,7 +36,7 @@
 summarise_Trendy <- function(res_list, ...) {
     res_summary <- list()
     for (i in names(res_list)) {
-        trendy.summary <- summarise_Trendy_one_group(res_list[[i]])
+        trendy.summary <- .summarise_Trendy_one_group(res_list[[i]])
         trendy.summary$Group <- i
         trendy.summary <- trendy.summary %>%
             dplyr::select(.data$Group, dplyr::everything())
