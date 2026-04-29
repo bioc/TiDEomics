@@ -1,0 +1,178 @@
+#' DE between time points
+#' @description Differential expression analysis between time points within 
+#' each group by limma
+#'
+#' @param se_obj A SummarizedExperiment object created by `create_input`
+#' @param group (Optional) A character vector specifying which groups to 
+#' analyse. If NULL, all groups in the 'Group' column will be used. (default 
+#' is NULL)
+#' @param filter (Optional) Minimum number of replicates required in both 
+#' conditions for a feature to be tested. If NULL, the minimum number of 
+#' replicates across all groups and time points will be used. (default is NULL)
+#' @param assay Assay index to use, where 1 is the original data and 2 is 
+#' normalised to time 0 (if available) (default is 1)
+#' @param adjP_thres (Optional) Threshold for adjusted p-value to consider a 
+#' feature as differentially expressed (default is 0.05)
+#' @param logFC_thres (Optional) Threshold for log2 fold change to consider a 
+#' feature as differentially expressed (default is 1)
+#' @param fontsize (Optional) Font size for the heatmap of DE numbers (default 
+#' is 8)
+#'
+#' @import SummarizedExperiment
+#' @import magrittr
+#' @importFrom dplyr filter select
+#'
+#' @returns A list containing two elements: 'all_list' is a nested list of 
+#' DE results for each group and time point comparison including all features; 
+#' 'de_list' is a nested list of filtered DE results based on the specified 
+#' thresholds including only significant features.
+#' @export
+#' @examples
+#' data("example")
+#' example_obj <- normalise_to_start(example_obj)
+#'
+#' DE_between_time_out <- DE_between_time(example_obj, assay = 1)
+#' plot_DE_between_time(example_obj,
+#'     de_list = DE_between_time_out$de_list,
+#'     fontsize = 8, value = TRUE, nrow = 1, heatmap_width = 3)
+DE_between_time <- function(se_obj, group = NULL, filter = NULL, 
+    assay = c(1, 2), adjP_thres = 0.05, logFC_thres = 1, fontsize = 8) {
+    if (is.null(group)) {
+        group <- unique(se_obj$Group)
+    } else if (!all(group %in% unique(se_obj$Group))) {
+        stop("At least one of the specified groups is not found in the ", 
+        "'Group' column of the input object.")
+    }
+
+    if (is.null(filter)) {
+        # minimum number of replicates in any group at any time point
+        filter <- min(table(se_obj$Group, se_obj$Time)) 
+        message("Non-NA replicate number filter not specified. ", 
+        "Using minimum number of replicates across all groups and ", 
+        "time points: ", filter)
+    }
+
+    if (length(assay) > 1 | is.null(assay)) {
+        assay <- 1
+        message("Using assay 1 (original data) for DE analysis.")
+    } else if (!(assay %in% seq_along(assays(se_obj)))) {
+        assay_avail <- paste(seq_along(assays(se_obj)), collapse = ", ")
+        stop(sprintf("Invalid assay index specified. Please choose from: %s",
+            assay_avail))
+    }
+
+    # compare all time point by all time point
+    outlist_limma <- list()
+
+    for (i in group) {
+        input <- se_obj[, se_obj$Group == i]
+        time_series <- sort(unique(colData(input)$Time)) %>% as.character()
+
+        outlist_limma[[i]] <- list()
+
+        for (cond1 in time_series) {
+            for (cond2 in time_series) {
+                if (as.numeric(cond1) < as.numeric(cond2)) {
+                    # comparisons between conditions
+                    label_comparison <- paste0("t", cond2, "-t", cond1)
+                    d_cond1 <- input[, input$Time == as.numeric(cond1)]
+                    d_cond2 <- input[, input$Time == as.numeric(cond2)]
+
+                    # require at least 'filter' values in both conditions
+                    cond1_non_na <- 
+                        rowSums(!is.na(assays(d_cond1)[[assay]])) %>% 
+                        as.data.frame()
+                    cond2_non_na <- 
+                        rowSums(!is.na(assays(d_cond2)[[assay]])) %>% 
+                        as.data.frame()
+
+                    if (filter > dim(assays(d_cond1)[[assay]])[2] | 
+                        filter > dim(assays(d_cond2)[[assay]])[2]) {
+                        stop("Filter value is larger than the number of ", 
+                        "replicates in one or both conditions.")
+                    }
+                    rows_selected <- (cond1_non_na$. >= filter & 
+                        cond2_non_na$. >= filter)
+
+                    n <- length(rows_selected)
+                    n_keep <- sum(rows_selected)
+                    pct <- round(n_keep / n, 3) * 100
+                    message("Comparing group ", i, " time ", cond2, " to ", 
+                        cond1, ": keeping ", n_keep, " of ", n, " features (", 
+                        sprintf("%.1f", pct), "%)")
+
+                    d_cond1_filter <- d_cond1[rows_selected, ]
+                    d_cond2_filter <- d_cond2[rows_selected, ]
+                    tb_compare <- cbind(d_cond1_filter, d_cond2_filter)
+
+                    # limma
+                    design <- stats::model.matrix(~ 0 + 
+                        as.character(tb_compare$Time))
+                    # numbers are non-valid names
+                    colnames(design) <- colnames(design) %>%
+                        gsub(pattern = "as.character(tb_compare$Time)", 
+                        fixed = TRUE, replacement = "t")
+                    rownames(design) <- colnames(tb_compare)
+                    fit1 <- limma::lmFit(assays(tb_compare)[[assay]],
+                        design = design,
+                        maxit = 2000
+                    )
+                    contrast <- limma::makeContrasts(
+                        contrasts = paste0("t", cond2, "-t", cond1),
+                        levels = colnames(design)
+                    )
+                    fit2 <- limma::contrasts.fit(fit1, contrasts = contrast)
+                    fit3 <- limma::eBayes(fit2)
+                    modtest <- limma::topTable(fit3, number = Inf, 
+                        sort.by = "none")
+                    limma_result <- merge(assays(tb_compare)[[assay]],
+                        as.data.frame(modtest[, -c(2, 3, 6)]),
+                        by = "row.names", all = TRUE
+                    )
+                    rownames(limma_result) <- limma_result$Row.names
+                    limma_result <- limma_result %>% dplyr::select(-Row.names)
+
+                    gene_df <- data.frame(
+                        row.names = rownames(tb_compare),
+                        Feature = rownames(tb_compare)
+                    )
+
+                    # setup columns
+                    gene_df$Comparison <- label_comparison
+                    gene_df$Group <- i
+                    gene_df$Cond1 <- factor(cond1, levels = time_series)
+                    gene_df$Cond2 <- factor(cond2, levels = time_series)
+
+                    # combine with gene df and sort
+                    out_limma <- merge(gene_df, limma_result, 
+                        by = "row.names", all = TRUE) %>%
+                        dplyr::select(-Row.names)
+
+                    outlist_limma[[i]][[label_comparison]] <- out_limma
+                }
+            }
+        }
+    }
+
+    # list of DE tables
+
+    # default criteria: p.adj < 0.05, |log2FC| > 1
+    de_list_limma <- list()
+
+    for (i in group) {
+        de_list_limma[[i]] <- list()
+
+        for (tb_name in names(outlist_limma[[i]])) { # example: t1-t0
+            tb <- outlist_limma[[i]][[tb_name]]
+            tb_de <- tb %>%
+                dplyr::select(Feature, Comparison, Group, Cond1, Cond2, 
+                    logFC, adj.P.Val) %>%
+                filter(adj.P.Val < adjP_thres) %>%
+                filter(logFC > logFC_thres | logFC < -logFC_thres)
+            de_list_limma[[i]][[tb_name]] <- tb_de
+        }
+
+    }
+
+    return(list(all_list = outlist_limma, de_list = de_list_limma))
+}
