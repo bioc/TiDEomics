@@ -73,8 +73,8 @@ remotes::install_github("hte123/TiDEomics")
 ## Example
 
 For detailed examples and explanations, please refer to the
-[tutorial](articles/TiDEomics.html), applications and other package
-documentation.
+[tutorial](https://hte123.github.io/TiDEomics/articles/TiDEomics.html),
+applications and other package documentation.
 
 ## Citation
 

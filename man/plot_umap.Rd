@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_umap.R
 \name{plot_umap}
 \alias{plot_umap}
-\title{UMAP}
+\title{Plot UMAP}
 \usage{
 plot_umap(
   se_obj,

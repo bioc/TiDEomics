@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_umap_by_group.R
 \name{plot_umap_by_group_list}
 \alias{plot_umap_by_group_list}
-\title{UMAP by group (list of objects)}
+\title{Plot UMAP by group (list of objects)}
 \usage{
 plot_umap_by_group_list(
   se_obj_list,

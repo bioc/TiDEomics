@@ -1,4 +1,4 @@
-#' Plot PCA 3D
+#' Plot PCA in 3D
 #'
 #' @description Plot principal component analysis (PCA) results in 3D. This 
 #' function takes the output PCA object of the `plot_pca` function and 

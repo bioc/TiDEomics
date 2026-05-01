@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_pca_3D.R
 \name{plot_pca_3D}
 \alias{plot_pca_3D}
-\title{Plot PCA 3D}
+\title{Plot PCA in 3D}
 \usage{
 plot_pca_3D(pca, pcs = seq(1, 3))
 }

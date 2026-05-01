@@ -1,4 +1,4 @@
-#' UMAP
+#' Plot UMAP
 #'
 #' @description Plot UMAP of samples, using features without missing values
 #'

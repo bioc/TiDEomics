@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_modules_v.R
 \name{plot_modules_v}
 \alias{plot_modules_v}
-\title{Plot modules (vertically)}
+\title{Plot modules (vertical layout)}
 \usage{
 plot_modules_v(
   module,

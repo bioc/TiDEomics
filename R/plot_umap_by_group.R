@@ -1,4 +1,4 @@
-#' UMAP by group (one object)
+#' Plot UMAP by group (one object)
 #'
 #' @description Plot UMAP by group, input is a SummarizedExperiment object
 #' with a "Group" column in the colData.
@@ -55,7 +55,7 @@ plot_umap_by_group <- function(se_obj, seed = 1234, nrow = 1,
 }
 
 
-#' UMAP by group (list of objects)
+#' Plot UMAP by group (list of objects)
 #'
 #' @description Plot UMAP by group, input is a list of SummarizedExperiment
 #' objects, with each object corresponding to a group

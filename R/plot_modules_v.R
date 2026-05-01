@@ -1,4 +1,4 @@
-#' Plot modules (vertically)
+#' Plot modules (vertical layout)
 #' @description Plot WGCNA modules' mean expression profiles and heatmaps,
 #' align vertically.
 #'
