@@ -42,6 +42,8 @@ plot_trend <- function(table_mean_sd, groups = NULL, features,
     if (errorbar) {
         p <- table_mean_sd %>%
             filter(Group %in% groups & Feature %in% features) %>%
+            # by the input order
+            mutate(Feature = factor(Feature, levels = features)) %>%
             ggplot(aes(x = Time, y = Mean, group = Group, color = Group)) +
             geom_line(linewidth = 0.7) +
             geom_point(size = 0.3) +
@@ -62,6 +64,8 @@ plot_trend <- function(table_mean_sd, groups = NULL, features,
     } else {
         p <- table_mean_sd %>%
             filter(Group %in% groups & Feature %in% features) %>%
+            # by the input order
+            mutate(Feature = factor(Feature, levels = features)) %>%
             ggplot(aes(x = Time, y = Mean, group = Group, color = Group)) +
             geom_line(linewidth = 0.7) +
             geom_point(size = 0.3) +

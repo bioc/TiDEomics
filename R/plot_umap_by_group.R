@@ -11,6 +11,7 @@
 #' @param fontsize Font size for the plot (default is 8)
 #' @param assay Assay index to use, where 1 is the original data and 2 is
 #' normalised to time 0 (if available) (default is 1)
+#' @param legend_pos Legend position for the PCA plots (default is "right")
 #'
 #' @import ggplot2
 #' @import SummarizedExperiment
@@ -24,7 +25,7 @@
 #' plot_umap_by_group(example_obj)
 plot_umap_by_group <- function(se_obj, seed = 1234, nrow = 1,
     umap_neighbors = NULL,
-    fontsize = 8, assay = 1) {
+    fontsize = 8, assay = 1, legend_pos = "right") {
     umap_list <- list()
     for (group in unique(se_obj$Group)) {
         umap_layout <- plot_umap(se_obj[, se_obj$Group == group],
@@ -47,11 +48,12 @@ plot_umap_by_group <- function(se_obj, seed = 1234, nrow = 1,
         font.label = list(size = fontsize + 2),
         hjust = 0, vjust = 0.5,
         nrow = nrow, ncol = ncol,
-        common.legend = TRUE
+        common.legend = TRUE,
+        legend = legend_pos
     ) %>%
         ggpubr::annotate_figure(top =
-        ggpubr::text_grob("UMAP - by group (features without missing values)",
-            face = "bold", size = fontsize + 2)))
+        ggpubr::text_grob("UMAP - by group (features without missing values)\n",
+            face = "bold", size = fontsize + 4)))
 }
 
 
@@ -69,6 +71,7 @@ plot_umap_by_group <- function(se_obj, seed = 1234, nrow = 1,
 #' @param fontsize Font size for the plot (default is 8)
 #' @param assay Assay index to use, where 1 is the original data and 2 is
 #' normalised to time 0 (if available) (default is 1)
+#' @param legend_pos Legend position for the PCA plots (default is "right")
 #'
 #' @import ggplot2
 #' @import SummarizedExperiment
@@ -83,7 +86,7 @@ plot_umap_by_group <- function(se_obj, seed = 1234, nrow = 1,
 #' plot_umap_by_group_list(example_obj_list)
 plot_umap_by_group_list <- function(se_obj_list, seed = 1234, nrow = 1,
     umap_neighbors = NULL,
-    fontsize = 8, assay = 1) {
+    fontsize = 8, assay = 1, legend_pos = "right") {
     umap_list <- list()
     for (group in names(se_obj_list)) {
         umap_layout <- plot_umap(se_obj_list[[group]],
@@ -106,9 +109,10 @@ plot_umap_by_group_list <- function(se_obj_list, seed = 1234, nrow = 1,
         font.label = list(size = fontsize + 2),
         hjust = 0, vjust = 0.5,
         nrow = nrow, ncol = ncol,
-        common.legend = TRUE
+        common.legend = TRUE,
+        legend = legend_pos
     ) %>%
         ggpubr::annotate_figure(top =
-        ggpubr::text_grob("UMAP - by group (features without missing values)",
-            face = "bold", size = fontsize + 2)))
+        ggpubr::text_grob("UMAP - by group (features without missing values)\n",
+            face = "bold", size = fontsize + 4)))
 }

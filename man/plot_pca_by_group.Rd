@@ -10,7 +10,8 @@ plot_pca_by_group(
   arrow = TRUE,
   nrow = 1,
   fontsize = 8,
-  assay = 1
+  assay = 1,
+  legend_pos = "right"
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ over time (default is TRUE)}
 
 \item{assay}{Assay index to use, where 1 is the original data and 2 is
 normalised to time 0 (if available) (default is 1)}
+
+\item{legend_pos}{Legend position for the PCA plots (default is "right")}
 }
 \value{
 A series of PCA plots showing the distribution of samples in

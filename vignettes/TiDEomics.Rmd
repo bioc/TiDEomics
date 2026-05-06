@@ -253,10 +253,10 @@ PCA and UMAP can also be performed separately on each group to explore within-gr
 By default, when plotting PCA by group, circles and arrows are added to show the trajectory of samples along time course. Set `circle = FALSE` or `arrow = FALSE` to remove circles and arrows.
 
 ```{r pca-umap-group, fig.width = 8, fig.height = 2.5}
-plot_pca_by_group(data_obj, circle = TRUE, arrow = TRUE)
-# same as plot_pca_by_group_list(data_obj_list, circle = TRUE, arrow = TRUE)
+plot_pca_by_group(data_obj, circle = TRUE, arrow = TRUE, legend_pos = "top")
+# same as plot_pca_by_group_list(data_obj_list)
 
-plot_umap_by_group(data_obj, seed = 1234) 
+plot_umap_by_group(data_obj, seed = 1234, legend_pos = "top") 
 # same as plot_umap_by_group_list(data_obj_list)
 ```
 
@@ -597,9 +597,9 @@ table_mean_sd_list <- calc_mean_sd(data_obj)
 table_mean_sd_orig <- table_mean_sd_list$orig
 table_mean_sd_norm <- table_mean_sd_list$norm0
 
-plot_trend(table_mean_sd_orig, features = c("Fosb", "Il23a", "Cd69", "Actb"),
+plot_trend(table_mean_sd_orig, features = c("Actb", "Cd69", "Fosb", "Il23a"),
     title = "Example features")
-plot_trend(table_mean_sd_norm, features = c("Fosb", "Il23a", "Cd69", "Actb"),
+plot_trend(table_mean_sd_norm, features = c("Actb", "Cd69", "Fosb", "Il23a"),
     title = "Example features with time 0 normalisation")
 ```
 
