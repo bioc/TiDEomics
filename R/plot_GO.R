@@ -29,7 +29,7 @@
 #' example_module <- data.frame(Module = as.factor(example_net$colors)) %>%
 #'     tibble::rownames_to_column("Feature") %>% arrange(Module)
 #' # select two modules for demonstration
-#' example_module_list <- example_module %>% 
+#' example_module_list <- example_module %>%
 #'     filter(Module %in% c(1, 2)) %>%
 #'     split(as.character(.$Module)) %>%
 #'     lapply(`[[`, "Feature")
@@ -76,7 +76,6 @@ plot_GO <- function(
             if (dim(go_list[[cate]])[1] > 0) {
                 print(clusterProfiler::dotplot(go_list[[cate]],
                         showCategory = showCategory_dotplot,
-                        label_format = 50, 
                         title = paste0("GO ", cate, " in ", label),
                         ...
                     ) +
@@ -131,7 +130,6 @@ plot_GO <- function(
                 print(clusterProfiler::emapplot(
                     enrichplot::pairwise_termsim(go_list[[cate]]),
                         showCategory = showCategory_emapplot,
-                        label_format = 50,
                         node_label_size = fontsize - 5, # default: 5
                         size_category = 1.5, # default: 1
                         ...
