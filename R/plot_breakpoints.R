@@ -11,7 +11,6 @@
 #' @import SummarizedExperiment
 #' @import magrittr
 #' @import ggplot2
-#' @importFrom dplyr mutate rename
 #'
 #' @returns A plot showing the distribution of breakpoints over time for 
 #' each specified group
@@ -48,6 +47,11 @@ plot_breakpoints <- function(res_list, group = NULL, fontsize = 8, ...) {
     p_list <- list()
     for (i in group) {
         res <- res_list[[i]]
+        if (is.null(res)) {
+            message("Skipping group '", i,
+                "': Trendy analysis was not performed.")
+            next
+        }
         res.top <- Trendy::topTrendy(res, ...)
 
         # Breakpoint distribution over the time course
@@ -57,7 +61,7 @@ plot_breakpoints <- function(res_list, group = NULL, fontsize = 8, ...) {
             as.data.frame() %>%
             tibble::rownames_to_column("Day") %>%
             dplyr::rename("Count" = ".") %>%
-            mutate(
+            dplyr::mutate(
                 Day = as.numeric(Day) %>% factor(),
                 Group = i
             )
@@ -71,7 +75,7 @@ plot_breakpoints <- function(res_list, group = NULL, fontsize = 8, ...) {
 
     res.bp.df.all <- res.bp.df.all %>%
         as.data.frame() %>%
-        mutate(Group = factor(Group, levels = group))
+        dplyr::mutate(Group = factor(Group, levels = group))
 
     p <- ggplot(res.bp.df.all, aes(x = Day, y = Count, color = Group)) +
         geom_point(position = position_dodge(width = 0.2)) +

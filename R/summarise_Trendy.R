@@ -5,7 +5,6 @@
 #' @param ... Additional arguments to be passed to the `Trendy::topTrendy()`
 
 #' @import magrittr
-#' @importFrom dplyr select mutate
 #'
 #' @returns A data frame of summary results of Trendy, including breakpoints,
 #' segment slopes and p-values for each fitted feature in each group. A
@@ -36,11 +35,20 @@
 summarise_Trendy <- function(res_list, ...) {
     res_summary <- list()
     for (i in names(res_list)) {
-        trendy.summary <- .summarise_Trendy_one_group(res_list[[i]])
+        if (is.null(res_list[[i]])) {
+            message("Skipping group '", i,
+                "': Trendy analysis was not performed (insufficient data).")
+            next
+        }
+        trendy.summary <- .summarise_Trendy_one_group(res_list[[i]], ...)
         trendy.summary$Group <- i
         trendy.summary <- trendy.summary %>%
             dplyr::select(.data$Group, dplyr::everything())
         res_summary[[i]] <- trendy.summary
+    }
+    if (length(res_summary) == 0) {
+        message("No groups with valid Trendy results.")
+        return(NULL)
     }
     res_summary_df <- do.call(rbind, res_summary) %>% as.data.frame()
 
@@ -58,7 +66,7 @@ summarise_Trendy <- function(res_list, ...) {
         paste(row[prs], collapse = "_")
     })
     df_patterns <- df %>%
-        mutate(Pattern = patterns)
+        dplyr::mutate(Pattern = patterns)
 
     return(df_patterns)
 }
@@ -69,7 +77,6 @@ summarise_Trendy <- function(res_list, ...) {
 #' @param res Result of the Trendy analysis, output of `run_Trendy()`
 #' @param ... Additional arguments to be passed to the `Trendy::topTrendy`
 #'
-#' @importFrom dplyr rename
 #' @import magrittr
 #'
 #' @returns A data frame of summary results of Trendy, including breakpoints,

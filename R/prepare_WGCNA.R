@@ -23,9 +23,6 @@
 #' (default is `c(seq(1, 10, by = 1), seq(12, 20, by = 2))`)
 #' @param ... Additional parameters to be passed to `WGCNA::pickSoftThreshold()`
 #'
-#' @importFrom graphics par plot text abline
-#' @importFrom grDevices dev.off
-#'
 #' @returns A list containing results of the scale-free topology
 #' fit indices with different powers, suggested power, network type and prepared
 #' input data used for reuse in `run_WGCNA()`
@@ -75,31 +72,33 @@ prepare_WGCNA <- function(
     sft$sample_info <- colData(se_obj)
     sft$networkType <- networkType
 
-    par(mfrow = c(2, 1))
+    graphics::par(mfrow = c(2, 1))
     cex1 <- 0.9
 
     # Scale-free topology fit index as a function of the soft-thresholding power
-    plot(sft$fitIndices[, 1], -sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2],
+    graphics::plot(sft$fitIndices[, 1], 
+        -sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2],
         xlab = "Soft Threshold (power)",
         ylab = "Scale Free Topology Model Fit, signed R^2", type = "n",
         main = paste("Scale independence")
     )
-    text(sft$fitIndices[, 1], -sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2],
+    graphics::text(sft$fitIndices[, 1], 
+        -sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2],
         labels = sft$fitIndices[, 1], cex = cex1, col = "black"
     )
     # this line corresponds to using an R^2 cut-off of h
-    abline(h = RsquaredCut, col = "red")
+    graphics::abline(h = RsquaredCut, col = "red")
 
     # Mean connectivity as a function of the soft-thresholding power
-    plot(sft$fitIndices[, 1], sft$fitIndices[, 5],
+    graphics::plot(sft$fitIndices[, 1], sft$fitIndices[, 5],
         xlab = "Soft Threshold (power)",
         ylab = "Mean Connectivity", type = "n",
         main = paste("Mean connectivity")
     )
-    text(sft$fitIndices[, 1], sft$fitIndices[, 5],
+    graphics::text(sft$fitIndices[, 1], sft$fitIndices[, 5],
         labels = sft$fitIndices[, 1], cex = cex1, col = "black"
     )
-    abline(h = MeanConnectivity, col = "red")
+    graphics::abline(h = MeanConnectivity, col = "red")
 
     return(sft)
 }

@@ -46,7 +46,7 @@ normalise_to_start <- function(se_obj) {
         d_list_0norm[[as.character(i)]] <- sweep(assays(input)[[1]], 
             1, first_non_na, FUN = "-")
     }
-    d_0norm <- do.call(cbind, d_list_0norm)
+    d_0norm <- do.call(cbind, unname(d_list_0norm))
 
     se_obj@assays@data[[2]] <- d_0norm
 

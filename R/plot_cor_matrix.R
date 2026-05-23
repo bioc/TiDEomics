@@ -21,7 +21,6 @@
 #'
 #' @import SummarizedExperiment
 #' @import magrittr
-#' @importFrom dplyr mutate select all_of
 #'
 #' @returns A heatmap showing the correlation between samples.
 #' @export
@@ -78,8 +77,8 @@ plot_cor_matrix <- function(
 
     ComplexHeatmap::Heatmap(cor_table,
         name = "Correlation",
-        clustering_distance_rows = as.dist(1 - cor_table),
-        clustering_distance_columns = as.dist(1 - cor_table),
+        clustering_distance_rows = stats::as.dist(1 - cor_table),
+        clustering_distance_columns = stats::as.dist(1 - cor_table),
         col = grDevices::colorRampPalette(c("#3C5488FF", "white",
             "#E64B35FF"))(100),
         show_row_names = show_rownames,
@@ -91,11 +90,11 @@ plot_cor_matrix <- function(
         top_annotation = if (length(ann) > 0) {
             ComplexHeatmap::HeatmapAnnotation(
                 df = colData(se_obj) %>% as.data.frame() %>%
-                    mutate(Time = factor(.data$Time,
+                    dplyr::mutate(Time = factor(.data$Time,
                         levels = as.character(colData(se_obj)$Time %>%
                             unique() %>% sort())
                     )) %>%
-                    dplyr::select(all_of(ann)),
+                    dplyr::select(dplyr::all_of(ann)),
                 col = ann_colors[ann],
                 annotation_name_side = "left",
                 annotation_legend_param = list(

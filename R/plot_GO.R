@@ -23,14 +23,14 @@
 #' @returns A series of plots visualizing the GO enrichment results.
 #' @export
 #' @examples
-#' library(dplyr)
+#' library(magrittr)
 #' library(org.Mm.eg.db)
 #' data(example_net)
 #' example_module <- data.frame(Module = as.factor(example_net$colors)) %>%
-#'     tibble::rownames_to_column("Feature") %>% arrange(Module)
+#'     tibble::rownames_to_column("Feature") %>% dplyr::arrange(Module)
 #' # select two modules for demonstration
 #' example_module_list <- example_module %>%
-#'     filter(Module %in% c(1, 2)) %>%
+#'     dplyr::filter(Module %in% c(1, 2)) %>%
 #'     split(as.character(.$Module)) %>%
 #'     lapply(`[[`, "Feature")
 #' # set cutoff to 1 to show all results for demonstration
@@ -96,7 +96,7 @@ plot_GO <- function(
             if (dim(go_list[[cate]])[1] > 0) {
                 clus_names <- go_list[[cate]] %>%
                     as.data.frame() %>%
-                    pull(Cluster) %>%
+                    dplyr::pull(Cluster) %>%
                     unique()
 
                 print(clusterProfiler::cnetplot(go_list[[cate]],
@@ -124,7 +124,7 @@ plot_GO <- function(
             if (dim(go_list[[cate]])[1] > 0) {
                 clus_names <- go_list[[cate]] %>%
                     as.data.frame() %>%
-                    pull(Cluster) %>%
+                    dplyr::pull(Cluster) %>%
                     unique()
 
                 print(clusterProfiler::emapplot(

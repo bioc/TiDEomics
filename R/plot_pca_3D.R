@@ -22,6 +22,9 @@
 #' PC = plot_pca(example_obj, morepc = seq(1, 3))
 #' plot_pca_3D(PC, pcs = seq(1, 3))
 plot_pca_3D <- function(pca, pcs = seq(1, 3)) {
+    if (!requireNamespace("plotly", quietly = TRUE))
+        stop("Package 'plotly' is required for 3D PCA. ", 
+        "Install with: install.packages('plotly')")
     if (length(pcs) != 3) {
         stop("Please specify three principal components to plot.")
     }

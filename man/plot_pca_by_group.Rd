@@ -2,12 +2,14 @@
 % Please edit documentation in R/plot_pca_by_group.R
 \name{plot_pca_by_group}
 \alias{plot_pca_by_group}
-\title{Plot PCA by group (one object)}
+\title{Plot PCA by group}
 \usage{
 plot_pca_by_group(
   se_obj,
   circle = TRUE,
   arrow = TRUE,
+  pc1 = 1,
+  pc2 = 2,
   nrow = 1,
   fontsize = 8,
   assay = 1,
@@ -15,22 +17,27 @@ plot_pca_by_group(
 )
 }
 \arguments{
-\item{se_obj}{A SummarizedExperiment object created by \code{create_input()}}
+\item{se_obj}{A SummarizedExperiment object, or a named list of them
+(e.g. from \code{split_groups()}).}
 
-\item{circle}{Logical, whether to draw circles (ellipses) around samples
-of each time point (default is TRUE)}
+\item{circle}{Logical, whether to draw ellipses around samples of each
+time point (default: TRUE).}
 
 \item{arrow}{Logical, whether to draw arrows indicating the trajectory
-over time (default is TRUE)}
+over time (default: TRUE).}
 
-\item{nrow}{Number of rows for arranging the PCA plots (default is 1)}
+\item{pc1}{Principal component for the x-axis (default: 1).}
 
-\item{fontsize}{Font size for the PCA plots (default is 8)}
+\item{pc2}{Principal component for the y-axis (default: 2).}
+
+\item{nrow}{Number of rows for arranging the plots (default: 1).}
+
+\item{fontsize}{Base font size (default: 8).}
 
 \item{assay}{Assay index to use, where 1 is the original data and 2 is
-normalised to time 0 (if available) (default is 1)}
+normalised to time 0 (if available) (default: 1).}
 
-\item{legend_pos}{Legend position for the PCA plots (default is "right")}
+\item{legend_pos}{Legend position (default: "right").}
 }
 \value{
 A series of PCA plots showing the distribution of samples in
@@ -38,9 +45,15 @@ each group, coloured by Time.
 }
 \description{
 Plot PCA for each group separately, with optional circles
-around time points and arrows indicating trajectory over time.
+around time points and arrows indicating trajectory over time. Accepts
+either a SummarizedExperiment object or a list of them (from
+\code{split_groups()}).
 }
 \examples{
 data("example")
 plot_pca_by_group(example_obj, circle = TRUE, arrow = TRUE)
+
+# Also accepts a list from split_groups()
+example_obj_list <- split_groups(example_obj)
+plot_pca_by_group(example_obj_list)
 }

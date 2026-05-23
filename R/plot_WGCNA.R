@@ -7,9 +7,6 @@
 #' @param fontsize Font size for plots (default is 8)
 #'
 #' @import magrittr
-#' @importFrom dplyr mutate select
-#' @importFrom stats hclust as.dist
-#' @importFrom graphics plot par
 #'
 #' @returns Plots of WGCNA module dendrogram, module eigengenes, pairwise
 #' scatterplots of eigengenes, clustering of module eigengenes, and
@@ -50,7 +47,7 @@ plot_WGCNA <- function(net, fontsize = 8) {
         set_rownames(NULL) %>%
         tibble::column_to_rownames("Sample") %>%
         dplyr::select(.data$Time, .data$Group) %>%
-        mutate(Time = as.numeric(.data$Time))
+        dplyr::mutate(Time = as.numeric(.data$Time))
     stopifnot(identical(row.names(MEs), row.names(ann_row)))
 
     col_time_func <- circlize::colorRamp2(
@@ -98,16 +95,17 @@ plot_WGCNA <- function(net, fontsize = 8) {
     )
 
     dissimME <- 1 - (t(stats::cor(MEs, method = "p", use = "p"))) / 2
-    hclustdatME <- hclust(as.dist(dissimME), method = "average")
-    par(mfrow = c(1, 1))
-    plot(hclustdatME, main = "Clustering based on the module eigengenes")
+    hclustdatME <- stats::hclust(stats::as.dist(dissimME), method = "average")
+    graphics::par(mfrow = c(1, 1))
+    graphics::plot(hclustdatME, 
+        main = "Clustering based on the module eigengenes")
 
     ## module-trait correlation
 
     # test correlation of modules to groups
     datTraits <- ann_row %>%
         dplyr::select(.data$Group, .data$Time) %>%
-        mutate(Time = as.numeric(.data$Time)) %>%
+        dplyr::mutate(Time = as.numeric(.data$Time)) %>%
         WGCNA::binarizeCategoricalColumns(
             convertColumns = c("Group"),
             dropFirstLevelVsAll = FALSE,
@@ -127,7 +125,7 @@ plot_WGCNA <- function(net, fontsize = 8) {
     dim(textMatrix) <- dim(moduleTraitCor)
 
     # Display correlation heatmap
-    par(mfrow = c(1, 1))
+    graphics::par(mfrow = c(1, 1))
     WGCNA::labeledHeatmap(
         Matrix = moduleTraitCor,
         xLabels = names(datTraits),

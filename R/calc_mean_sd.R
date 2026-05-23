@@ -8,7 +8,6 @@
 #'
 #' @import SummarizedExperiment
 #' @import magrittr
-#' @importFrom stats sd
 #' @returns A list containing two data frames: one for original values 
 #' and one for normalized values (if available). Each data frame includes 
 #' columns for Mean, SD, Group, Time, and Feature.
@@ -31,7 +30,7 @@ calc_mean_sd <- function(se_obj) {
             as.data.frame()
         colnames(table_mean) <- "Mean"
         table_mean$SD <- assays(sp)[[assay]] %>%
-            apply(1, function(x) sd(x, na.rm = TRUE))
+            apply(1, function(x) stats::sd(x, na.rm = TRUE))
         table_mean$Group <- i
         table_mean$Time <- j
         table_mean$Feature <- row.names(table_mean)

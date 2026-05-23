@@ -4,12 +4,17 @@
 \alias{impute_groups}
 \title{Impute missing values}
 \usage{
-impute_groups(se_obj_list)
+impute_groups(se_obj_list, fun = min)
 }
 \arguments{
 \item{se_obj_list}{A list of SummarizedExperiment objects, created by
 \code{split_groups()} or \code{merge_replicates()}, each corresponds to one group
 of samples.}
+
+\item{fun}{Function applied to the non-NA values in each group to
+generate the replacement value. Default: \code{min}. Use
+\code{function(x) min(x) / 2} for half-minimum, \code{median} for median
+imputation, etc.}
 }
 \value{
 A list of SummarizedExperiment objects with the missing values
@@ -18,7 +23,8 @@ of samples.
 }
 \description{
 Impute missing values for each group of samples in a list of
-SummarizedExperiment objects, with the minimum value in the group.
+SummarizedExperiment objects. By default, replaces NA with the minimum
+value in the group. A custom function can be supplied for other strategies.
 
 The input samples can contain replicates, or merged replicates (mean of
 replicates).

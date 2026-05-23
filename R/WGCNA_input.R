@@ -14,7 +14,6 @@
 #'
 #' @import SummarizedExperiment
 #' @import magrittr
-#' @importFrom dplyr select mutate
 #'
 #' @returns A data frame with samples in rows and features in columns, filtered 
 #' to remove bad samples and features, ready for use in `prepare_WGCNA()`.

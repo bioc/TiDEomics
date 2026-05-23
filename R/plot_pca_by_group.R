@@ -1,23 +1,27 @@
-#' Plot PCA by group (one object)
+#' Plot PCA by group
 #'
 #' @description Plot PCA for each group separately, with optional circles
-#' around time points and arrows indicating trajectory over time.
+#' around time points and arrows indicating trajectory over time. Accepts
+#' either a SummarizedExperiment object or a list of them (from
+#' `split_groups()`).
 #'
-#' @param se_obj A SummarizedExperiment object created by `create_input()`
-#' @param circle Logical, whether to draw circles (ellipses) around samples
-#' of each time point (default is TRUE)
+#' @param se_obj A SummarizedExperiment object, or a named list of them
+#'   (e.g. from `split_groups()`).
+#' @param circle Logical, whether to draw ellipses around samples of each
+#'   time point (default: TRUE).
 #' @param arrow Logical, whether to draw arrows indicating the trajectory
-#' over time (default is TRUE)
-#' @param nrow Number of rows for arranging the PCA plots (default is 1)
-#' @param fontsize Font size for the PCA plots (default is 8)
+#'   over time (default: TRUE).
+#' @param pc1 Principal component for the x-axis (default: 1).
+#' @param pc2 Principal component for the y-axis (default: 2).
+#' @param nrow Number of rows for arranging the plots (default: 1).
+#' @param fontsize Base font size (default: 8).
 #' @param assay Assay index to use, where 1 is the original data and 2 is
-#' normalised to time 0 (if available) (default is 1)
-#' @param legend_pos Legend position for the PCA plots (default is "right")
+#'   normalised to time 0 (if available) (default: 1).
+#' @param legend_pos Legend position (default: "right").
 #'
 #' @import ggplot2
 #' @import SummarizedExperiment
 #' @import magrittr
-#' @importFrom dplyr arrange
 #'
 #' @returns A series of PCA plots showing the distribution of samples in
 #' each group, coloured by Time.
@@ -25,69 +29,25 @@
 #' @examples
 #' data("example")
 #' plot_pca_by_group(example_obj, circle = TRUE, arrow = TRUE)
+#'
+#' # Also accepts a list from split_groups()
+#' example_obj_list <- split_groups(example_obj)
+#' plot_pca_by_group(example_obj_list)
 plot_pca_by_group <- function(se_obj, circle = TRUE, arrow = TRUE,
-    nrow = 1, fontsize = 8, assay = 1, legend_pos = "right") {
-    pca_list <- list()
-    for (group in unique(se_obj$Group)) {
-        p1 <- plot_pca_arrows(se_obj[, se_obj$Group == group],
-            circle = circle,
-            arrow = arrow,
-            fontsize = fontsize,
-            assay = assay
-        )
-        pca_list[[group]] <- p1
+    pc1 = 1, pc2 = 2, nrow = 1, fontsize = 8, assay = 1,
+    legend_pos = "right") {
+
+    if (is.list(se_obj) && !methods::is(se_obj, "SummarizedExperiment")) {
+        se_list <- se_obj
+    } else {
+        se_list <- split_groups(se_obj)
     }
 
-    ncol <- ceiling(length(pca_list) / nrow)
-
-    print(ggpubr::ggarrange(
-        plotlist = pca_list, labels = names(pca_list),
-        font.label = list(size = fontsize + 2),
-        hjust = 0, vjust = 0.5,
-        nrow = nrow, ncol = ncol,
-        common.legend = TRUE,
-        legend = legend_pos
-    ) %>%
-        ggpubr::annotate_figure(top =
-        ggpubr::text_grob("PCA by group (features without missing values)\n",
-        face = "bold", size = fontsize + 4)))
-}
-
-
-#' Plot PCA by group (list of objects)
-#'
-#' @description Plot PCA by group, input is a list of SummarizedExperiment
-#' objects, with each object corresponding to a group
-#'
-#' @param se_obj_list A list of SummarizedExperiment objects, such as output
-#' of `split_groups()`
-#' @param circle Logical, whether to draw circles (ellipses) around samples
-#' of each time point (default is TRUE)
-#' @param arrow Logical, whether to draw arrows indicating the trajectory
-#' over time (default is TRUE)
-#' @param nrow Number of rows for arranging the PCA plots (default is 1)
-#' @param fontsize Font size for the PCA plots (default is 8)
-#' @param assay Assay index to use, where 1 is the original data and 2 is
-#' normalised to time 0 (if available) (default is 1)
-#' @param legend_pos Legend position for the PCA plots (default is "right")
-#'
-#' @import ggplot2
-#' @import SummarizedExperiment
-#' @import magrittr
-#' @importFrom dplyr arrange
-#' @returns A series of PCA plots showing the distribution of samples in
-#' each group, coloured by Time.
-#' @export
-#' @examples
-#' data("example")
-#' example_obj_list <- split_groups(example_obj)
-#' plot_pca_by_group_list(example_obj_list)
-plot_pca_by_group_list <- function(se_obj_list, circle = TRUE, arrow = TRUE,
-    nrow = 1, fontsize = 8, assay = 1, legend_pos = "right") {
     pca_list <- list()
-    for (group in names(se_obj_list)) {
-        p1 <- plot_pca_arrows(se_obj_list[[group]], circle = circle,
-            arrow = arrow, fontsize = fontsize, assay = assay)
+    for (group in names(se_list)) {
+        p1 <- plot_pca_arrows(se_list[[group]], circle = circle,
+            arrow = arrow, pc1 = pc1, pc2 = pc2,
+            fontsize = fontsize, assay = assay)
         pca_list[[group]] <- p1
     }
 
@@ -109,31 +69,32 @@ plot_pca_by_group_list <- function(se_obj_list, circle = TRUE, arrow = TRUE,
 
 #' Plot PCA with arrows
 #'
-#' @description Plot PCA with arrows indicating trajectory over time
+#' @description Plot PCA with arrows indicating trajectory over time, for
+#' a single group.
 #'
-#' @param se_obj A SummarizedExperiment object
-#' @param circle Logical, whether to draw circles (ellipses) around samples
-#' of each time point (default is TRUE)
+#' @param se_obj A SummarizedExperiment object (single group).
+#' @param circle Logical, whether to draw ellipses around samples of each
+#'   time point (default: TRUE).
 #' @param arrow Logical, whether to draw arrows indicating the trajectory
-#' over time (default is TRUE)
-#' @param fontsize Font size for the PCA plot (default is 8)
+#'   over time (default: TRUE).
+#' @param pc1 Principal component for the x-axis (default: 1).
+#' @param pc2 Principal component for the y-axis (default: 2).
+#' @param fontsize Base font size (default: 8).
 #' @param assay Assay index to use, where 1 is the original data and 2 is
-#' normalised to time 0 (if available) (default is 1)
+#'   normalised to time 0 (if available) (default: 1).
 #'
 #' @import ggplot2
 #' @import SummarizedExperiment
 #' @import magrittr
-#' @importFrom dplyr arrange
-#' @importFrom stats aggregate
 #'
-#' @returns A PCA plot showing the distribution of samples, coloured by
-#' Time, with arrows indicating the trajectory over time.
+#' @returns A PCA plot coloured by Time, with optional ellipses and
+#' trajectory arrows.
 #' @export
 #' @examples
 #' data("example")
 #' plot_pca_arrows(example_obj[, example_obj$Group == "IFNbeta"])
 plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
-    fontsize = 8, assay = 1) {
+    pc1 = 1, pc2 = 2, fontsize = 8, assay = 1) {
 
     if (length(unique(se_obj$Group)) > 1) {
         warning("Input object contains multiple groups, circles / arrows ",
@@ -147,16 +108,22 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
     pc$Sample <- rownames(pc)
     pc <- merge(pc, as.data.frame(colData(se_obj)), by = "Sample")
 
-    xlab <- paste0("PC1: ", round(pca2$variance[["PC1"]], 2), "%")
-    ylab <- paste0("PC2: ", round(pca2$variance[["PC2"]], 2), "%")
+    xlab <- paste0("PC", pc1, ": ",
+        round(pca2$variance[[paste0("PC", pc1)]], 2), "%")
+    ylab <- paste0("PC", pc2, ": ",
+        round(pca2$variance[[paste0("PC", pc2)]], 2), "%")
 
-    arrows_in <- pc[, c("PC1", "PC2", "Sample", "Time")] %>% arrange(Time)
-    x_arrows <- aggregate(PC1 ~ Time, data = arrows_in, FUN = mean)
-    y_arrows <- aggregate(PC2 ~ Time, data = arrows_in, FUN = mean)
+    pc1_col <- paste0("PC", pc1); pc2_col <- paste0("PC", pc2)
+    colnames(pc)[colnames(pc) == pc1_col] <- "PC1"
+    colnames(pc)[colnames(pc) == pc2_col] <- "PC2"
+    arrows_in <- pc[, c("PC1", "PC2", "Sample", "Time")] %>%
+        dplyr::arrange(Time)
+    x_arrows <- stats::aggregate(PC1 ~ Time, data = arrows_in, FUN = mean)
+    y_arrows <- stats::aggregate(PC2 ~ Time, data = arrows_in, FUN = mean)
     arrows <- merge(x_arrows, y_arrows, by = "Time") %>%
         dplyr::rename(x_start = PC1, y_start = PC2)
 
-    time_series <- sort(unique(x_arrows$Time)) # not necessarily 1,2,3...
+    time_series <- sort(unique(x_arrows$Time))
 
     for (i in seq(1, length(time_series))) {
         if (i == length(time_series)) next
@@ -168,7 +135,8 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
 
     if (circle & arrow) {
         p1 <- pc %>%
-            mutate(Time = factor(Time, levels = unique(pc$Time) %>% sort())) %>%
+            dplyr::mutate(Time = factor(Time, 
+                levels = unique(pc$Time) %>% sort())) %>%
             ggplot(aes(x = PC1, y = PC2, color = Time)) +
             geom_segment(
                 data = arrows, aes(
@@ -185,13 +153,14 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
             scale_color_viridis_d(option = "D") +
             scale_fill_viridis_d(option = "D") +
             theme_custom(base_size = fontsize) +
-            xlim(range(pc$PC1) * 1.2) + # extra space for circles
+            xlim(range(pc$PC1) * 1.2) +
             ylim(range(pc$PC2) * 1.2) +
             xlab(xlab) +
             ylab(ylab)
     } else if (arrow) {
         p1 <- pc %>%
-            mutate(Time = factor(Time, levels = unique(pc$Time) %>% sort())) %>%
+            dplyr::mutate(Time = factor(Time, 
+                levels = unique(pc$Time) %>% sort())) %>%
             ggplot(aes(x = PC1, y = PC2, color = Time)) +
             geom_segment(
                 data = arrows, aes(
@@ -209,7 +178,8 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
             ylab(ylab)
     } else if (circle) {
         p1 <- pc %>%
-            mutate(Time = factor(Time, levels = unique(pc$Time) %>% sort())) %>%
+            dplyr::mutate(Time = factor(Time, 
+                levels = unique(pc$Time) %>% sort())) %>%
             ggplot(aes(x = PC1, y = PC2, color = Time)) +
             geom_point(size = 3) +
             ggforce::geom_mark_ellipse(aes(fill = Time),
@@ -218,13 +188,14 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
             scale_color_viridis_d(option = "D") +
             scale_fill_viridis_d(option = "D") +
             theme_custom(base_size = fontsize) +
-            xlim(range(pc$PC1) * 1.2) + # extra space for circles
+            xlim(range(pc$PC1) * 1.2) +
             ylim(range(pc$PC2) * 1.2) +
             xlab(xlab) +
             ylab(ylab)
     } else {
         p1 <- pc %>%
-            mutate(Time = factor(Time, levels = unique(pc$Time) %>% sort())) %>%
+            dplyr::mutate(Time = factor(Time, 
+                levels = unique(pc$Time) %>% sort())) %>%
             ggplot(aes(x = PC1, y = PC2, color = Time)) +
             geom_point(size = 3) +
             scale_color_viridis_d(option = "D") +

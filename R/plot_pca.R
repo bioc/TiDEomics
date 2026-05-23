@@ -37,8 +37,6 @@
 #' @import ggplot2
 #' @import SummarizedExperiment
 #' @import magrittr
-#' @importFrom dplyr mutate
-#' @importFrom stats complete.cases
 #'
 #' @returns A PCA plot showing the distribution of samples, other plots
 #' provided by PCAtools package, and PCAtools output object for custom plotting.
@@ -64,9 +62,9 @@ plot_pca <- function(
     M_0 <- se_obj@assays@data[[assay]]
     if (sum(is.na(M_0)) > 0) {
         message("Input data contains missing values. Only complete rows ",
-        "will be used for UMAP.")
+        "will be used for PCA.")
     }
-    M <- M_0[complete.cases(M_0), ]
+    M <- M_0[stats::complete.cases(M_0), ]
     sp_info <- as.data.frame(colData(se_obj))
 
     pca2 <- PCAtools::pca(M, metadata = sp_info, center = TRUE)
@@ -102,7 +100,7 @@ plot_pca <- function(
 
     title <- paste0("PCA (", nrow(M), " features without missing values)")
     p1 <- pc %>%
-        mutate(Time = factor(Time)) %>%
+        dplyr::mutate(Time = factor(Time)) %>%
         ggplot(aes(x = !!sym(pc1_name), y = !!sym(pc2_name),
             fill = Group, label = Sample)) +
         geom_point(aes(size = Time), alpha = 0.8, shape = 21) +

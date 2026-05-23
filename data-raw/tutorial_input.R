@@ -18,7 +18,7 @@ geo_sample_info <- pData(geo_data[[1]]) %>%
     "Batch" = "batch:ch1",
     "Sample" = "title"
   ) %>%
-  mutate(
+  dplyr::mutate(
     Time = Time %>% str_replace("h", "") %>% as.numeric(),
     Replicate = Replicate %>% str_replace("R", "") %>% as.numeric(),
     Batch = Batch %>% as.numeric()
@@ -29,7 +29,7 @@ row.names(geo_sample_info) <- NULL
 
 geo_sample_info %>%
   dplyr::group_by(Group) %>%
-  dplyr::summarise(n = n())
+  dplyr::summarise(n = dplyr::n())
 
 # download expression matrix from GEO
 getGEOSuppFiles("GSE263759", baseDir = "data-raw", makeDirectory = FALSE)#
@@ -41,7 +41,7 @@ geo_data_tb <- read.csv(geo_data_tb_gz) %>%
 geo_data_tb_symbol <- geo_data_tb$Feature %>%
   bitr(fromType = "ENSEMBL", toType = "SYMBOL", OrgDb = org.Mm.eg.db) %>%
   merge(geo_data_tb, by.x = "ENSEMBL", by.y = "Feature") %>%
-  distinct(SYMBOL, .keep_all = TRUE) %>%
+  dplyr::distinct(SYMBOL, .keep_all = TRUE) %>%
   dplyr::select(-ENSEMBL) %>%
   dplyr::rename("Feature" = "SYMBOL")
 
@@ -64,14 +64,14 @@ for (i in unique(geo_sample_info$Group)) {
     group_t0 <- geo_data_tb_filtered %>%
       dplyr::select(starts_with("RNA_untreated_0h"))
     group_t0_sample <- geo_sample_info %>%
-      filter(Group == "untreated" & Time == 0)
+      dplyr::filter(Group == "untreated" & Time == 0)
 
     colnames(group_t0) <- colnames(group_t0) %>%
       str_replace("untreated", i)
     geo_data_tb_new <- cbind(geo_data_tb_new, group_t0)
 
     group_t0_sample <- group_t0_sample %>%
-      mutate(
+      dplyr::mutate(
         Sample = Sample %>%
           str_replace("RNA_untreated", paste0("RNA_", i)),
         Group = i
@@ -82,11 +82,11 @@ for (i in unique(geo_sample_info$Group)) {
 
 # Tutorial dataset
 tutorial_sample_info <- geo_sample_info_new %>%
-  filter(Group %in% c("untreated", "IFNbeta", "IFNgamma", "LPS"))
+  dplyr::filter(Group %in% c("untreated", "IFNbeta", "IFNgamma", "LPS"))
 gene_random <- geo_data_tb_new$Feature %>% sample(500)
 tutorial_data <- geo_data_tb_new %>%
   dplyr::select(Feature, example_sample_info$Sample) %>%
-  filter(Feature %in% gene_random)
+  dplyr::filter(Feature %in% gene_random)
 
 usethis::use_data(tutorial_sample_info, tutorial_data)
 

@@ -15,8 +15,6 @@
 #' @import SummarizedExperiment
 #' @import magrittr
 #' @import ggplot2
-#' @importFrom dplyr summarise_all mutate everything
-#' @importFrom utils combn
 #' @returns A plot showing the ID number for each sample, with a dashed line 
 #' indicating the average number across all samples.
 #' @export
@@ -39,11 +37,11 @@ plot_ID <- function(se_obj, fontsize = 8, signif = FALSE, ...) {
         dim(assays(se_obj)[[1]])[2]
 
     id_tb <- assays(se_obj)[[1]] %>%
-        summarise_all(~ sum(!is.na(.))) %>%
-        tidyr::pivot_longer(cols = everything(), values_to = "ID") %>%
+        dplyr::summarise_all(~ sum(!is.na(.))) %>%
+        tidyr::pivot_longer(cols = dplyr::everything(), values_to = "ID") %>%
         merge(., colData(se_obj), by.x = "name", by.y = "Sample") %>%
         as.data.frame() %>%
-        mutate(Time = as.factor(Time))
+        dplyr::mutate(Time = as.factor(Time))
 
     (id_tb %>%
         ggplot(aes(x = Time, y = ID, fill = Replicate)) +
@@ -68,7 +66,8 @@ plot_ID <- function(se_obj, fontsize = 8, signif = FALSE, ...) {
 
     if (signif) {
         p <- p +
-            ggsignif::geom_signif(comparisons = combn(unique(se_obj$Group) %>% 
+            ggsignif::geom_signif(
+                comparisons = utils::combn(unique(se_obj$Group) %>% 
                 as.vector(), m = 2) %>%
                 as.data.frame() %>% as.list(), ...)
     }

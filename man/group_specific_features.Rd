@@ -11,7 +11,7 @@ group_specific_features(
   group_pct = 1,
   genename = TRUE,
   GO = TRUE,
-  org.db = NULL,
+  OrgDb = NULL,
   keytype = NULL,
   ...
 )
@@ -40,14 +40,14 @@ feature must be present in all specified groups).}
 \item{genename}{A logical value indicating whether to output a table of
 gene names. If TRUE, the function will use the \code{clusterProfiler::bitr()}
 function to annotate the features with gene names based on the specified
-\code{org.db} and \code{keytype}. (default is TRUE).}
+\code{OrgDb} and \code{keytype}. (default is TRUE).}
 
 \item{GO}{A logical value indicating whether to perform Gene Ontology
 (GO) enrichment analysis on the identified unique features. If TRUE, the
 function will use the \code{enrichGO_list()} function to perform GO enrichment
 analysis and visualize the results with a dot plot. (default is TRUE).}
 
-\item{org.db}{An OrgDb object from the \code{AnnotationDbi} package corresponding
+\item{OrgDb}{An OrgDb object from the \code{AnnotationDbi} package corresponding
 to the organism of interest (e.g., \code{org.Hs.eg.db} for human, \code{org.Mm.eg.db}
 for mouse). This will be used for gene annotation with the
 \code{clusterProfiler::bitr()} function.}
@@ -56,7 +56,7 @@ for mouse). This will be used for gene annotation with the
 used in the row names of the assay data (e.g., "SYMBOL", "ENTREZID",
 "ENSEMBL"). This will be used for gene annotation with the
 \code{clusterProfiler::bitr()} function. Available key types depend on the
-\code{org.db} database and can be checked with the \code{AnnotationDbi::keytypes}
+\code{OrgDb} database and can be checked with the \code{AnnotationDbi::keytypes}
 function.}
 
 \item{...}{Additional arguments to be passed to the \code{enrichGO_list()}

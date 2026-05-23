@@ -34,7 +34,6 @@
 #' when label = TRUE
 #'
 #' @import ggplot2
-#' @importFrom dplyr filter
 #' 
 #' @returns A volcano plot of DE results
 #' @export
@@ -74,15 +73,15 @@ plot_volcano <- function(DE_out,
 
         if (is.null(logFC_thres) & is.null(adjP_thres)) {
             de_tb <- DE_out$de_list[[paste0(group2, "-", group1)]] %>% 
-                filter(Time == time)
+                dplyr::filter(Time == time)
         } else {
             de_tb <- volcano_tb %>% 
-                filter(Time == time & abs(logFC) >= logFC_thres &
+                dplyr::filter(Time == time & abs(logFC) >= logFC_thres &
                 adj.P.Val <= adjP_thres)
         }
 
         volcano_tb <- volcano_tb %>%
-            mutate(Color = ifelse(Feature %in% de_tb$Feature, 
+            dplyr::mutate(Color = ifelse(Feature %in% de_tb$Feature, 
                 ifelse(logFC > 0, "Red", "Blue"), "Grey"))
 
         p <- volcano_tb %>%
@@ -108,11 +107,12 @@ plot_volcano <- function(DE_out,
                 DE_out$de_list[[group]][[paste0("t", time2, "-t", time1)]] 
         } else { # filter DE features based on thresholds provided
             de_tb <- volcano_tb %>% 
-                filter(abs(logFC) >= logFC_thres & adj.P.Val <= adjP_thres)
+                dplyr::filter(
+                    abs(logFC) >= logFC_thres & adj.P.Val <= adjP_thres)
         }
 
         volcano_tb <- volcano_tb %>%
-            mutate(Color = ifelse(Feature %in% de_tb$Feature, 
+            dplyr::mutate(Color = ifelse(Feature %in% de_tb$Feature, 
                 ifelse(logFC > 0, "Red", "Blue"), "Grey"))
 
         p <- volcano_tb %>%

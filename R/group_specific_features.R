@@ -23,7 +23,7 @@
 #' @param group_pct A numeric value between 0 and 1 specifying the percentage
 #' of groups in which a feature must be present. (default is 1, meaning that a
 #' feature must be present in all specified groups).
-#' @param org.db An OrgDb object from the `AnnotationDbi` package corresponding
+#' @param OrgDb An OrgDb object from the `AnnotationDbi` package corresponding
 #' to the organism of interest (e.g., `org.Hs.eg.db` for human, `org.Mm.eg.db`
 #' for mouse). This will be used for gene annotation with the
 #' `clusterProfiler::bitr()` function.
@@ -31,12 +31,12 @@
 #' used in the row names of the assay data (e.g., "SYMBOL", "ENTREZID",
 #' "ENSEMBL"). This will be used for gene annotation with the
 #' `clusterProfiler::bitr()` function. Available key types depend on the
-#' `org.db` database and can be checked with the `AnnotationDbi::keytypes`
+#' `OrgDb` database and can be checked with the `AnnotationDbi::keytypes`
 #' function.
 #' @param genename A logical value indicating whether to output a table of
 #' gene names. If TRUE, the function will use the `clusterProfiler::bitr()`
 #' function to annotate the features with gene names based on the specified
-#' `org.db` and `keytype`. (default is TRUE).
+#' `OrgDb` and `keytype`. (default is TRUE).
 #' @param GO A logical value indicating whether to perform Gene Ontology
 #' (GO) enrichment analysis on the identified unique features. If TRUE, the
 #' function will use the `enrichGO_list()` function to perform GO enrichment
@@ -44,7 +44,6 @@
 #' @param ... Additional arguments to be passed to the `enrichGO_list()`
 #' function for GO enrichment analysis (e.g., `pvalueCutoff`, `qvalueCutoff`,
 #' etc.).
-#' @importFrom dplyr filter distinct group_by summarise ungroup pull
 #'
 #' @returns A character vector of features that are identified as unique to
 #' the specified groups based on the filtering criteria. If `genename` is
@@ -70,7 +69,7 @@ group_specific_features <- function(
     group_pct = 1,
     genename = TRUE,
     GO = TRUE,
-    org.db = NULL, keytype = NULL,
+    OrgDb = NULL, keytype = NULL,
     ...
 ) {
     if (is.null(groups)) {
@@ -83,8 +82,8 @@ group_specific_features <- function(
     }
 
     if (genename | GO) {
-        if (is.null(org.db) | is.null(keytype)) {
-            stop("Both 'org.db' and 'keytype' must be provided when ",
+        if (is.null(OrgDb) | is.null(keytype)) {
+            stop("Both 'OrgDb' and 'keytype' must be provided when ",
             "'genename' or 'GO' is TRUE.")
         }
     }
@@ -93,38 +92,44 @@ group_specific_features <- function(
 
     # count of included expressed groups for each feature
     filter_count_groups <- property_random_fc %>%
-        filter(Exp_ratio >= filter_ratio) %>%
-        filter(Group %in% groups) %>%
-        distinct(Feature, Group) %>%
+        dplyr::filter(Exp_ratio >= filter_ratio) %>%
+        dplyr::filter(Group %in% groups) %>%
+        dplyr::distinct(Feature, Group) %>%
         dplyr::group_by(Feature) %>%
-        dplyr::summarise(Count = n()) %>%
+        dplyr::summarise(Count = dplyr::n()) %>%
         dplyr::ungroup()
 
     # count of excluded expressed groups for each feature
     filter_count_groups_op <- property_random_fc %>%
-        filter(Exp_ratio >= filter_ratio) %>%
-        filter(!(Group %in% groups)) %>%
-        distinct(Feature, Group) %>%
+        dplyr::filter(Exp_ratio >= filter_ratio) %>%
+        dplyr::filter(!(Group %in% groups)) %>%
+        dplyr::distinct(Feature, Group) %>%
         dplyr::group_by(Feature) %>%
-        dplyr::summarise(Count = n()) %>%
+        dplyr::summarise(Count = dplyr::n()) %>%
         dplyr::ungroup()
 
     # features that are present in at least 1 excluded group
     other_group_genes <- filter_count_groups_op %>%
-        filter(Count > 0) %>%
-        pull(Feature)
+        dplyr::filter(Count > 0) %>%
+        dplyr::pull(Feature)
 
     # features that are present in at least group_pct of the included groups
     # and not present in any excluded group
     group_num <- ceiling(length(groups) * group_pct)
     unique_genes <- filter_count_groups %>%
-        filter(Count >= group_num) %>%
-        pull(Feature) %>%
+        dplyr::filter(Count >= group_num) %>%
+        dplyr::pull(Feature) %>%
         setdiff(other_group_genes)
 
-    message("Filtering criteria: >=", 100 * filter_ratio,
-        "% values >", threshold, " in >=", group_num, " of groups: ",
-        paste(groups, collapse = ", "))
+    if (is.na(threshold)) {
+        message("Filtering criteria: >=", 100 * filter_ratio,
+            "% non-NA time points in >=", group_num, " of groups: ",
+            paste(groups, collapse = ", "))
+    } else {
+        message("Filtering criteria: >=", 100 * filter_ratio,
+            "% values >", threshold, " in >=", group_num, " of groups: ",
+            paste(groups, collapse = ", "))
+    }
 
     if (length(unique_genes) == 0) {
         message("No unique features with the specified ",
@@ -136,14 +141,15 @@ group_specific_features <- function(
         unique_genes %>%
             clusterProfiler::bitr(
                 fromType = keytype, toType = c(keytype, "GENENAME"),
-                OrgDb = org.db
+                OrgDb = OrgDb
             ) %>%
-            arrange(SYMBOL) %>%
+            dplyr::arrange(SYMBOL) %>%
             DT::datatable(
                 options = list(pageLength = 10),
                 caption = paste0(
                     "Features with >=", 100 * filter_ratio,
-                    "% values >", threshold, " in >=",
+                    "% ", if (is.na(threshold)) "non-NA time points"
+                    else paste0("values >", threshold), " in >=",
                     group_num, " of groups: ",
                     paste(groups, collapse = ", ")
                 )
@@ -153,7 +159,7 @@ group_specific_features <- function(
 
     if (GO == TRUE & length(unique_genes) > 0) {
         unique_genes_go <- enrichGO_list(list("Unique" = unique_genes),
-            OrgDb = org.db,
+            OrgDb = OrgDb,
             universe = property_random_fc$Feature,
             keyType = keytype, ...
         )
@@ -163,7 +169,8 @@ group_specific_features <- function(
             showCategory_dotplot = 10,
             label = paste0(
                 "features with >=", 100 * filter_ratio,
-                "% values >", threshold, " in >=",
+                "% ", if (is.na(threshold)) "non-NA time points"
+                else paste0("values >", threshold), " in >=",
                 group_num, " of groups: ",
                 paste(groups, collapse = ", ")
             )

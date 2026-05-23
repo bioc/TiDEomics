@@ -15,7 +15,6 @@
 #'
 #' @import SummarizedExperiment
 #' @import magrittr
-#' @importFrom dplyr group_by summarise ungroup arrange pull
 #'
 #' @returns A SummarizedExperiment object containing the input data and sample
 #' annotations.

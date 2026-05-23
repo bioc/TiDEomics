@@ -135,7 +135,6 @@ run_Trendy <- function(se_obj_imp_list, group = NULL,
 #'
 #' @import SummarizedExperiment
 #' @import magrittr
-#' @importFrom dplyr filter pull
 #'
 #' @returns Trendy analysis result, including the fitted model parameters
 #' and statistics for each feature.
@@ -156,8 +155,8 @@ run_Trendy <- function(se_obj_imp_list, group = NULL,
     if (is.null(feature)) {
         feature <- rowData(se_obj_imp) %>%
             as.data.frame() %>%
-            filter(.data$Exp_ratio >= minExp) %>%
-            pull(.data$Feature)
+            dplyr::filter(.data$Exp_ratio >= minExp) %>%
+            dplyr::pull(.data$Feature)
         message("Feature not specified. Using ", length(feature),
             " features expressed in >=", minExp * 100, "% time points.")
     } else {

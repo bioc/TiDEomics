@@ -22,13 +22,16 @@
 #' feature as differentially expressed (default is 1)
 #' @param plot (Optional) Whether to plot the number of DE features between
 #' groups over time (default is TRUE)
+#' @param trend (Optional) Logical, passed to `limma::eBayes()`.
+#'   Set to `TRUE` for RNA-seq count-derived data to model the mean-variance
+#'   trend. Leave as `FALSE` (default) for microarray, proteomics,
+#'   metabolomics, or other log-intensity data where the mean-variance
+#'   relationship is typically flat.
 #' @param fontsize (Optional) Font size for the plot (default is 8)
 #'
 #' @import SummarizedExperiment
 #' @import magrittr
 #' @import ggplot2
-#' @importFrom dplyr filter select bind_rows anti_join group_by summarise
-#' @importFrom dplyr distinct
 #'
 #' @returns A list containing two elements: 'all_list' is a nested list of DE
 #' results for each pair of groups and each time point including all features;
@@ -42,7 +45,8 @@
 #' DE_between_group_out <- DE_between_group(example_obj, assay = 2)
 DE_between_group <- function(
     se_obj, group = NULL, filter = NULL, assay = c(1, 2),
-    adjP_thres = 0.05, logFC_thres = 1, plot = TRUE, fontsize = 8
+    adjP_thres = 0.05, logFC_thres = 1, trend = FALSE,
+    plot = TRUE, fontsize = 8
 ) {
     if (is.null(group)) {
         group <- unique(se_obj$Group)
@@ -143,7 +147,7 @@ DE_between_group <- function(
                     levels = colnames(design)
                 )
                 fit2 <- limma::contrasts.fit(fit1, contrasts = contrast)
-                fit3 <- limma::eBayes(fit2)
+                fit3 <- limma::eBayes(fit2, trend = trend)
                 modtest <- limma::topTable(fit3, number = Inf, sort.by = "none")
                 limma_result <- merge(assays(tb_compare)[[assay]],
                     as.data.frame(modtest[, -c(2, 3, 6)]),
@@ -191,14 +195,14 @@ DE_between_group <- function(
                 tb_de <- tb %>%
                     dplyr::select(Feature, Comparison, Time, Cond1, Cond2,
                         logFC, adj.P.Val) %>%
-                    filter(adj.P.Val < adjP_thres) %>%
-                    filter(logFC > logFC_thres | logFC < -logFC_thres)
+                    dplyr::filter(adj.P.Val < adjP_thres) %>%
+                    dplyr::filter(logFC > logFC_thres | logFC < -logFC_thres)
                 de_list_limma[[label_comparison]][[tb_name]] <- tb_de
             }
 
             de_list_limma[[label_comparison]] <-
                 de_list_limma[[label_comparison]] %>%
-                bind_rows()
+                dplyr::bind_rows()
         }
     }
 
@@ -206,9 +210,9 @@ DE_between_group <- function(
         de_num_limma <- de_list_limma %>%
             lapply(function(x) {
                 x %>%
-                    group_by(Time) %>%
-                    summarise(N = n()) %>%
-                    mutate(
+                    dplyr::group_by(Time) %>%
+                    dplyr::summarise(N = dplyr::n()) %>%
+                    dplyr::mutate(
                         Cond1 = unique(x$Cond1),
                         Cond2 = unique(x$Cond2),
                         Time = as.numeric(as.character(Time))
@@ -228,21 +232,22 @@ DE_between_group <- function(
                         Time = as.numeric(as.character(unique(tb$Time)))
                     )
                 }) %>%
-                    bind_rows()
+                    dplyr::bind_rows()
             }) %>%
-            bind_rows() %>%
-            distinct()
+            dplyr::bind_rows() %>%
+            dplyr::distinct()
         if (dim(all_comparisons_t)[1] > dim(de_num_limma)[1]) {
-            missing_comparisons <- anti_join(all_comparisons_t, de_num_limma,
+            missing_comparisons <- dplyr::anti_join(all_comparisons_t,
+                de_num_limma,
                 by = c("Cond1", "Cond2", "Time")) # rows in x and not in y
             missing_comparisons$N <- 0
-            de_num_limma <- bind_rows(de_num_limma, missing_comparisons)
+            de_num_limma <- dplyr::bind_rows(de_num_limma, missing_comparisons)
         }
 
         for (i in group) {
             (de_num_limma %>%
-                filter(Cond1 == i) %>%
-                mutate(Group = Cond2) %>%
+                dplyr::filter(Cond1 == i) %>%
+                dplyr::mutate(Group = Cond2) %>%
                 ggplot(aes(x = Time, y = N, group = Group, color = Group)) +
                 geom_point() +
                 geom_line() +

@@ -13,7 +13,6 @@
 #' @param errorbar Whether to plot error bars (default is TRUE)
 #' @param fontsize Font size for the plot (default is 8)
 #'
-#' @importFrom dplyr filter
 #' @import ggplot2
 #' @returns Plot of feature abundances over time by mean and SD
 #' @export
@@ -41,9 +40,9 @@ plot_trend <- function(table_mean_sd, groups = NULL, features,
 
     if (errorbar) {
         p <- table_mean_sd %>%
-            filter(Group %in% groups & Feature %in% features) %>%
+            dplyr::filter(Group %in% groups & Feature %in% features) %>%
             # by the input order
-            mutate(Feature = factor(Feature, levels = features)) %>%
+            dplyr::mutate(Feature = factor(Feature, levels = features)) %>%
             ggplot(aes(x = Time, y = Mean, group = Group, color = Group)) +
             geom_line(linewidth = 0.7) +
             geom_point(size = 0.3) +
@@ -63,9 +62,9 @@ plot_trend <- function(table_mean_sd, groups = NULL, features,
             facet_wrap(~Feature, scales = "free_y")
     } else {
         p <- table_mean_sd %>%
-            filter(Group %in% groups & Feature %in% features) %>%
+            dplyr::filter(Group %in% groups & Feature %in% features) %>%
             # by the input order
-            mutate(Feature = factor(Feature, levels = features)) %>%
+            dplyr::mutate(Feature = factor(Feature, levels = features)) %>%
             ggplot(aes(x = Time, y = Mean, group = Group, color = Group)) +
             geom_line(linewidth = 0.7) +
             geom_point(size = 0.3) +

@@ -5,7 +5,6 @@
 #' @param trendy.summary A data frame, output of `summarise_Trendy()`, 
 #' containing the segmented regression results for all features in all groups.
 #'
-#' @importFrom dplyr filter pull
 #' @import magrittr
 #'
 #' @returns A nested list of features grouped by their segment trend patterns 
@@ -38,14 +37,14 @@ extract_segment_trends <- function(trendy.summary) {
     for (i in unique(trendy.summary$Group)) {
         trendy_list[[i]] <- list()
 
-        trend_comb <- unique(trendy.summary %>% filter(Group == i) %>% 
-            pull(Pattern))
+        trend_comb <- unique(trendy.summary %>% dplyr::filter(Group == i) %>% 
+            dplyr::pull(Pattern))
 
         for (j in trend_comb) {
             trendy_list[[i]][[j]] <- trendy.summary %>%
-                filter(Group == i) %>%
-                filter(Pattern == j) %>%
-                pull(Feature)
+                dplyr::filter(Group == i) %>%
+                dplyr::filter(Pattern == j) %>%
+                dplyr::pull(Feature)
         }
     }
 

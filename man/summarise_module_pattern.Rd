@@ -27,12 +27,12 @@ Summarise module patterns by integrating WGCNA output with
 Trendy results
 }
 \examples{
-library(dplyr)
+library(magrittr)
 data("example_res_list")
 trendy_summary <- summarise_Trendy(example_res_list)
 
 data(example_net)
 example_module <- data.frame(Module = as.factor(example_net$colors)) \%>\%
-    tibble::rownames_to_column("Feature") \%>\% arrange(Module)
+    tibble::rownames_to_column("Feature") \%>\% dplyr::arrange(Module)
 summarise_module_pattern(example_module, trendy_summary)
 }

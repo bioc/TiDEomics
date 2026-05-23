@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_umap_by_group.R
 \name{plot_umap_by_group}
 \alias{plot_umap_by_group}
-\title{Plot UMAP by group (one object)}
+\title{Plot UMAP by group}
 \usage{
 plot_umap_by_group(
   se_obj,
@@ -15,31 +15,37 @@ plot_umap_by_group(
 )
 }
 \arguments{
-\item{se_obj}{A SummarizedExperiment object created by \code{create_input()}}
+\item{se_obj}{A SummarizedExperiment object, or a named list of them
+(e.g. from \code{split_groups()}).}
 
-\item{seed}{Random seed for UMAP (default is 1234)}
+\item{seed}{Random seed for UMAP (default: 1234).}
 
-\item{nrow}{Number of rows for arranging the UMAP plots (default is 1)}
+\item{nrow}{Number of rows for arranging the plots (default: 1).}
 
-\item{umap_neighbors}{UMAP n_neighbors parameter (default is selected by
-\code{umap_n_neighbors()} function based on the number of samples)}
+\item{umap_neighbors}{UMAP n_neighbors parameter (default: auto-selected
+based on sample count).}
 
-\item{fontsize}{Font size for the plot (default is 8)}
+\item{fontsize}{Base font size (default: 8).}
 
 \item{assay}{Assay index to use, where 1 is the original data and 2 is
-normalised to time 0 (if available) (default is 1)}
+normalised to time 0 (if available) (default: 1).}
 
-\item{legend_pos}{Legend position for the PCA plots (default is "right")}
+\item{legend_pos}{Legend position (default: "right").}
 }
 \value{
 A series of UMAP plots showing the distribution of samples in
 each group, coloured by Time.
 }
 \description{
-Plot UMAP by group, input is a SummarizedExperiment object
-with a "Group" column in the colData.
+Plot UMAP for each group separately. Accepts either a
+SummarizedExperiment object or a named list of them (from
+\code{split_groups()}).
 }
 \examples{
 data("example")
 plot_umap_by_group(example_obj)
+
+# Also accepts a list from split_groups()
+example_obj_list <- split_groups(example_obj)
+plot_umap_by_group(example_obj_list)
 }

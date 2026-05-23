@@ -4,28 +4,41 @@
 \alias{plot_pca_arrows}
 \title{Plot PCA with arrows}
 \usage{
-plot_pca_arrows(se_obj, circle = TRUE, arrow = TRUE, fontsize = 8, assay = 1)
+plot_pca_arrows(
+  se_obj,
+  circle = TRUE,
+  arrow = TRUE,
+  pc1 = 1,
+  pc2 = 2,
+  fontsize = 8,
+  assay = 1
+)
 }
 \arguments{
-\item{se_obj}{A SummarizedExperiment object}
+\item{se_obj}{A SummarizedExperiment object (single group).}
 
-\item{circle}{Logical, whether to draw circles (ellipses) around samples
-of each time point (default is TRUE)}
+\item{circle}{Logical, whether to draw ellipses around samples of each
+time point (default: TRUE).}
 
 \item{arrow}{Logical, whether to draw arrows indicating the trajectory
-over time (default is TRUE)}
+over time (default: TRUE).}
 
-\item{fontsize}{Font size for the PCA plot (default is 8)}
+\item{pc1}{Principal component for the x-axis (default: 1).}
+
+\item{pc2}{Principal component for the y-axis (default: 2).}
+
+\item{fontsize}{Base font size (default: 8).}
 
 \item{assay}{Assay index to use, where 1 is the original data and 2 is
-normalised to time 0 (if available) (default is 1)}
+normalised to time 0 (if available) (default: 1).}
 }
 \value{
-A PCA plot showing the distribution of samples, coloured by
-Time, with arrows indicating the trajectory over time.
+A PCA plot coloured by Time, with optional ellipses and
+trajectory arrows.
 }
 \description{
-Plot PCA with arrows indicating trajectory over time
+Plot PCA with arrows indicating trajectory over time, for
+a single group.
 }
 \examples{
 data("example")

@@ -20,8 +20,6 @@
 #'
 #' @import SummarizedExperiment
 #' @import magrittr
-#' @importFrom dplyr mutate rename select
-#' @importFrom stats as.formula median
 #' @returns A data frame with variance decomposition results
 #' @references https://github.com/aifimmunology/PALMO/blob/main/R/lmeVariance.R
 #' @export
@@ -55,9 +53,9 @@ decomp_variance <- function(
 
     ann <- colData(palmo_obj) %>%
         as.data.frame() %>%
-        mutate(Sample_new = paste0(.data$Group, "_", .data$Time, "_",
+        dplyr::mutate(Sample_new = paste0(.data$Group, "_", .data$Time, "_",
             .data$Replicate)) %>%
-        mutate(Time = factor(.data$Time))
+        dplyr::mutate(Time = factor(.data$Time))
 
     mat <- assays(palmo_obj)[[assay]] %>% as.data.frame()
     colnames(mat) <- colnames(mat) %>%
@@ -65,7 +63,7 @@ decomp_variance <- function(
 
     ann <- ann %>%
         dplyr::select(-Sample) %>%
-        rename(Sample = Sample_new)
+        dplyr::rename(Sample = Sample_new)
     row.names(ann) <- ann$Sample
 
     ## Define formula
@@ -115,7 +113,7 @@ decomp_variance <- function(
             check_gene_group <- sum(gene_group == 1)
             if (check_gene_group == 0) {
                 ## Define formula form
-                form1 <- as.formula(paste("exp ~ ", form, sep = ""))
+                form1 <- stats::as.formula(paste("exp ~ ", form, sep = ""))
 
                 ## linear mixed effect model
                 if (lmer_control == TRUE) {
@@ -137,7 +135,8 @@ decomp_variance <- function(
                 lmem_re$CV <- lmem_re$sdcor / fix_effect ## Calculate CV
                 return(c(
                     geneName, mean(df$exp, na.rm = TRUE),
-                    median(df$exp, na.rm = TRUE), sd(df$exp, na.rm = TRUE),
+                    stats::median(df$exp, na.rm = TRUE), 
+                    stats::sd(df$exp, na.rm = TRUE),
                     max(df$exp, na.rm = TRUE),
                     (lmem_re$vcov) / sum(lmem_re$vcov)
                 ))

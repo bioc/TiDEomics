@@ -19,7 +19,6 @@
 #' @import SummarizedExperiment
 #' @import magrittr
 #' @import ggplot2
-#' @importFrom dplyr mutate everything
 #'
 #' @returns A plot showing the density distribution of abundance values, 
 #' optionally faceted by the specified variable.
@@ -31,7 +30,7 @@
 plot_distribution <- function(se_obj, facet_by = NULL, fontsize = 8) {
     if (is.null(facet_by)) {
         (assays(se_obj)[[1]] %>%
-            tidyr::pivot_longer(cols = everything()) %>%
+            tidyr::pivot_longer(cols = dplyr::everything()) %>%
             ggplot(aes(x = value, group = name)) +
             geom_density() +
             ggtitle("Abundance distribution") +
@@ -45,10 +44,10 @@ plot_distribution <- function(se_obj, facet_by = NULL, fontsize = 8) {
 
         if (facet_by == "Group") {
             (assays(se_obj)[[1]] %>%
-                tidyr::pivot_longer(cols = everything()) %>%
+                tidyr::pivot_longer(cols = dplyr::everything()) %>%
                 merge(., colData(se_obj), by.x = "name", by.y = "Sample") %>%
                 as.data.frame() %>%
-                mutate(Time = as.factor(Time)) %>%
+                dplyr::mutate(Time = as.factor(Time)) %>%
                 ggplot(aes(x = value, y = Time, fill = Replicate)) +
                 ggridges::geom_density_ridges(color = "black", alpha = 0.3) +
                 facet_wrap(~Group, nrow = 1) +
@@ -59,10 +58,10 @@ plot_distribution <- function(se_obj, facet_by = NULL, fontsize = 8) {
 
         if (facet_by == "Time") {
             (assays(se_obj)[[1]] %>%
-                tidyr::pivot_longer(cols = everything()) %>%
+                tidyr::pivot_longer(cols = dplyr::everything()) %>%
                 merge(., colData(se_obj), by.x = "name", by.y = "Sample") %>%
                 as.data.frame() %>%
-                mutate(Time = as.factor(Time)) %>%
+                dplyr::mutate(Time = as.factor(Time)) %>%
                 ggplot(aes(x = value, y = Group, fill = Replicate)) +
                 ggridges::geom_density_ridges(color = "black", alpha = 0.3) +
                 facet_wrap(~Time, nrow = 1) +
@@ -73,7 +72,7 @@ plot_distribution <- function(se_obj, facet_by = NULL, fontsize = 8) {
 
         if (facet_by == "Sample") {
             (assays(se_obj)[[1]] %>%
-                tidyr::pivot_longer(cols = everything()) %>%
+                tidyr::pivot_longer(cols = dplyr::everything()) %>%
                 ggplot(aes(x = value)) +
                 geom_density() +
                 facet_wrap(~name) +

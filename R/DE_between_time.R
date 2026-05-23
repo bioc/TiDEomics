@@ -15,12 +15,16 @@
 #' feature as differentially expressed (default is 0.05)
 #' @param logFC_thres (Optional) Threshold for log2 fold change to consider a 
 #' feature as differentially expressed (default is 1)
-#' @param fontsize (Optional) Font size for the heatmap of DE numbers (default 
+#' @param trend (Optional) Logical, passed to `limma::eBayes()`.
+#'   Set to `TRUE` for RNA-seq count-derived data to model the mean-variance
+#'   trend. Leave as `FALSE` (default) for microarray, proteomics,
+#'   metabolomics, or other log-intensity data where the mean-variance
+#'   relationship is typically flat.
+#' @param fontsize (Optional) Font size for the heatmap of DE numbers (default
 #' is 8)
 #'
 #' @import SummarizedExperiment
 #' @import magrittr
-#' @importFrom dplyr filter select
 #'
 #' @returns A list containing two elements: 'all_list' is a nested list of 
 #' DE results for each group and time point comparison including all features; 
@@ -35,8 +39,9 @@
 #' plot_DE_between_time(example_obj,
 #'     de_list = DE_between_time_out$de_list,
 #'     fontsize = 8, value = TRUE, nrow = 1, heatmap_width = 3)
-DE_between_time <- function(se_obj, group = NULL, filter = NULL, 
-    assay = c(1, 2), adjP_thres = 0.05, logFC_thres = 1, fontsize = 8) {
+DE_between_time <- function(se_obj, group = NULL, filter = NULL,
+    assay = c(1, 2), adjP_thres = 0.05, logFC_thres = 1,
+    trend = FALSE, fontsize = 8) {
     if (is.null(group)) {
         group <- unique(se_obj$Group)
     } else if (!all(group %in% unique(se_obj$Group))) {
@@ -122,7 +127,7 @@ DE_between_time <- function(se_obj, group = NULL, filter = NULL,
                         levels = colnames(design)
                     )
                     fit2 <- limma::contrasts.fit(fit1, contrasts = contrast)
-                    fit3 <- limma::eBayes(fit2)
+                    fit3 <- limma::eBayes(fit2, trend = trend)
                     modtest <- limma::topTable(fit3, number = Inf, 
                         sort.by = "none")
                     limma_result <- merge(assays(tb_compare)[[assay]],
@@ -167,8 +172,8 @@ DE_between_time <- function(se_obj, group = NULL, filter = NULL,
             tb_de <- tb %>%
                 dplyr::select(Feature, Comparison, Group, Cond1, Cond2, 
                     logFC, adj.P.Val) %>%
-                filter(adj.P.Val < adjP_thres) %>%
-                filter(logFC > logFC_thres | logFC < -logFC_thres)
+                dplyr::filter(adj.P.Val < adjP_thres) %>%
+                dplyr::filter(logFC > logFC_thres | logFC < -logFC_thres)
             de_list_limma[[i]][[tb_name]] <- tb_de
         }
 

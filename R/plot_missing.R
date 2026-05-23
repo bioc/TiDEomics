@@ -14,8 +14,6 @@
 #' @import SummarizedExperiment
 #' @import magrittr
 #' @import ggplot2
-#' @importFrom dplyr summarise_all mutate everything
-#' @importFrom utils combn
 #' @returns A plot showing the missing value rate for each sample, with a 
 #' dashed line indicating the global missing value rate across all samples.
 #' @export
@@ -38,11 +36,12 @@ plot_missing <- function(se_obj, fontsize = 8, signif = FALSE, ...) {
         dim(assays(se_obj)[[1]])[1] / dim(assays(se_obj)[[1]])[2]
 
     missing_tb <- assays(se_obj)[[1]] %>%
-        summarise_all(~ sum(is.na(.)) / length(.)) %>%
-        tidyr::pivot_longer(cols = everything(), values_to = "Missing") %>%
+        dplyr::summarise_all(~ sum(is.na(.)) / length(.)) %>%
+        tidyr::pivot_longer(cols = dplyr::everything(), 
+            values_to = "Missing") %>%
         merge(., colData(se_obj), by.x = "name", by.y = "Sample") %>%
         as.data.frame() %>%
-        mutate(Time = as.factor(Time))
+        dplyr::mutate(Time = as.factor(Time))
 
     (missing_tb %>%
         ggplot(aes(x = Time, y = Missing, fill = Replicate)) +
@@ -67,7 +66,8 @@ plot_missing <- function(se_obj, fontsize = 8, signif = FALSE, ...) {
 
     if (signif) {
         p <- p +
-            ggsignif::geom_signif(comparisons = combn(unique(se_obj$Group) %>% 
+            ggsignif::geom_signif(
+                comparisons = utils::combn(unique(se_obj$Group) %>% 
                 as.vector(), m = 2) %>%
                 as.data.frame() %>% as.list(), ...)
     }

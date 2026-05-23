@@ -12,6 +12,7 @@ enrichGO_list(
   universe_list = NULL,
   pAdjustMethod = "BH",
   pvalueCutoff = 0.05,
+  qvalueCutoff = 0.05,
   category = NULL,
   simplify = FALSE,
   simplify_cutoff = 0.7,
@@ -39,6 +40,9 @@ a list of gene vectors with the same names as \code{gene_list}}
 (default is "BH")}
 
 \item{pvalueCutoff}{(Optional) Parameter of \code{clusterProfiler::enrichGO()}
+(default is 0.05)}
+
+\item{qvalueCutoff}{(Optional) Parameter of \code{clusterProfiler::enrichGO()}
 (default is 0.05)}
 
 \item{category}{(Optional) GO category to analyze (default is all three of
@@ -78,15 +82,15 @@ with clusterProfiler, allowing for using different or same background
 genes for each gene set
 }
 \examples{
-library(dplyr)
+library(magrittr)
 library(org.Mm.eg.db)
 library(clusterProfiler)
 data(example_net)
 example_module <- data.frame(Module = as.factor(example_net$colors)) \%>\%
-    tibble::rownames_to_column("Feature") \%>\% arrange(Module)
+    tibble::rownames_to_column("Feature") \%>\% dplyr::arrange(Module)
 # select two modules for demonstration
 example_module_list <- example_module \%>\% 
-    filter(Module \%in\% c(1, 2)) \%>\%
+    dplyr::filter(Module \%in\% c(1, 2)) \%>\%
     split(as.character(.$Module)) \%>\%
     lapply(`[[`, "Feature")
 # set cutoff to 1 to show all results for demonstration

@@ -11,21 +11,19 @@
 #' @param top_n Number of top patterns to show per module when `print_top_n` is
 #' TRUE (default is 5)
 #'
-#' @importFrom dplyr select filter arrange
 #' @import magrittr
-#' @importFrom utils head
 #'
 #' @returns A list of data frames, each data frame shows the pattern counts
 #' in a module
 #' @export
 #' @examples
-#' library(dplyr)
+#' library(magrittr)
 #' data("example_res_list")
 #' trendy_summary <- summarise_Trendy(example_res_list)
 #'
 #' data(example_net)
 #' example_module <- data.frame(Module = as.factor(example_net$colors)) %>%
-#'     tibble::rownames_to_column("Feature") %>% arrange(Module)
+#'     tibble::rownames_to_column("Feature") %>% dplyr::arrange(Module)
 #' summarise_module_pattern(example_module, trendy_summary)
 summarise_module_pattern <- function(module, trendy_summary,
     print_top_n = TRUE, top_n = 5) {
@@ -42,17 +40,18 @@ summarise_module_pattern <- function(module, trendy_summary,
 
     for (i in seq(1, n_module)) {
         module_genes <- module %>%
-            filter(Module == i) %>%
-            pull(Feature)
+            dplyr::filter(Module == i) %>%
+            dplyr::pull(Feature)
 
-        trendy_genes <- trendy_tb_wider %>% filter(Feature %in% module_genes)
+        trendy_genes <- trendy_tb_wider %>% 
+            dplyr::filter(Feature %in% module_genes)
 
         trendy_genes_pattern <- trendy_genes %>%
             dplyr::select(-Feature) %>%
             apply(1, function(x) paste0(x, collapse = ", ")) %>%
             table() %>%
             data.frame() %>%
-            arrange(desc(Freq))
+            dplyr::arrange(dplyr::desc(Freq))
 
         colnames(trendy_genes_pattern) <- c(
             paste0(colnames(trendy_tb_wider)[-1], collapse = ", "),
@@ -70,7 +69,7 @@ summarise_module_pattern <- function(module, trendy_summary,
     if (print_top_n) {
         for (i in seq(1, n_module)) {
             message(sprintf("Module %d top %d patterns:", i, top_n))
-            print(head(trendy_genes_pattern_list[[i]], n = top_n))
+            print(utils::head(trendy_genes_pattern_list[[i]], n = top_n))
         }
     }
 

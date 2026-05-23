@@ -32,8 +32,6 @@
 #' @import SummarizedExperiment
 #' @import magrittr
 #' @import ggplot2
-#' @importFrom dplyr mutate
-#' @importFrom stats complete.cases
 #'
 #' @returns A UMAP plot showing the distribution of samples. And a data
 #' frame containing UMAP coordinates and sample annotations for custom plotting.
@@ -56,7 +54,7 @@ plot_umap <- function(
         message("Input data contains missing values. Only complete rows ",
         "will be used for UMAP.")
     }
-    M <- M_0[complete.cases(M_0), ]
+    M <- M_0[stats::complete.cases(M_0), ]
     sp_info <- as.data.frame(colData(se_obj))
 
     n_neighbors <- ifelse(is.null(umap_neighbors),
@@ -131,7 +129,7 @@ plot_umap <- function(
             face = "bold", size = fontsize + 2)))
 
     p1 <- umap_layout %>%
-        mutate(Time = Time %>% factor()) %>%
+        dplyr::mutate(Time = Time %>% factor()) %>%
         ggplot(aes(x = V1, y = V2, fill = Group)) +
         geom_point(aes(size = Time), alpha = 0.8, shape = 21) +
         scale_fill_manual(values =

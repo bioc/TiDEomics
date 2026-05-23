@@ -9,7 +9,7 @@ plot_variance(
   rank = c("Group", "Time"),
   features = NULL,
   top_n = 20,
-  ylab = TRUE,
+  show_ylab = TRUE,
   fontsize = 8
 )
 }
@@ -24,7 +24,7 @@ plot_variance(
 \item{top_n}{Top n features ranked by \code{rank} to be plotted when \code{features}
 is not specified (default is 20)}
 
-\item{ylab}{Whether to show y axis text (default is TRUE)}
+\item{show_ylab}{Whether to show y axis text (default is TRUE)}
 
 \item{fontsize}{Font size for the plot (default is 8)}
 }

@@ -254,10 +254,10 @@ By default, when plotting PCA by group, circles and arrows are added to show the
 
 ```{r pca-umap-group, fig.width = 8, fig.height = 2.5}
 plot_pca_by_group(data_obj, circle = TRUE, arrow = TRUE, legend_pos = "top")
-# same as plot_pca_by_group_list(data_obj_list)
+# also accepts a list: plot_pca_by_group(data_obj_list)
 
-plot_umap_by_group(data_obj, seed = 1234, legend_pos = "top") 
-# same as plot_umap_by_group_list(data_obj_list)
+plot_umap_by_group(data_obj, seed = 1234, legend_pos = "top")
+# also accepts a list: plot_umap_by_group(data_obj_list)
 ```
 
 ### Pairwise differential expression
@@ -284,6 +284,8 @@ Common parameters for both functions:
 - `assay`: index of assay to use (1 = original, 2 = time0-normalised if available)
 
 - `filter`: minimal number of non-NA replicates for the feature to be included in DE testing (e.g., `filter = 1` means requiring features to have at least 1 non-NA value at both time points in the specific group, or in both groups at the specific time point).
+
+- `trend`: passed to `limma::eBayes(trend=)`. Set to `TRUE` for RNA-seq count-derived data to model the mean-variance trend. Leave as `FALSE` (default) for proteomics, metabolomics, or other log-intensity data where the mean-variance relationship is typically flat.
 
 - Default thresholds for DE are `p.adj < 0.05` and `|log2FC| > 1`.
 
@@ -332,6 +334,14 @@ plot_volcano(DE_between_group_out,
     logFC_thres = 0.5, adjP_thres = 0.05, label = TRUE)
 ```
 
+#### Statistical notes
+
+Both DE functions use `limma::lmFit()` followed by `limma::eBayes()` with empirical Bayes variance moderation, which stabilises variance estimates when the number of replicates is small. The input data should be log-transformed and normalised before analysis.
+
+For **RNA-seq** data derived from counts (e.g., log~2~(TMM-CPM + 1)), set `trend = TRUE` to let limma model the mean-variance relationship — low-abundance features typically have higher variance. For **proteomics** (log~2~ intensity), **metabolomics**, and **microarray** data, the mean-variance trend is typically weak or absent, so `trend = FALSE` (default) is appropriate.
+
+When replicates within a Group×Time combination are from the same biological units measured repeatedly (longitudinal design), consider running `limma::duplicateCorrelation()` separately — TiDEomics currently treats all replicates as independent.
+
 ### Feature properties and classification
 
 `calc_feature_property()` computes per-feature properties:
@@ -376,7 +386,7 @@ group_specific_features(property_tb, groups = c("untreated"),
 
 **Notes**: 
 
-- The function requires complete input (no NA). When data contains missing values (e.g. proteomics), use `impute_groups()` to impute with group-specific minimum value, or restrict to features with complete data.
+- The function requires complete input (no NA). When data contains missing values (e.g. proteomics), use `impute_groups()` to impute (default: group minimum; pass `fun = function(x) min(x) / 2` for half-minimum, `fun = median` for median imputation, etc.), or restrict to features with complete data.
 
 - If `feature` is not specified, the function will run on all features filtered by expression / missing rate, which requires running `calc_feature_property()` before `impute_groups()`.
 
@@ -614,7 +624,7 @@ plot_trend(table_mean_sd_orig,
 
 plot_trend(table_mean_sd_orig,
     features = var_decomp %>%
-        dplyr::arrange(desc(Residual)) %>% head(12) %>% dplyr::pull(Feature),
+        dplyr::arrange(dplyr::desc(Residual)) %>% head(12) %>% dplyr::pull(Feature),
     title = "Features with highest residual variance"
 )
 ```

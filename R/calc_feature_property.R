@@ -12,8 +12,6 @@
 #'
 #' @import SummarizedExperiment
 #' @import magrittr
-#' @importFrom dplyr select
-#' @importFrom stats na.omit
 #'
 #' @returns A list of SummarizedExperiment objects, each corresponding to
 #' one group, with updated rowData containing the following columns: Feature,
@@ -71,7 +69,7 @@ calc_feature_property <- function(se_obj_merged_list, threshold = NULL) {
         random_pv <- apply(
             d_mean_n, 1,
             function(x) {
-                randtests::bartels.rank.test(na.omit(x),
+                randtests::bartels.rank.test(stats::na.omit(x),
                     alternative = "left.sided")$p.value
             }
         ) %>%
@@ -84,7 +82,7 @@ calc_feature_property <- function(se_obj_merged_list, threshold = NULL) {
 
         # max fold change and the time points of max and min
         max_fc <- apply(d_mean_1, 1, function(x) {
-            max(na.omit(x)) - min(na.omit(x))
+            max(stats::na.omit(x)) - min(stats::na.omit(x))
         }) %>%
             as.data.frame() %>%
             set_colnames("Max_FC")

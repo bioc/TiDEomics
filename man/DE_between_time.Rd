@@ -11,6 +11,7 @@ DE_between_time(
   assay = c(1, 2),
   adjP_thres = 0.05,
   logFC_thres = 1,
+  trend = FALSE,
   fontsize = 8
 )
 }
@@ -33,6 +34,12 @@ feature as differentially expressed (default is 0.05)}
 
 \item{logFC_thres}{(Optional) Threshold for log2 fold change to consider a
 feature as differentially expressed (default is 1)}
+
+\item{trend}{(Optional) Logical, passed to \code{limma::eBayes()}.
+Set to \code{TRUE} for RNA-seq count-derived data to model the mean-variance
+trend. Leave as \code{FALSE} (default) for microarray, proteomics,
+metabolomics, or other log-intensity data where the mean-variance
+relationship is typically flat.}
 
 \item{fontsize}{(Optional) Font size for the heatmap of DE numbers (default
 is 8)}

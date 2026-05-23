@@ -9,9 +9,9 @@ test_that("plot_modules_v works", {
 
     data(example_net)
     example_module <- data.frame(Module = as.factor(example_net$colors)) %>%
-        tibble::rownames_to_column("Feature") %>% arrange(Module)
+        tibble::rownames_to_column("Feature") %>% dplyr::arrange(Module)
 
-    pq <- plot_modules_v(example_module %>% filter(Module != '0'),
+    pq <- plot_modules_v(example_module %>% dplyr::filter(Module != '0'),
         example_obj_merged, scale = TRUE,
         ylabel = "Z-score of log2 (expression)",
         height_ratio = 2,

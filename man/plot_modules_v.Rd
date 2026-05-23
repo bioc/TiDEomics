@@ -73,8 +73,7 @@ feature (gene).
 If certain time points are missing in some groups, NA values are added.
 }
 \examples{
-library(dplyr)
-
+library(magrittr)
 data(example)
 example_obj <- normalise_to_start(example_obj)
 example_obj_list <- split_groups(example_obj)
@@ -83,9 +82,9 @@ example_obj_merged <- merge_groups(example_obj_merged_list)
 
 data(example_net)
 example_module <- data.frame(Module = as.factor(example_net$colors)) \%>\%
-    tibble::rownames_to_column("Feature") \%>\% arrange(Module)
+    tibble::rownames_to_column("Feature") \%>\% dplyr::arrange(Module)
 
-plot_modules_v(example_module \%>\% filter(Module != '0'),
+plot_modules_v(example_module \%>\% dplyr::filter(Module != '0'),
     example_obj_merged, scale = TRUE,
     ylabel = "Z-score of log2 (expression)",
     height_ratio = 2,

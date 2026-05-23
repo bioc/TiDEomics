@@ -35,15 +35,13 @@
 #' @import magrittr
 #' @import ggplot2
 #' @import patchwork
-#' @importFrom dplyr filter
 #'
 #' @returns Two plots aligned vertically by groups: the top one is a line plot
 #' of module feature mean expression profiles, the bottom one is a heatmap of
 #' feature expression across time points.
 #' @export
 #' @examples
-#' library(dplyr)
-#'
+#' library(magrittr)
 #' data(example)
 #' example_obj <- normalise_to_start(example_obj)
 #' example_obj_list <- split_groups(example_obj)
@@ -52,9 +50,9 @@
 #'
 #' data(example_net)
 #' example_module <- data.frame(Module = as.factor(example_net$colors)) %>%
-#'     tibble::rownames_to_column("Feature") %>% arrange(Module)
+#'     tibble::rownames_to_column("Feature") %>% dplyr::arrange(Module)
 #'
-#' plot_modules_v(example_module %>% filter(Module != '0'),
+#' plot_modules_v(example_module %>% dplyr::filter(Module != '0'),
 #'     example_obj_merged, scale = TRUE,
 #'     ylabel = "Z-score of log2 (expression)",
 #'     height_ratio = 2,
@@ -78,7 +76,7 @@ plot_modules_v <- function(
         se_obj_merged = se_obj_merged, scale = scale, assay = assay)
 
     p <- data_module_long %>%
-        mutate(Time = as.numeric(as.character(Time))) %>%
+        dplyr::mutate(Time = as.numeric(as.character(Time))) %>%
         ggplot(aes(x = Time, y = Abundance, group = Feature)) +
         geom_line(alpha = 0.3, color = "grey") +
         stat_summary(aes(group = Group, color = Group),

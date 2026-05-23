@@ -22,14 +22,12 @@ biocViews: Software, GeneExpression, DifferentialExpression, Proteomics,
     Transcriptomics, TimeCourse, MultipleComparison, Pathways, Visualization
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 Imports: 
     circlize,
     clusterProfiler,
     ComplexHeatmap,
     dplyr,
     enrichplot,
-    enrichR,
     ggforce,
     ggh4x,
     ggplot2,
@@ -42,10 +40,10 @@ Imports:
     limma,
     lme4,
     magrittr,
+    methods,
     patchwork,
     pbapply,
     PCAtools,
-    plotly,
     plyr,
     randtests,
     scales,
@@ -59,13 +57,16 @@ Imports:
 Depends: 
     R (>= 4.4.0)
 LazyData: false
-Suggests: 
+Suggests:
     knitr,
     rmarkdown,
     BiocStyle,
     sessioninfo,
     testthat,
+    plotly,
+    enrichR,
     org.Hs.eg.db,
     org.Mm.eg.db
 VignetteBuilder: knitr
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0

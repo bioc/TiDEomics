@@ -39,11 +39,11 @@ using enrichR, allowing for using different or same background genes for
 each gene set
 }
 \examples{
-library(dplyr)
+library(magrittr)
 data(example_net)
 example_module <- data.frame(Module = as.factor(example_net$colors)) \%>\%
-    tibble::rownames_to_column("Feature") \%>\% arrange(Module)
-example_module_list <- example_module \%>\% filter(Module != 0) \%>\%
+    tibble::rownames_to_column("Feature") \%>\% dplyr::arrange(Module)
+example_module_list <- example_module \%>\% dplyr::filter(Module != 0) \%>\%
     split(as.character(.$Module)) \%>\%
     lapply(`[[`, "Feature")
 # drugs_tb = enrich_drug_list(example_module_list, drug_dbs = c("DSigDB"),

@@ -10,7 +10,6 @@
 #' @import SummarizedExperiment
 #' @import magrittr
 #' @import ggplot2
-#' @importFrom dplyr summarise mutate
 #' @returns A plot showing the distribution of coefficient of variation (CV) 
 #' for each feature, grouped by Time and Group. If there are no replicates, a 
 #' message will be printed indicating that CV cannot be calculated.
@@ -24,20 +23,20 @@ plot_cv <- function(se_obj, fontsize = 8) {
         return(NULL)
     }
 
-    calc_cv <- function(x, na.rm = TRUE) sd(x, na.rm = na.rm) / 
+    calc_cv <- function(x, na.rm = TRUE) stats::sd(x, na.rm = na.rm) / 
         mean(x, na.rm = na.rm)
 
     cv_tb <- assays(se_obj)[[1]] %>%
-        mutate(Feature = row.names(.)) %>%
+        dplyr::mutate(Feature = row.names(.)) %>%
         tidyr::pivot_longer(cols = -Feature) %>%
         merge(., colData(se_obj), by.x = "name", by.y = "Sample") %>%
         as.data.frame() %>%
-        mutate(Time = as.factor(Time)) %>%
-        group_by(Time, Group, Feature) %>%
-        summarise(CV = calc_cv(value), .groups = "keep")
+        dplyr::mutate(Time = as.factor(Time)) %>%
+        dplyr::group_by(Time, Group, Feature) %>%
+        dplyr::summarise(CV = calc_cv(value), .groups = "keep")
 
     (cv_tb %>%
-        filter(!is.na(CV)) %>%
+        dplyr::filter(!is.na(CV)) %>%
         ggplot(aes(x = Time, y = CV)) +
         geom_violin() +
         geom_boxplot(

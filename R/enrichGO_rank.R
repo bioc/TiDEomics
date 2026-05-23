@@ -64,15 +64,14 @@ enrichGO_rank <- function(
 
     # gene set enrichment with ranked gene list
     rank_list <- rank_table %>%
-        arrange(desc(.data[[gene_rank_by]])) %>%
-        pull(.data[[gene_rank_by]], name = .data$Feature)
+        dplyr::arrange(dplyr::desc(.data[[gene_rank_by]])) %>%
+        dplyr::pull(.data[[gene_rank_by]], name = .data$Feature)
 
     if (any(is.na(rank_list)) || any(is.nan(rank_list)) ||
             any(is.infinite(rank_list))) {
         message("NA / NaN / Inf values found in the gene ranking variable. ",
             "Those genes will be removed.")
         rank_list <- rank_list[!is.na(rank_list)]
-        rank_list <- rank_list[!is.nan(rank_list)]
         rank_list <- rank_list[!is.infinite(rank_list)]
     }
 
@@ -99,7 +98,7 @@ enrichGO_rank <- function(
 
     if (go_rank_by %in% colnames(gse_rank@result)) {
         gse_rank@result <- gse_rank@result %>%
-            arrange(.data[[go_rank_by]])
+            dplyr::arrange(.data[[go_rank_by]])
     } else {
         message("GO term ranking variable not found in the result: ",
             paste(setdiff(go_rank_by, colnames(gse_rank@result)),

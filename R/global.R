@@ -12,6 +12,26 @@ utils::globalVariables(c(
     "Adjusted.P.value", "name", ".", "Breakpoint", "Freq", "Color"
 ))
 
+#' Custom ggplot2 theme
+#'
+#' A minimal theme used by all TiDEomics plotting functions, built on
+#' `theme_minimal()`. Exported so users can apply it to their own plots
+#' for consistent styling.
+#'
+#' @param base_size Base font size (default: 8).
+#' @param panel_border Logical, whether to draw a border around the panel
+#'   (default: FALSE).
+#' @param legend_position Legend position (default: "right").
+#' @param x_text_angle Angle for x-axis text (default: 0).
+#'
+#' @return A ggplot2 theme object.
+#' @export
+#'
+#' @examples
+#' library(ggplot2)
+#' ggplot(mtcars, aes(wt, mpg)) +
+#'     geom_point() +
+#'     theme_custom(base_size = 10)
 theme_custom <- function(
     base_size = 8, panel_border = FALSE,
     legend_position = "right", x_text_angle = 0

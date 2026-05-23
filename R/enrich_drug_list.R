@@ -15,18 +15,16 @@
 #' need to be gene symbols.
 #' @param pvalueCutoff (Optional) Adjusted p-value cutoff for filtering
 #' enriched terms (default is 0.05)
-#' @importFrom dplyr filter mutate select arrange everything n
-#' @importFrom stats setNames
 #'
 #' @returns A data frame of enriched drug targets for each gene set in the
 #' input list.
 #' @export
 #' @examples
-#' library(dplyr)
+#' library(magrittr)
 #' data(example_net)
 #' example_module <- data.frame(Module = as.factor(example_net$colors)) %>%
-#'     tibble::rownames_to_column("Feature") %>% arrange(Module)
-#' example_module_list <- example_module %>% filter(Module != 0) %>%
+#'     tibble::rownames_to_column("Feature") %>% dplyr::arrange(Module)
+#' example_module_list <- example_module %>% dplyr::filter(Module != 0) %>%
 #'     split(as.character(.$Module)) %>%
 #'     lapply(`[[`, "Feature")
 #' # drugs_tb = enrich_drug_list(example_module_list, drug_dbs = c("DSigDB"),
@@ -40,7 +38,18 @@ enrich_drug_list <- function(
 ) {
     options(enrichR.base.address = "https://maayanlab.cloud/Enrichr/")
 
-    dbs_available <- enrichR::listEnrichrDbs()
+    dbs_available <- tryCatch(
+        enrichR::listEnrichrDbs(),
+        error = function(e) {
+            warning("enrichR server unreachable: ", e$message)
+            return(NULL)
+        }
+    )
+    if (is.null(dbs_available)) {
+        return(data.frame(Module = character(), Database = character(),
+            Term = character(), Adjusted.P.value = numeric(),
+            Genes = character(), stringsAsFactors = FALSE))
+    }
 
     if (!all(drug_dbs %in% dbs_available$libraryName)) {
         message("The specified drug database(s) ",
@@ -74,8 +83,8 @@ enrich_drug_list <- function(
         )
         for (db in drug_dbs) {
             drugs_tb[[i]][[db]] <- enr[[db]] %>%
-                filter(Adjusted.P.value < pvalueCutoff) %>%
-                mutate(
+                dplyr::filter(Adjusted.P.value < pvalueCutoff) %>%
+                dplyr::mutate(
                     Module = i,
                     Database = db
                 )
@@ -85,9 +94,9 @@ enrich_drug_list <- function(
     drugs_tb_all <- do.call(rbind, drugs_tb)
 
     drugs_tb_all <- drugs_tb_all %>%
-        select("Module", "Database", "Term", "Adjusted.P.value",
-            "Genes", everything()) %>%
-        arrange("Module", "Database", "Adjusted.P.value")
+        dplyr::select("Module", "Database", "Term", "Adjusted.P.value",
+            "Genes", dplyr::everything()) %>%
+        dplyr::arrange("Module", "Database", "Adjusted.P.value")
 
     return(drugs_tb_all)
 }

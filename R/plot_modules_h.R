@@ -48,16 +48,13 @@
 #'
 #' @import magrittr
 #' @import ggplot2
-#' @importFrom dplyr filter arrange distinct mutate group_by slice_min ungroup
-#' @importFrom grDevices dev.off pdf png tiff jpeg
 #' @import SummarizedExperiment
-#' @importFrom dplyr select
 #'
 #' @returns A combined plot of heatmap, mean expression profile, and GO terms
 #' for each WGCNA module
 #' @export
 #' @examples
-#' library(dplyr)
+#' library(magrittr)
 #' library(org.Mm.eg.db)
 #'
 #' data(example)
@@ -68,11 +65,11 @@
 #'
 #' data(example_net)
 #' example_module <- data.frame(Module = as.factor(example_net$colors)) %>%
-#'     tibble::rownames_to_column("Feature") %>% arrange(Module)
+#'     tibble::rownames_to_column("Feature") %>% dplyr::arrange(Module)
 #'
 #' # select two modules for demonstration
 #' example_module_list <- example_module %>% 
-#'     filter(Module %in% c(1, 2)) %>%
+#'     dplyr::filter(Module %in% c(1, 2)) %>%
 #'     split(as.character(.$Module)) %>%
 #'     lapply(`[[`, "Feature")
 #' # set cutoff to 1 to show all results for demonstration
@@ -83,7 +80,7 @@
 #' # plot_GO(example_go_list$all, plot_dotplot = TRUE,
 #' #     plot_emapplot = FALSE, plot_cnetplot = FALSE)
 #'
-#' plot_modules_h(example_module %>% filter(Module != '0'),
+#' plot_modules_h(example_module %>% dplyr::filter(Module != '0'),
 #'     example_obj_merged, scale = TRUE,
 #'     ylabel = "Z-score of log2 expression",
 #'     go_list = example_go_list$all, go_category = "BP",
@@ -122,7 +119,7 @@ plot_modules_h <- function(
 
     sp_info <- data_module_long %>%
         dplyr::select(Group, Time) %>%
-        distinct()
+        dplyr::distinct()
 
     # plot modules with complexheatmap
     data_module_wider <- data_module_long %>%
@@ -130,7 +127,7 @@ plot_modules_h <- function(
             names_from = c(Group, Time), values_from = Abundance) %>%
         tibble::column_to_rownames("Feature") %>%
         as.data.frame() %>%
-        arrange(Module)
+        dplyr::arrange(Module)
     mat <- data_module_wider %>%
         dplyr::select(-Module) %>%
         as.matrix()
@@ -138,7 +135,7 @@ plot_modules_h <- function(
     ggplot2_profile_list <- list()
     for (i in levels(data_module_long$Module)) {
         ggplot2_profile_list[[i]] <- ggplot(
-            data_module_long %>% filter(Module == i),
+            data_module_long %>% dplyr::filter(Module == i),
             aes(x = Time, y = Abundance, group = Feature)
         ) +
             stat_summary(aes(group = Group, color = Group),
@@ -201,12 +198,13 @@ plot_modules_h <- function(
     if (!is.null(go_list[[go_category]])) {
         termanno <- go_list[[go_category]] %>%
             as.data.frame() %>%
-            mutate(id = as.character(Cluster)) %>%
-            filter(id %in% levels(data_module_long$Module)) %>%
-            group_by(id) %>%
-            slice_min(order_by = .data[[go_rank_by]],
+            dplyr::mutate(id = as.character(Cluster)) %>%
+            dplyr::filter(id %in% levels(data_module_long$Module)) %>%
+            dplyr::group_by(id) %>%
+            dplyr::slice_min(order_by = .data[[go_rank_by]],
                 n = go_top_n, with_ties = FALSE) %>%
-            mutate(term = Description) %>%
+            dplyr::mutate(term = Description) %>%
+
             dplyr::select(id, term)
 
         termanno <- termanno |>
@@ -328,22 +326,34 @@ plot_modules_h <- function(
         }
 
         if (device == "pdf") {
-            pdf(
-                file = paste0(save, "\\WGCNA_h_", suffix,
-                    Sys.Date(), ".", device),
+            grDevices::pdf(
+                file = file.path(save, paste0("WGCNA_h_", suffix,
+                    Sys.Date(), ".", device)),
                 width = width / 2.54,
                 height = height / 2.54
             )
         } else {
-            get(device)(paste0(save, "\\WGCNA_h_", suffix,
-                    Sys.Date(), ".", device),
+            if (device == "png") {
+                device_fun <- grDevices::png
+            } else if (device == "tiff") {
+                device_fun <- grDevices::tiff
+            } else if (device == "jpeg") {
+                device_fun <- grDevices::jpeg
+            } else {
+                message("Unsupported device type for saving image: ", device)
+                message("Defaulting to png.")
+                device_fun <- grDevices::png
+            }
+
+            device_fun(file.path(save, paste0("WGCNA_h_", suffix,
+                    Sys.Date(), ".", device)),
                 width = width,
                 height = height,
                 units = "cm",
                 res = res)
         }
         grid::grid.draw(p)
-        dev.off()
+        grDevices::dev.off()
     }
 
     grid::grid.newpage()

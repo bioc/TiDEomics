@@ -15,6 +15,8 @@
 #'   (default is "BH")
 #' @param pvalueCutoff (Optional) Parameter of `clusterProfiler::enrichGO()`
 #'   (default is 0.05)
+#' @param qvalueCutoff (Optional) Parameter of `clusterProfiler::enrichGO()`
+#'   (default is 0.05)
 #' @param category (Optional) GO category to analyze (default is all three of
 #'   BP, MF, CC)
 #' @param simplify (Optional) Whether to simplify the GO terms by removing
@@ -40,15 +42,15 @@
 #' for each GO category (BP, MF, CC).
 #' @export
 #' @examples
-#' library(dplyr)
+#' library(magrittr)
 #' library(org.Mm.eg.db)
 #' library(clusterProfiler)
 #' data(example_net)
 #' example_module <- data.frame(Module = as.factor(example_net$colors)) %>%
-#'     tibble::rownames_to_column("Feature") %>% arrange(Module)
+#'     tibble::rownames_to_column("Feature") %>% dplyr::arrange(Module)
 #' # select two modules for demonstration
 #' example_module_list <- example_module %>% 
-#'     filter(Module %in% c(1, 2)) %>%
+#'     dplyr::filter(Module %in% c(1, 2)) %>%
 #'     split(as.character(.$Module)) %>%
 #'     lapply(`[[`, "Feature")
 #' # set cutoff to 1 to show all results for demonstration
@@ -64,6 +66,7 @@ enrichGO_list <- function(gene_list, keyType = "SYMBOL",
     universe_list = NULL,
     pAdjustMethod = "BH",
     pvalueCutoff = 0.05,
+    qvalueCutoff = 0.05,
     category = NULL,
     simplify = FALSE,
     simplify_cutoff = 0.7,
@@ -122,6 +125,7 @@ enrichGO_list <- function(gene_list, keyType = "SYMBOL",
                 universe = universe_list[[clus]],
                 pAdjustMethod = pAdjustMethod,
                 pvalueCutoff = pvalueCutoff,
+                qvalueCutoff = qvalueCutoff,
                 ...
             )
 

@@ -76,8 +76,6 @@ plot_segments <- function(se_obj_imp_list, res_list, feature,
 #' @param ... Additional arguments to be passed to the `Trendy::plotFeature()`
 #'
 #' @import SummarizedExperiment
-#' @importFrom dplyr filter
-#' @importFrom graphics par
 #'
 #' @returns A plot of the segmented regression fits for the specified features.
 #' @keywords internal
@@ -98,7 +96,7 @@ plot_segments <- function(se_obj_imp_list, res_list, feature,
     M_imp <- assays(se_obj_imp)[[1]]
     time.vector <- colData(se_obj_imp)$Time
 
-    par(mfrow = c(nrow, ncol))
+    graphics::par(mfrow = c(nrow, ncol))
     Trendy::plotFeature(
         Data = M_imp[feature, ],
         tVectIn = time.vector,

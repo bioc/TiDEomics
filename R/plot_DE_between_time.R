@@ -17,7 +17,6 @@
 #'
 #' @import SummarizedExperiment
 #' @import magrittr
-#' @importFrom dplyr filter select
 #'
 #' @returns One heatmap per group showing the number of DE features between 
 #' time points for each group, with the same scale across groups for easy 
