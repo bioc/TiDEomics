@@ -48,7 +48,7 @@ plot_umap_by_group <- function(se_obj, seed = 1234, nrow = 1,
             umap_neighbors = umap_neighbors
         )
         umap_list[[group]] <- ggplot(umap_layout,
-            aes(x = .data$V1, y = .data$V2, color = .data$Time)) +
+            aes(x = V1, y = V2, color = Time)) +
             geom_point(size = 2) +
             scale_color_viridis_c() +
             theme_custom(base_size = fontsize)

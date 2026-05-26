@@ -66,7 +66,7 @@
 #' # trendy_list <- extract_segment_trends(trendy_summary)
 run_Trendy <- function(se_obj_imp_list, group = NULL,
     feature = NULL, minExp = 0.5, maxK = 1,
-    meanCut = 0, minNumInSeg = 3, NCores = 2, ...) {
+    meanCut = 0, minNumInSeg = 3, NCores = 1, ...) {
     if (is.null(group)) {
         group <- names(se_obj_imp_list)
     } else if (!all(group %in% names(se_obj_imp_list))) {
@@ -141,7 +141,7 @@ run_Trendy <- function(se_obj_imp_list, group = NULL,
 #' @keywords internal
 .run_Trendy_one_group <- function(se_obj_imp,
     minExp = 0.5, feature = NULL, maxK = 1,
-    meanCut = 0, minNumInSeg = 3, NCores = 2, ...) {
+    meanCut = 0, minNumInSeg = 3, NCores = 1, ...) {
 
     n_time_points <- length(unique(colData(se_obj_imp)$Time))
     if (n_time_points < ((maxK + 1) * minNumInSeg)) {
@@ -155,8 +155,8 @@ run_Trendy <- function(se_obj_imp_list, group = NULL,
     if (is.null(feature)) {
         feature <- rowData(se_obj_imp) %>%
             as.data.frame() %>%
-            dplyr::filter(.data$Exp_ratio >= minExp) %>%
-            dplyr::pull(.data$Feature)
+            dplyr::filter(Exp_ratio >= minExp) %>%
+            dplyr::pull(Feature)
         message("Feature not specified. Using ", length(feature),
             " features expressed in >=", minExp * 100, "% time points.")
     } else {

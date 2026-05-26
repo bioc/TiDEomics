@@ -111,17 +111,34 @@ DE_between_time <- function(se_obj, group = NULL, filter = NULL,
                     tb_compare <- cbind(d_cond1_filter, d_cond2_filter)
 
                     # limma
-                    design <- stats::model.matrix(~ 0 + 
+                    design <- stats::model.matrix(~ 0 +
                         as.character(tb_compare$Time))
                     # numbers are non-valid names
                     colnames(design) <- colnames(design) %>%
-                        gsub(pattern = "as.character(tb_compare$Time)", 
+                        gsub(pattern = "as.character(tb_compare$Time)",
                         fixed = TRUE, replacement = "t")
                     rownames(design) <- colnames(tb_compare)
-                    fit1 <- limma::lmFit(assays(tb_compare)[[assay]],
-                        design = design,
-                        maxit = 2000
-                    )
+
+                    # Paired analysis if Subject column present
+                    has_subject <- "Subject" %in% colnames(colData(tb_compare))
+                    if (has_subject) {
+                        corfit <- limma::duplicateCorrelation(
+                            assays(tb_compare)[[assay]],
+                            design = design,
+                            block = colData(tb_compare)$Subject
+                        )
+                        fit1 <- limma::lmFit(assays(tb_compare)[[assay]],
+                            design = design,
+                            block = colData(tb_compare)$Subject,
+                            correlation = corfit$consensus.correlation,
+                            maxit = 2000
+                        )
+                    } else {
+                        fit1 <- limma::lmFit(assays(tb_compare)[[assay]],
+                            design = design,
+                            maxit = 2000
+                        )
+                    }
                     contrast <- limma::makeContrasts(
                         contrasts = paste0("t", cond2, "-t", cond1),
                         levels = colnames(design)
@@ -130,8 +147,10 @@ DE_between_time <- function(se_obj, group = NULL, filter = NULL,
                     fit3 <- limma::eBayes(fit2, trend = trend)
                     modtest <- limma::topTable(fit3, number = Inf, 
                         sort.by = "none")
+                    modtest <- modtest[, !colnames(modtest) %in%
+                        c("AveExpr", "t", "B")]
                     limma_result <- merge(assays(tb_compare)[[assay]],
-                        as.data.frame(modtest[, -c(2, 3, 6)]),
+                        modtest,
                         by = "row.names", all = TRUE
                     )
                     rownames(limma_result) <- limma_result$Row.names

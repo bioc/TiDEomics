@@ -19,18 +19,38 @@
 #' plot_trend(table_mean_sd, 
 #'     features = sample(unique(table_mean_sd$Feature), 4))
 calc_mean_sd <- function(se_obj) {
+    if ("Subject" %in% colnames(colData(se_obj))) {
+        n_subj <- dplyr::n_distinct(colData(se_obj)$Subject)
+        message("Subject column detected. Computing mean and SD across ",
+            n_subj, 
+            " subjects per Group x Time. SD = between-subject variation."
+        )
+    }
     # function to calculate mean and sd for each group and time point
     mean_sd <- function(se_obj, i, j, assay) {
-        # assay 1 is original, 2 is normalised to time 0
-        # table = expression matrix, i = group, j = time
         sp <- se_obj[, se_obj$Group == i & se_obj$Time == j]
+        has_subject <- "Subject" %in% colnames(colData(sp))
 
-        table_mean <- assays(sp)[[assay]] %>%
-            apply(1, function(x) mean(x, na.rm = TRUE)) %>%
-            as.data.frame()
-        colnames(table_mean) <- "Mean"
-        table_mean$SD <- assays(sp)[[assay]] %>%
-            apply(1, function(x) stats::sd(x, na.rm = TRUE))
+        if (has_subject) {
+            # Within-subject means first, then mean/SD across subjects
+            subjects <- unique(colData(sp)$Subject)
+            subj_means <- vapply(subjects, function(s) {
+                sp_s <- sp[, sp$Subject == s]
+                rowMeans(assays(sp_s)[[assay]], na.rm = TRUE)
+            }, FUN.VALUE = numeric(nrow(sp)))
+            table_mean <- data.frame(
+                Mean = rowMeans(subj_means, na.rm = TRUE),
+                SD = apply(subj_means, 1, stats::sd, na.rm = TRUE)
+            )
+        } else {
+            table_mean <- data.frame(
+                Mean = assays(sp)[[assay]] %>%
+                    apply(1, function(x) mean(x, na.rm = TRUE))
+            )
+            table_mean$SD <- assays(sp)[[assay]] %>%
+                apply(1, function(x) stats::sd(x, na.rm = TRUE))
+        }
+
         table_mean$Group <- i
         table_mean$Time <- j
         table_mean$Feature <- row.names(table_mean)

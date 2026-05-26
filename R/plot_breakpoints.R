@@ -16,26 +16,8 @@
 #' each specified group
 #' @export
 #' @examples
-#' data("example")
-#' example_obj <- normalise_to_start(example_obj)
-#' example_obj_list <- split_groups(example_obj)
-#' example_obj_merged_list <- merge_replicates(example_obj_list)
-#' example_obj_merged_list <- 
-#'     calc_feature_property(example_obj_merged_list, threshold = 0)
-#' # no missing value in the example dataset, so imputation is not necessary
-#' example_obj_merged_imp_list <- impute_groups(example_obj_merged_list)
-#'
-#' # "untreated" group has only 3 time points, so Trendy analysis will not be 
-#' # performed for this group
-#' # example_res_list <- run_Trendy(example_obj_merged_imp_list, maxK = 1,
-#' #     minNumInSeg = 2, meanCut = 0)
 #' data("example_res_list")
-#'
-#' plot_segments(example_obj_merged_imp_list, example_res_list,
-#'     feature = c("Mctp1"))
 #' plot_breakpoints(example_res_list)
-#' trendy_summary <- summarise_Trendy(example_res_list)
-#' trendy_list <- extract_segment_trends(trendy_summary)
 plot_breakpoints <- function(res_list, group = NULL, fontsize = 8, ...) {
     if (is.null(group)) {
         group <- names(res_list)
@@ -44,7 +26,7 @@ plot_breakpoints <- function(res_list, group = NULL, fontsize = 8, ...) {
         "input object list.")
     }
 
-    p_list <- list()
+    bp_list <- list()
     for (i in group) {
         res <- res_list[[i]]
         if (is.null(res)) {
@@ -66,14 +48,10 @@ plot_breakpoints <- function(res_list, group = NULL, fontsize = 8, ...) {
                 Group = i
             )
 
-        if (i == group[1]) {
-            res.bp.df.all <- res.bp.df
-        } else {
-            res.bp.df.all <- rbind(res.bp.df.all, res.bp.df)
-        }
+        bp_list[[i]] <- res.bp.df
     }
 
-    res.bp.df.all <- res.bp.df.all %>%
+    res.bp.df.all <- do.call(rbind, bp_list) %>%
         as.data.frame() %>%
         dplyr::mutate(Group = factor(Group, levels = group))
 

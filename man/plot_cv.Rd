@@ -22,6 +22,8 @@ message will be printed indicating that CV cannot be calculated.
 Plot the distribution of coefficient of variation (CV) for
 each feature with replicates. The CV is calculated as the standard
 deviation divided by the mean of the abundance values.
+
+Note: CV is only meaningful for positive-valued data.
 }
 \examples{
 data("example")

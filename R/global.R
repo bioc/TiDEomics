@@ -1,15 +1,17 @@
 utils::globalVariables(c(
-    "Feature", "Group", "Time", "Replicate", "Batch", "Sample",
+    "Feature", "Group", "Time", "Replicate", "Batch", "Sample", "Subject",
     "Row.names", "Comparison", "Pattern", "Module",
     "Cond1", "Cond2", "logFC", "adj.P.Val",
-    "One", "Three", "Feature", "PTID", "Residual",
+    "One", "Three", "PTID", "Residual",
     "Composition", "Percentage", "Day", "Count",
-    "Sample", "Abundance", "Cluster", "id", "p.adjust",
+    "Abundance", "Cluster", "id", "p.adjust",
     "Description", "term", "PC1", "PC2",
     "x_start", "x_end", "y_start", "y_end",
     "Mean", "SD", "V1", "V2", "ID", "N", "Sample_new",
     "Exp_ratio", "SYMBOL", "CV", "value", "Missing",
-    "Adjusted.P.value", "name", ".", "Breakpoint", "Freq", "Color"
+    "Adjusted.P.value", "name", ".", "Breakpoint", "Freq", "Color",
+    "Database", "MeanConn", "Power", "SignedR2",
+    "Combined.Score", "Genes", "Odds.Ratio", "Term"
 ))
 
 #' Custom ggplot2 theme
@@ -22,7 +24,6 @@ utils::globalVariables(c(
 #' @param panel_border Logical, whether to draw a border around the panel
 #'   (default: FALSE).
 #' @param legend_position Legend position (default: "right").
-#' @param x_text_angle Angle for x-axis text (default: 0).
 #'
 #' @return A ggplot2 theme object.
 #' @export
@@ -34,7 +35,7 @@ utils::globalVariables(c(
 #'     theme_custom(base_size = 10)
 theme_custom <- function(
     base_size = 8, panel_border = FALSE,
-    legend_position = "right", x_text_angle = 0
+    legend_position = "right"
 ) {
     half_line <- base_size / 2
     if (panel_border) {
@@ -56,8 +57,6 @@ theme_custom <- function(
             axis.text = element_text(size = base_size),
             axis.ticks = element_line(linewidth = 0.5),
             axis.line = axis.line,
-            # axis.text.x = element_text(angle = x_text_angle,
-            #     hjust = ifelse(x_text_angle > 5, 1, NULL)),
             panel.background = element_rect(fill = NA, colour = NA),
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),

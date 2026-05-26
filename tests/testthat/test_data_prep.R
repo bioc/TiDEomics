@@ -99,3 +99,31 @@ test_that("impute_groups works", {
                 assay(data_obj_original)[!is.na(assay(data_obj_original))])
     }
 })
+
+# ---- calc_mean_sd ----
+
+test_that("calc_mean_sd returns list of data.frames", {
+    data("example")
+    res <- calc_mean_sd(example_obj)
+    expect_type(res, "list")
+    expect_true("norm0" %in% names(res) || length(res) > 0)
+    for (i in seq_along(res)) {
+        expect_s3_class(res[[i]], "data.frame")
+    }
+})
+
+test_that("calc_mean_sd data.frame has expected columns", {
+    data("example")
+    res <- calc_mean_sd(example_obj)
+    tb <- res[[1]]
+    expect_true(all(c("Group", "Time", "Feature") %in% colnames(tb)))
+})
+
+# ---- WGCNA_module with numeric labels ----
+
+test_that("WGCNA_module works with numeric label net", {
+    data("example_net")
+    mod <- WGCNA_module(example_net)
+    expect_s3_class(mod, "data.frame")
+    expect_true(nrow(mod) > 0)
+})

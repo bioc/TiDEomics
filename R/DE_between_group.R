@@ -7,6 +7,12 @@
 #' thresholds including only significant features. The function can also plot
 #' the number of DE features between groups over time.
 #'
+#' @details
+#' Only time points present in both groups are compared. No multiple-testing
+#' correction is applied across the pairwise group-by-time comparisons; each
+#' comparison is independent. Apply your own correction (e.g.,
+#' `stats::p.adjust()`) across combined results if needed.
+#'
 #' @param se_obj A SummarizedExperiment object
 #' @param group (Optional) A character vector specifying which group to be
 #' compared to. If NULL, all groups in the 'Group' column will be compared to.
@@ -93,6 +99,23 @@ DE_between_group <- function(
 
             cond1 <- i
             cond2 <- j
+
+            dropped1 <- setdiff(time_series_1, time_series_2)
+            dropped2 <- setdiff(time_series_2, time_series_1)
+            if (length(dropped1) > 0 || length(dropped2) > 0) {
+                msg <- sprintf(
+                "Comparing %s vs %s: time points only in %s: %s; only in %s: %s.",
+                cond2, 
+                cond1,
+                cond1, 
+                if (length(dropped1) > 0) 
+                    paste(dropped1, collapse = ", ") else "none",
+                cond2, 
+                if (length(dropped2) > 0) 
+                    paste(dropped2, collapse = ", ") else "none"
+                )
+                message(msg)
+            }
             label_comparison <- paste0(cond2, "-", cond1)
             outlist_limma[[label_comparison]] <- list()
 
@@ -149,8 +172,10 @@ DE_between_group <- function(
                 fit2 <- limma::contrasts.fit(fit1, contrasts = contrast)
                 fit3 <- limma::eBayes(fit2, trend = trend)
                 modtest <- limma::topTable(fit3, number = Inf, sort.by = "none")
+                modtest <- modtest[, !colnames(modtest) %in%
+                    c("AveExpr", "t", "B")]
                 limma_result <- merge(assays(tb_compare)[[assay]],
-                    as.data.frame(modtest[, -c(2, 3, 6)]),
+                    modtest,
                     by = "row.names", all = TRUE
                 )
                 rownames(limma_result) <- limma_result$Row.names

@@ -4,12 +4,7 @@
 \alias{theme_custom}
 \title{Custom ggplot2 theme}
 \usage{
-theme_custom(
-  base_size = 8,
-  panel_border = FALSE,
-  legend_position = "right",
-  x_text_angle = 0
-)
+theme_custom(base_size = 8, panel_border = FALSE, legend_position = "right")
 }
 \arguments{
 \item{base_size}{Base font size (default: 8).}
@@ -18,8 +13,6 @@ theme_custom(
 (default: FALSE).}
 
 \item{legend_position}{Legend position (default: "right").}
-
-\item{x_text_angle}{Angle for x-axis text (default: 0).}
 }
 \value{
 A ggplot2 theme object.

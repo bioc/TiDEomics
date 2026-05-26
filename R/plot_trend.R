@@ -41,6 +41,8 @@ plot_trend <- function(table_mean_sd, groups = NULL, features,
     if (errorbar) {
         p <- table_mean_sd %>%
             dplyr::filter(Group %in% groups & Feature %in% features) %>%
+            # dplyr::filter(!is.na(Mean)) %>% 
+            # filtering out will make non-NA points directly connected
             # by the input order
             dplyr::mutate(Feature = factor(Feature, levels = features)) %>%
             ggplot(aes(x = Time, y = Mean, group = Group, color = Group)) +
@@ -63,6 +65,8 @@ plot_trend <- function(table_mean_sd, groups = NULL, features,
     } else {
         p <- table_mean_sd %>%
             dplyr::filter(Group %in% groups & Feature %in% features) %>%
+            # dplyr::filter(!is.na(Mean)) %>% 
+            # filtering out will make non-NA points directly connected
             # by the input order
             dplyr::mutate(Feature = factor(Feature, levels = features)) %>%
             ggplot(aes(x = Time, y = Mean, group = Group, color = Group)) +

@@ -54,9 +54,7 @@ plot_distribution <- function(se_obj, facet_by = NULL, fontsize = 8) {
                 ggtitle("Abundance distribution") +
                 xlab("Log2 Abundance") +
                 theme_custom(base_size = fontsize)) %>% print()
-        }
-
-        if (facet_by == "Time") {
+        } else if (facet_by == "Time") {
             (assays(se_obj)[[1]] %>%
                 tidyr::pivot_longer(cols = dplyr::everything()) %>%
                 merge(., colData(se_obj), by.x = "name", by.y = "Sample") %>%
@@ -68,9 +66,7 @@ plot_distribution <- function(se_obj, facet_by = NULL, fontsize = 8) {
                 ggtitle("Abundance distribution") +
                 xlab("Log2 Abundance") +
                 theme_custom(base_size = fontsize)) %>% print()
-        }
-
-        if (facet_by == "Sample") {
+        } else if (facet_by == "Sample") {
             (assays(se_obj)[[1]] %>%
                 tidyr::pivot_longer(cols = dplyr::everything()) %>%
                 ggplot(aes(x = value)) +

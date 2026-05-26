@@ -21,6 +21,7 @@
 #' (default is 100)
 #' @param powers (Optional) Parameter of `WGCNA::pickSoftThreshold()`
 #' (default is `c(seq(1, 10, by = 1), seq(12, 20, by = 2))`)
+#' @param fontsize Base font size for diagnostic plots (default: 8).
 #' @param ... Additional parameters to be passed to `WGCNA::pickSoftThreshold()`
 #'
 #' @returns A list containing results of the scale-free topology
@@ -46,7 +47,8 @@ prepare_WGCNA <- function(
     networkType = "signed",
     RsquaredCut = 0.8,
     MeanConnectivity = 100,
-    powers = NULL, ...
+    powers = NULL,
+    fontsize = 8, ...
 ) {
     WGCNA::allowWGCNAThreads()
     data_wgcna <- .WGCNA_input(se_obj, assay = assay)
@@ -72,33 +74,31 @@ prepare_WGCNA <- function(
     sft$sample_info <- colData(se_obj)
     sft$networkType <- networkType
 
-    graphics::par(mfrow = c(2, 1))
-    cex1 <- 0.9
+    # Diagnostic plots: scale-free topology fit + mean connectivity
+    fit_tb <- data.frame(
+        Power       = sft$fitIndices[, 1],
+        SignedR2    = -sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2],
+        MeanConn    = sft$fitIndices[, 5]
+    )
 
-    # Scale-free topology fit index as a function of the soft-thresholding power
-    graphics::plot(sft$fitIndices[, 1], 
-        -sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2],
-        xlab = "Soft Threshold (power)",
-        ylab = "Scale Free Topology Model Fit, signed R^2", type = "n",
-        main = paste("Scale independence")
-    )
-    graphics::text(sft$fitIndices[, 1], 
-        -sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2],
-        labels = sft$fitIndices[, 1], cex = cex1, col = "black"
-    )
-    # this line corresponds to using an R^2 cut-off of h
-    graphics::abline(h = RsquaredCut, col = "red")
+    p1 <- ggplot(fit_tb, aes(x = Power, y = SignedR2)) +
+        geom_text(aes(label = Power), size = fontsize * 0.35) +
+        geom_hline(yintercept = RsquaredCut, colour = "red", linewidth = 0.5) +
+        labs(x = "Soft Threshold (power)",
+            y = expression(Signed~R^2),
+            title = "Scale independence") +
+        theme_custom(base_size = fontsize)
 
-    # Mean connectivity as a function of the soft-thresholding power
-    graphics::plot(sft$fitIndices[, 1], sft$fitIndices[, 5],
-        xlab = "Soft Threshold (power)",
-        ylab = "Mean Connectivity", type = "n",
-        main = paste("Mean connectivity")
-    )
-    graphics::text(sft$fitIndices[, 1], sft$fitIndices[, 5],
-        labels = sft$fitIndices[, 1], cex = cex1, col = "black"
-    )
-    graphics::abline(h = MeanConnectivity, col = "red")
+    p2 <- ggplot(fit_tb, aes(x = Power, y = MeanConn)) +
+        geom_text(aes(label = Power), size = fontsize * 0.35) +
+        geom_hline(yintercept = MeanConnectivity, colour = "red",
+                linewidth = 0.5) +
+        labs(x = "Soft Threshold (power)",
+            y = "Mean Connectivity",
+            title = "Mean connectivity") +
+        theme_custom(base_size = fontsize)
+
+    print(p1 / p2)
 
     return(sft)
 }

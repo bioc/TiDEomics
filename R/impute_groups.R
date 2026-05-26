@@ -1,7 +1,8 @@
 #' Impute missing values
 #' @description Impute missing values for each group of samples in a list of
 #' SummarizedExperiment objects. By default, replaces NA with the minimum
-#' value in the group. A custom function can be supplied for other strategies.
+#' non-NA value per group / subject. 
+#' A custom function can be supplied for other strategies.
 #'
 #' The input samples can contain replicates, or merged replicates (mean of
 #' replicates).
@@ -9,17 +10,19 @@
 #' @param se_obj_list A list of SummarizedExperiment objects, created by
 #' `split_groups()` or `merge_replicates()`, each corresponds to one group
 #' of samples.
-#' @param fun Function applied to the non-NA values in each group to
-#'   generate the replacement value. Default: `min`. Use
-#'   `function(x) min(x) / 2` for half-minimum, `median` for median
-#'   imputation, etc.
+#' @param fun Function applied to the non-NA values to generate the
+#'   replacement value. Default: `min`. Use `function(x) min(x) / 2`
+#'   for half-minimum, `median` for median imputation, etc.
+#' @param impute_by `"group"` (default): compute replacement value from
+#'   all non-NA values in the group. `"subject"`: compute per-subject
+#'   replacement value (requires Subject column). If a subject is all
+#'   NA, fall back to group-level replacement.
 #'
 #' @import SummarizedExperiment
 #' @import magrittr
 #'
-#' @returns A list of SummarizedExperiment objects with the missing values
-#' imputed for each group. Each object in the list corresponds to one group
-#' of samples.
+#' @returns A list of SummarizedExperiment objects with missing values
+#' imputed. Each object corresponds to one group of samples.
 #' @export
 #' @examples
 #' data("example")
@@ -27,25 +30,65 @@
 #' example_obj_list <- split_groups(example_obj)
 #' example_obj_merged_list <- merge_replicates(example_obj_list)
 #' example_obj_merged_imp_list <- impute_groups(example_obj_merged_list)
-impute_groups <- function(se_obj_list, fun = min) {
+impute_groups <- function(se_obj_list, fun = min,
+    impute_by = c("group", "subject")) {
+    impute_by <- match.arg(impute_by)
     se_obj_imp_list <- list()
+
+    has_subject <- "Subject" %in% colnames(colData(se_obj_list[[1]]))
+
+    if (impute_by == "subject" && !has_subject) {
+        warning("impute_by = 'subject' but no Subject column found. ",
+            "Falling back to group-level imputation.")
+        impute_by <- "group"
+    }
+
+    if (impute_by == "subject") {
+        message("Imputing per-subject: each subject's missing values ", 
+            "replaced by subject-level statistic.")
+    }
 
     for (i in names(se_obj_list)) {
         input <- se_obj_list[[i]]
 
-        # calculate mean of replicates for one group
+        # Report missing value status
+        n_na <- sum(is.na(assays(input)[[1]]))
+        n_total <- length(assays(input)[[1]])
+        if (n_na > 0) {
+            message(sprintf("Group %s: %d missing values (%.1f%%).",
+                i, n_na, 100 * n_na / n_total))
+        } else {
+            message(sprintf("Group %s: no missing values.", i))
+        }
+
         assay_list <- list()
         for (assay in seq(1, length(assays(input)))) {
             M_na <- assays(input)[[assay]]
             M_imp <- M_na
-            M_imp[is.na(M_imp)] <- fun(M_imp[!is.na(M_imp)])
+
+            if (impute_by == "subject") {
+                subjects <- unique(colData(input)$Subject)
+                for (s in subjects) {
+                    s_cols <- which(colData(input)$Subject == s)
+                    s_vals <- M_na[, s_cols, drop = FALSE]
+                    s_non_na <- s_vals[!is.na(s_vals)]
+                    s_imp_val <- if (length(s_non_na) > 0) {
+                        fun(s_non_na)
+                    } else {
+                        fun(M_imp[!is.na(M_imp)])
+                    }
+                    na_mask <- is.na(M_imp[, s_cols, drop = FALSE])
+                    M_imp[, s_cols][na_mask] <- s_imp_val
+                }
+            } else {
+                M_imp[is.na(M_imp)] <- fun(M_imp[!is.na(M_imp)])
+            }
 
             assay_list[[assay]] <- M_imp
         }
 
         se_obj_imp <- input
         assays(se_obj_imp) <- assay_list
-
         se_obj_imp_list[[i]] <- se_obj_imp
     }
 

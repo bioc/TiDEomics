@@ -46,9 +46,8 @@ plot_DE_between_time <- function(
     # groups may have different time points
 
     for (i in names(de_list)) {
-        de_num <- matrix(data = NA, nrow = length(time_series), 
-            ncol = length(time_series) - 1) %>%
-            as.data.frame()
+        de_num <- matrix(data = NA, nrow = length(time_series),
+            ncol = length(time_series) - 1)
 
         colnames(de_num) <- time_series[-1]
         rownames(de_num) <- time_series

@@ -31,8 +31,6 @@
 #' @param fontsize Font size for the PCA plot (default is 8)
 #' @param assay Assay index to use, where 1 is the original data and 2 is
 #' normalised to time 0 (if available) (default is 1)
-#' @param ... Additional arguments passed to `ggforce::geom_mark_ellipse()`
-#' for customizing the ellipses
 #'
 #' @import ggplot2
 #' @import SummarizedExperiment
@@ -56,10 +54,9 @@ plot_pca <- function(
     xlim_min = NULL, xlim_max = NULL,
     ylim_min = NULL, ylim_max = NULL,
     fontsize = 8,
-    assay = 1,
-    ...
+    assay = 1
 ) {
-    M_0 <- se_obj@assays@data[[assay]]
+    M_0 <- assay(se_obj, assay)
     if (sum(is.na(M_0)) > 0) {
         message("Input data contains missing values. Only complete rows ",
         "will be used for PCA.")
@@ -106,6 +103,7 @@ plot_pca <- function(
         geom_point(aes(size = Time), alpha = 0.8, shape = 21) +
         scale_fill_manual(values =
             get_custom_palette(unique(colData(se_obj)$Group))) +
+        scale_size_discrete() +
         theme_custom(base_size = fontsize) +
         guides(fill = guide_legend(override.aes = list(size = 4))) +
         xlab(xlab) +
@@ -127,10 +125,12 @@ plot_pca <- function(
     }
 
     if (circle) {
-        p2 <- p1 + ggforce::geom_mark_ellipse(aes(fill = Group, label = Group),
+        p1$layers <- c(p1$layers, list(ggforce::geom_mark_ellipse(
+            aes(fill = Group, label = Group),
             con.cap = 0, alpha = 0.1, label.fontsize = fontsize,
-            label.buffer = unit(0, "mm"), ...
-        ) +
+            label.buffer = unit(0, "mm")
+        )))
+        p2 <- p1 +
             xlim(xlim_min, xlim_max) + ylim(ylim_min, ylim_max)
         print(p2)
     }

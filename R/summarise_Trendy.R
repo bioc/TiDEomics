@@ -43,7 +43,7 @@ summarise_Trendy <- function(res_list, ...) {
         trendy.summary <- .summarise_Trendy_one_group(res_list[[i]], ...)
         trendy.summary$Group <- i
         trendy.summary <- trendy.summary %>%
-            dplyr::select(.data$Group, dplyr::everything())
+            dplyr::select(Group, dplyr::everything())
         res_summary[[i]] <- trendy.summary
     }
     if (length(res_summary) == 0) {
@@ -89,9 +89,10 @@ summarise_Trendy <- function(res_list, ...) {
     # bug in colname when maxK = 1
     if ("topTrendyData.Breakpoints.featureNames..." %in%
         colnames(trendy.summary)) {
-        trendy.summary <- trendy.summary %>%
-            dplyr::rename(Breakpoint =
-                .data$`topTrendyData.Breakpoints.featureNames...`)
+        colnames(trendy.summary)[
+            colnames(trendy.summary) ==
+                "topTrendyData.Breakpoints.featureNames..."
+        ] <- "Breakpoint"
     }
 
     return(trendy.summary)

@@ -2,7 +2,7 @@
 #'
 #' @description Plot correlation matrix between samples as a heatmap
 #'
-#' @param se_obj A SummarizedExperiment object created by `check_input()`
+#' @param se_obj A SummarizedExperiment object created by `create_input()`
 #' @param use Parameter of `stats::cor()` (default is "pairwise.complete.obs")
 #' @param method Parameter of `stats::cor()` (default is "spearman")
 #' @param label_group Whether to label Group (default is TRUE)
@@ -44,7 +44,7 @@ plot_cor_matrix <- function(
         stop("Invalid correlation method. Please choose one of 'spearman', ",
         "'pearson', or 'kendall'.")
     }
-    cor_table <- stats::cor(se_obj@assays@data[[1]],
+    cor_table <- stats::cor(assay(se_obj, 1),
         use = use,
         method = method
     )
@@ -90,7 +90,7 @@ plot_cor_matrix <- function(
         top_annotation = if (length(ann) > 0) {
             ComplexHeatmap::HeatmapAnnotation(
                 df = colData(se_obj) %>% as.data.frame() %>%
-                    dplyr::mutate(Time = factor(.data$Time,
+                    dplyr::mutate(Time = factor(Time,
                         levels = as.character(colData(se_obj)$Time %>%
                             unique() %>% sort())
                     )) %>%

@@ -17,7 +17,17 @@ in the list corresponds to one group of samples.
 }
 \description{
 Calculate mean of replicates for each feature at each time
-point for each group
+point for each group.
+
+When a Subject column is present, merging is done in two stages:
+\enumerate{
+\item Average replicates within each Group-Subject-Time combination.
+\item Average across subjects within each Group-Time combination.
+This gives equal weight to each subject regardless of replicate count.
+}
+
+Without a Subject column, all samples at the same Group-Time are averaged
+together in a single step.
 }
 \examples{
 data("example")

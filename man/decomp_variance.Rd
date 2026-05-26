@@ -7,39 +7,52 @@
 decomp_variance(
   se_obj,
   features = NULL,
-  variables = c("Group", "Time"),
   fixed_effect_var = NULL,
+  interaction = FALSE,
   assay = c(1, 2),
-  core = 2
+  core = 1
 )
 }
 \arguments{
 \item{se_obj}{A SummarizedExperiment object created by \code{create_input()}}
 
-\item{features}{A vector of features (e.g. genes) to include in the
-analysis. If NULL, all features are used. (default is NULL)}
+\item{features}{A vector of features to include. If NULL, all features.}
 
-\item{variables}{Variables to be included in linear mixed model for variance
-analysis. (default is c("Group", "Time"))}
+\item{fixed_effect_var}{Column names to include as fixed effects
+(regressed out, not appearing as variance components). Default is
+\code{NULL} (no fixed effects). Set to \code{"Batch"} to regress out batch
+effects, or provide other columns (e.g., \code{c("Sex", "Age")}).}
 
-\item{fixed_effect_var}{Fixed effect variables to be included in linear
-mixed model, variance contribution obtained by adding them as random
-variables. (default is NULL)}
+\item{interaction}{Logical. If TRUE, adds \code{(1|Group:Time)} (or
+\code{(1|Subject:Time)} when Subject present) to the model to capture
+interaction variance. Default: FALSE.}
 
-\item{assay}{1 for the original input data, or 2 for the data normalised
-to time point 0}
+\item{assay}{1 for original data, or 2 for data normalised to time 0}
 
-\item{core}{Number of cores to use for parallel processing (default is 2)}
+\item{core}{Number of cores for parallel processing (default: 2)}
 }
 \value{
-A data frame with variance decomposition results
+A data frame with variance decomposition results (percentages).
 }
 \description{
-Variance decomposition by linear mixed models, to estimate
-the contribution of different variables to the variance of each feature.
+Variance decomposition by linear mixed models (LMM), to estimate
+the contribution of Group and Time to the variance of each feature.
 Modified from \code{PALMO::lmeVariance()} function.
 
-Allow using original data or data normalised to time point 0
+Group and Time are always included as random effects. The formula is
+extended automatically based on colData:
+\itemize{
+\item Subject column present: adds \code{(1|Subject)} to model between-subject
+differences
+\item \code{interaction = TRUE}: adds \code{(1|Group:Time)} (or \code{(1|Subject:Time)}
+when Subject present) to capture interaction variance. Requires >= 2
+replicates per combination. Default: FALSE.
+}
+
+Output always includes: Group, Time, Residual. Subject is included when
+present. All values are percentages of total variance.
+
+Allow using original data or data normalised to time point 0.
 }
 \examples{
 data("example")

@@ -25,3 +25,54 @@ test_that("WGCNA works", {
     plot_WGCNA(example_net, fontsize = 8)
 }
 )
+
+# ---- WGCNA_module ----
+
+test_that("WGCNA_module returns correct structure", {
+    data("example_net")
+    mod <- WGCNA_module(example_net)
+    expect_s3_class(mod, "data.frame")
+    expect_named(mod, c("Feature", "Module"))
+    expect_type(mod$Feature, "character")
+    expect_s3_class(mod$Module, "factor")
+})
+
+test_that("WGCNA_module excludes grey when requested", {
+    data("example_net")
+    mod_all <- WGCNA_module(example_net, exclude_grey = FALSE)
+    mod_nogrey <- WGCNA_module(example_net, exclude_grey = TRUE)
+    expect_true(any(c("0", "grey", "gray") %in% levels(mod_all$Module)))
+    expect_true(nrow(mod_nogrey) <= nrow(mod_all))
+})
+
+test_that("WGCNA_module errors on invalid input", {
+    expect_error(WGCNA_module(list()),
+        "must be the output of run_WGCNA")
+    expect_error(WGCNA_module(data.frame()),
+        "must be the output of run_WGCNA")
+})
+
+test_that("WGCNA_module Module is sorted", {
+    data("example_net")
+    mod <- WGCNA_module(example_net)
+    expect_equal(mod, dplyr::arrange(mod, Module))
+})
+
+# ---- prepare_WGCNA ----
+
+test_that("prepare_WGCNA validates assay index", {
+    data("example")
+    example_obj <- normalise_to_start(example_obj)
+    expect_error(
+        prepare_WGCNA(example_obj, assay = 99,
+            powers = seq(1, 10), RsquaredCut = 0.8),
+        "assay"
+    )
+})
+
+# ---- plot_WGCNA ----
+
+test_that("plot_WGCNA runs without error", {
+    data("example_net")
+    expect_error(plot_WGCNA(example_net, fontsize = 8), NA)
+})

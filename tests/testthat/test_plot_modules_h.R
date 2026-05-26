@@ -9,14 +9,10 @@ test_that("plot_modules_h works", {
     example_obj_merged <- merge_groups(example_obj_merged_list)
 
     data(example_net)
-    example_module <- data.frame(Module = as.factor(example_net$colors)) %>%
-        tibble::rownames_to_column("Feature") %>% dplyr::arrange(Module)
+    example_module <- WGCNA_module(example_net, exclude_grey = TRUE) 
 
-    example_module_list <- example_module %>% dplyr::filter(Module != 0) %>%
-        split(as.character(.$Module)) %>%
-        lapply(`[[`, "Feature")
     # set cutoff to 1 to show all results for demonstration
-    example_go_list = enrichGO_list(example_module_list, OrgDb = org.Mm.eg.db,
+    example_go_list = enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
         universe = example_module$Feature,
         pvalueCutoff = 1, qvalueCutoff = 1,
         category = "BP", simplify = FALSE)
@@ -26,13 +22,13 @@ test_that("plot_modules_h works", {
     expect_null(plot_modules_h(example_module %>% dplyr::filter(Module != 0),
         example_obj_merged, scale = TRUE,
         ylabel = "Z-score of log2 expression",
-        go_list = example_go_list$all, go_category = "BP",
+        enrich_list = example_go_list$all, enrich_category = "BP",
         heatmap_width = 6, heatmap_height = 4))
 
     expect_warning(plot_modules_h(example_module %>% dplyr::filter(Module != 0),
         example_obj_merged, scale = TRUE,
         ylabel = "Z-score of log2 expression",
-        go_list = example_go_list$all, go_category = "CC",
+        enrich_list = example_go_list$all, enrich_category = "CC",
         heatmap_width = 6, heatmap_height = 4))
 }
 )

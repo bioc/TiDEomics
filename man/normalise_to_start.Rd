@@ -4,10 +4,13 @@
 \alias{normalise_to_start}
 \title{Normalise to time 0}
 \usage{
-normalise_to_start(se_obj)
+normalise_to_start(se_obj, by_subject = FALSE)
 }
 \arguments{
 \item{se_obj}{A SummarizedExperiment object created by \code{create_input()}}
+
+\item{by_subject}{If FALSE (default), use group-level baseline. If TRUE,
+use subject-level baseline (requires Subject column in colData).}
 }
 \value{
 A SummarizedExperiment object with normalised data in the second
@@ -15,7 +18,18 @@ assay slot.
 }
 \description{
 Normalise to starting time point, to make the mean of
-starting time point replicates 0
+starting time point samples 0.
+
+Two modes are available:
+\itemize{
+\item \code{by_subject = FALSE} (default): computes the group-level mean at the
+first non-NA time point per feature and subtracts it. All samples within
+a group share the same baseline.
+\item \code{by_subject = TRUE}: computes each subject's value at the first non-NA
+time point per feature and subtracts that subject-specific baseline.
+Removes between-subject baseline differences. Use when each subject has
+their own initial condition. Requires a Subject column in colData.
+}
 }
 \examples{
 data("example")

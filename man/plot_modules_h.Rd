@@ -15,10 +15,10 @@ plot_modules_h(
   save = NULL,
   profile_width = 3,
   profile_link_width = 1,
-  go_list = NULL,
-  go_category = "BP",
-  go_rank_by = "p.adjust",
-  go_top_n = 3,
+  enrich_list = NULL,
+  enrich_category = "BP",
+  enrich_rank_by = "p.adjust",
+  enrich_top_n = 3,
   fontsize = 8,
   heatmap_width = 8,
   heatmap_height = 8,
@@ -58,17 +58,18 @@ string)}
 \item{profile_link_width}{Width of the link in cm between heatmap
 and mean expression profile plot (default is 1)}
 
-\item{go_list}{A list of GO enrichment results for WGCNA modules, as produced
-by the \code{enrichGO_list()} function. If NULL (default), no GO terms will
-be displayed.}
+\item{enrich_list}{A named list of enrichment results for WGCNA modules,
+as produced by \code{enrichGO_list()$all}. Each named element should be a
+data.frame with columns \code{Cluster}, \code{Description}, and the rank column.
+If NULL (default), no enrichment terms will be displayed.}
 
-\item{go_category}{Category of GO terms to display, one of "BP", "MF",
-or "CC" (default is "BP")}
+\item{enrich_category}{Name of the enrichment category to display
+(default is \code{"BP"}).}
 
-\item{go_rank_by}{Column name in the GO enrichment result to rank the
-GO terms (default is "p.adjust")}
+\item{enrich_rank_by}{Column name to rank enrichment terms by
+(default is \code{"p.adjust"}).}
 
-\item{go_top_n}{Number of top GO terms to display for each module
+\item{enrich_top_n}{Number of top enrichment terms to display per module
 (default is 3)}
 
 \item{fontsize}{Font size (default is 8)}
@@ -85,12 +86,12 @@ GO terms (default is "p.adjust")}
 (default is 300 (ppi))}
 }
 \value{
-A combined plot of heatmap, mean expression profile, and GO terms
-for each WGCNA module
+A combined plot of heatmap, mean expression profile, and enrichment
+terms for each WGCNA module
 }
 \description{
 Plot WGCNA modules' heatmaps, mean expression profiles,
-and GO terms, align horizontally.
+and enrichment terms, aligned horizontally.
 
 Different from running WGCNA, the input data should have the
 replicates merged, instead of having multiple samples per group, time and
@@ -109,16 +110,11 @@ example_obj_merged_list <- merge_replicates(example_obj_list)
 example_obj_merged <- merge_groups(example_obj_merged_list)
 
 data(example_net)
-example_module <- data.frame(Module = as.factor(example_net$colors)) \%>\%
-    tibble::rownames_to_column("Feature") \%>\% dplyr::arrange(Module)
-
 # select two modules for demonstration
-example_module_list <- example_module \%>\% 
-    dplyr::filter(Module \%in\% c(1, 2)) \%>\%
-    split(as.character(.$Module)) \%>\%
-    lapply(`[[`, "Feature")
+example_module <- WGCNA_module(example_net) \%>\%
+    dplyr::filter(Module \%in\% c("1", "2"))
 # set cutoff to 1 to show all results for demonstration
-example_go_list = enrichGO_list(example_module_list, OrgDb = org.Mm.eg.db,
+example_go_list = enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
     universe = example_module$Feature,
     pvalueCutoff = 1, qvalueCutoff = 1,
     category = "BP", simplify = FALSE)
@@ -128,7 +124,7 @@ example_go_list = enrichGO_list(example_module_list, OrgDb = org.Mm.eg.db,
 plot_modules_h(example_module \%>\% dplyr::filter(Module != '0'),
     example_obj_merged, scale = TRUE,
     ylabel = "Z-score of log2 expression",
-    go_list = example_go_list$all, go_category = "BP",
+    enrich_list = example_go_list$all, enrich_category = "BP",
     heatmap_width = 6, heatmap_height = 4)
 }
 \references{

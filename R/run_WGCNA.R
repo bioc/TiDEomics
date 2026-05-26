@@ -8,6 +8,8 @@
 #' @param power Soft-thresholding power to be used in
 #' `WGCNA::blockwiseModules()`, selected automatically or manually based
 #' on the output of `prepare_WGCNA()`
+#' @param numericLabels Whether to use numeric labels for modules in the output
+#' (default is TRUE)
 #' @param ... Additional parameters to be passed to `WGCNA::blockwiseModules()`
 #'
 #' @returns The built network and parameters of `WGCNA::blockwiseModules()`,
@@ -28,7 +30,7 @@
 #' # plot_WGCNA(example_net, fontsize = 8)
 #' # use_data(example_net)
 #' @references https://github.com/edo98811/WGCNA_official_documentation/blob/main/FemaleLiver-03-relateModsToExt.R
-run_WGCNA <- function(wgcna_input, power, ...) {
+run_WGCNA <- function(wgcna_input, power, numericLabels = TRUE, ...) {
     WGCNA::allowWGCNAThreads()
 
     cor <- WGCNA::cor
@@ -45,6 +47,7 @@ run_WGCNA <- function(wgcna_input, power, ...) {
     net$parameters <- list(
         power = power,
         networkType = wgcna_input$networkType,
+        numericLabels = numericLabels,
         ...
     )
 

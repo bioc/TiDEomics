@@ -33,17 +33,18 @@ merge_groups <- function(se_obj_list) {
             if (j > length(assay_list)) {
                 assay_list[[j]] <- df
             } else {
-                assay_list[[j]] <- merge(assay_list[[j]], df,
-                    by = "row.names", all = TRUE
+                assay_list[[j]] <- dplyr::full_join(
+                    assay_list[[j]] %>% tibble::rownames_to_column(".rowname"),
+                    df %>% tibble::rownames_to_column(".rowname"),
+                    by = ".rowname"
                 ) %>%
-                    tibble::column_to_rownames("Row.names") 
-                    # in case of different number of genes
+                    tibble::column_to_rownames(".rowname")
             }
         }
 
         # colData
         cd <- colData(se_obj) %>% as.data.frame()
-        cd$Group <- i # unnecesary
+        cd$Group <- i # unnecessary
         cd$Sample <- paste0(i, "_", cd$Sample)
         coldata_list[[i]] <- cd
     }

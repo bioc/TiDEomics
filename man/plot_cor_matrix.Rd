@@ -22,7 +22,7 @@ plot_cor_matrix(
 )
 }
 \arguments{
-\item{se_obj}{A SummarizedExperiment object created by \code{check_input()}}
+\item{se_obj}{A SummarizedExperiment object created by \code{create_input()}}
 
 \item{use}{Parameter of \code{stats::cor()} (default is "pairwise.complete.obs")}
 

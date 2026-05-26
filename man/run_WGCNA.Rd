@@ -4,7 +4,7 @@
 \alias{run_WGCNA}
 \title{Weighted gene co-expression network analysis}
 \usage{
-run_WGCNA(wgcna_input, power, ...)
+run_WGCNA(wgcna_input, power, numericLabels = TRUE, ...)
 }
 \arguments{
 \item{wgcna_input}{A list output by \code{prepare_WGCNA()}, containing the
@@ -13,6 +13,9 @@ prepared input data and networkType parameter used in power selection.}
 \item{power}{Soft-thresholding power to be used in
 \code{WGCNA::blockwiseModules()}, selected automatically or manually based
 on the output of \code{prepare_WGCNA()}}
+
+\item{numericLabels}{Whether to use numeric labels for modules in the output
+(default is TRUE)}
 
 \item{...}{Additional parameters to be passed to \code{WGCNA::blockwiseModules()}}
 }

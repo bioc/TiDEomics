@@ -26,7 +26,7 @@
 #'
 #' na_obj <- create_input(na_data,
 #'     data.frame(Sample = paste0("Sample", 1:100),
-#'     Time = rep(rep(1:10, each = 5)), 2,
+#'     Time = rep(rep(1:10, each = 5), 2),
 #'     Group = rep(c("A", "B"), each = 50),
 #'     Replicate = rep(1:5, 20)))
 #' plot_ID(na_obj)
@@ -36,7 +36,8 @@ plot_missing <- function(se_obj, fontsize = 8, signif = FALSE, ...) {
         dim(assays(se_obj)[[1]])[1] / dim(assays(se_obj)[[1]])[2]
 
     missing_tb <- assays(se_obj)[[1]] %>%
-        dplyr::summarise_all(~ sum(is.na(.)) / length(.)) %>%
+        dplyr::summarise(dplyr::across(dplyr::everything(), 
+            ~ sum(is.na(.)) / length(.))) %>%
         tidyr::pivot_longer(cols = dplyr::everything(), 
             values_to = "Missing") %>%
         merge(., colData(se_obj), by.x = "name", by.y = "Sample") %>%

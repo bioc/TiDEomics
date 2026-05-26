@@ -6,7 +6,7 @@
 \usage{
 plot_variance(
   var_decomp,
-  rank = c("Group", "Time"),
+  rank = "Group",
   features = NULL,
   top_n = 20,
   show_ylab = TRUE,
@@ -14,10 +14,9 @@ plot_variance(
 )
 }
 \arguments{
-\item{var_decomp}{A data frame of variance decomposition result from
-\code{variance_decomp()} function}
+\item{var_decomp}{A data frame output from \code{decomp_variance()}}
 
-\item{rank}{Rank the plot by "Group" or "Time"}
+\item{rank}{Rank the plot by selected variable (default is "Group")}
 
 \item{features}{Features to be plotted (default is NULL)}
 
@@ -29,8 +28,9 @@ is not specified (default is 20)}
 \item{fontsize}{Font size for the plot (default is 8)}
 }
 \value{
-A plot of variance decomposition for each feature, showing the
-percentage of variance explained by Group, Time, and Residual. The features
+A stacked bar plot showing the percentage of variance explained
+by each model component (Group, Time, Residual, plus Subject and
+interaction terms when present). Features
 are ranked by the specified \code{rank} variable (Group or Time) and only the
 top n features are plotted if \code{features} is not specified.
 }

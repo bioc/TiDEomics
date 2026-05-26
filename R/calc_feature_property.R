@@ -19,9 +19,9 @@
 #' Exp_threshold), T_total
 #' (total number of time points), P_trend (p-value from Bartels' test for
 #' randomness against a trend), Max_FC (maximum fold change across time
-#' points), Max_FC_time (time difference between max and min expression,
-#' positive if max occurs after min, negative otherwise), Exp_ratio
-#' (T_exp / T_total).
+#' points), Max_FC_time (difference between the time points at which maximum
+#' and minimum expression occur; positive if max occurs after min, negative
+#' otherwise), Exp_ratio (T_exp / T_total).
 #' @export
 #' @examples
 #' data("example")
@@ -33,6 +33,17 @@
 #'     calc_feature_property(example_obj_merged_list, threshold = 0)
 #' property_random_fc <- summarise_feature_property(example_obj_merged_list)
 calc_feature_property <- function(se_obj_merged_list, threshold = NULL) {
+    # Validate that input has been through merge_replicates
+    for (i in names(se_obj_merged_list)) {
+        n_col <- ncol(assays(se_obj_merged_list[[i]])[[1]])
+        n_time <- length(unique(colData(se_obj_merged_list[[i]])$Time))
+        if (n_col != n_time) {
+            stop("Input has multiple values per time point, replicates ",
+                "have not been merged. ",
+                "Run merge_replicates() before calc_feature_property().")
+        }
+    }
+
     for (i in names(se_obj_merged_list)) {
         d_mean <- assays(se_obj_merged_list[[i]])[[1]]
 
@@ -87,8 +98,9 @@ calc_feature_property <- function(se_obj_merged_list, threshold = NULL) {
             as.data.frame() %>%
             set_colnames("Max_FC")
 
+        time_vals <- as.numeric(colnames(d_mean_1))
         max_fc_day <- apply(d_mean_1, 1, function(x) {
-            which.max(x) - which.min(x)
+            time_vals[which.max(x)] - time_vals[which.min(x)]
         }) %>%
             as.data.frame() %>%
             set_colnames("Max_FC_time")
@@ -100,7 +112,7 @@ calc_feature_property <- function(se_obj_merged_list, threshold = NULL) {
             tibble::column_to_rownames("Row.names") %>%
             merge(max_fc_day, by = "row.names", all.x = TRUE) %>%
             tibble::column_to_rownames("Row.names") %>%
-            dplyr::select(-.data$One, -.data$Three)
+            dplyr::select(-One, -Three)
 
         property_tb$Exp_ratio <- property_tb$T_exp / property_tb$T_total
 

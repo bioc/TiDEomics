@@ -11,6 +11,7 @@ prepare_WGCNA(
   RsquaredCut = 0.8,
   MeanConnectivity = 100,
   powers = NULL,
+  fontsize = 8,
   ...
 )
 }
@@ -36,6 +37,8 @@ stored by \code{normalise_to_start()})}
 
 \item{powers}{(Optional) Parameter of \code{WGCNA::pickSoftThreshold()}
 (default is \code{c(seq(1, 10, by = 1), seq(12, 20, by = 2))})}
+
+\item{fontsize}{Base font size for diagnostic plots (default: 8).}
 
 \item{...}{Additional parameters to be passed to \code{WGCNA::pickSoftThreshold()}}
 }

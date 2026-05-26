@@ -4,7 +4,7 @@
 \alias{create_input}
 \title{Create object}
 \usage{
-create_input(data, sample_ann)
+create_input(data, sample_ann, subject_col = NULL)
 }
 \arguments{
 \item{data}{A data frame with rows as features (e.g., genes, proteins)
@@ -15,8 +15,15 @@ of the downstream analyses.}
 
 \item{sample_ann}{A data frame containing sample annotations with required
 columns: 'Sample', 'Group', and 'Time'. 'Replicate' and 'Batch' are optional
-columns and will be set to 1 for all samples if not provided. 'Time',
+columns and will be auto-generated if not provided. 'Time',
 'Replicate' and 'Batch' should be numeric.}
+
+\item{subject_col}{Optional: name of a column in \code{sample_ann} identifying
+biological subjects measured repeatedly across time points (e.g.,
+\code{"PatientID"}). If provided, the column is renamed to 'Subject' and used
+for repeated-measures analyses downstream. If NULL (default), all samples
+are treated as independent, e.g. for cell culture experiments.
+experiments.}
 }
 \value{
 A SummarizedExperiment object containing the input data and sample

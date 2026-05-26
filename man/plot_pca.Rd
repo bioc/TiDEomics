@@ -19,8 +19,7 @@ plot_pca(
   ylim_min = NULL,
   ylim_max = NULL,
   fontsize = 8,
-  assay = 1,
-  ...
+  assay = 1
 )
 }
 \arguments{
@@ -63,9 +62,6 @@ of each group (default is FALSE)}
 
 \item{assay}{Assay index to use, where 1 is the original data and 2 is
 normalised to time 0 (if available) (default is 1)}
-
-\item{...}{Additional arguments passed to \code{ggforce::geom_mark_ellipse()}
-for customizing the ellipses}
 }
 \value{
 A PCA plot showing the distribution of samples, other plots

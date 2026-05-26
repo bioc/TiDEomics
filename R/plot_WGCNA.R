@@ -28,7 +28,15 @@
 #' plot_WGCNA(example_net, fontsize = 8)
 #' @references https://github.com/edo98811/WGCNA_official_documentation/blob/main/FemaleLiver-03-relateModsToExt.R
 plot_WGCNA <- function(net, fontsize = 8) {
-    moduleColors <- WGCNA::labels2colors(net$colors)
+    if ("numericLabels" %in% names(net$parameters)) {
+        if (net$parameters$numericLabels == TRUE) {
+            moduleColors <- WGCNA::labels2colors(net$colors)
+        } else {
+            moduleColors <- net$colors
+        }
+    } else {
+        moduleColors <- net$colors
+    }
     WGCNA::plotDendroAndColors(net$dendrograms[[1]],
         moduleColors[net$blockGenes[[1]]],
         main = "Feature dendrogram and module colors",
@@ -46,8 +54,8 @@ plot_WGCNA <- function(net, fontsize = 8) {
         as.data.frame() %>%
         set_rownames(NULL) %>%
         tibble::column_to_rownames("Sample") %>%
-        dplyr::select(.data$Time, .data$Group) %>%
-        dplyr::mutate(Time = as.numeric(.data$Time))
+        dplyr::select(Time, Group) %>%
+        dplyr::mutate(Time = as.numeric(Time))
     stopifnot(identical(row.names(MEs), row.names(ann_row)))
 
     col_time_func <- circlize::colorRamp2(
@@ -60,7 +68,7 @@ plot_WGCNA <- function(net, fontsize = 8) {
         Time = col_time_func
     )
 
-    ComplexHeatmap::Heatmap(MEs,
+    ComplexHeatmap::Heatmap(as.matrix(MEs),
         column_title = "WGCNA module eigengenes",
         col = grDevices::colorRampPalette(c("#3C5488FF", "white",
             "#E64B35FF"))(100),
@@ -104,8 +112,8 @@ plot_WGCNA <- function(net, fontsize = 8) {
 
     # test correlation of modules to groups
     datTraits <- ann_row %>%
-        dplyr::select(.data$Group, .data$Time) %>%
-        dplyr::mutate(Time = as.numeric(.data$Time)) %>%
+        dplyr::select(Group, Time) %>%
+        dplyr::mutate(Time = as.numeric(Time)) %>%
         WGCNA::binarizeCategoricalColumns(
             convertColumns = c("Group"),
             dropFirstLevelVsAll = FALSE,

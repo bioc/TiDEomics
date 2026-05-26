@@ -65,7 +65,7 @@ enrichGO_rank <- function(
     # gene set enrichment with ranked gene list
     rank_list <- rank_table %>%
         dplyr::arrange(dplyr::desc(.data[[gene_rank_by]])) %>%
-        dplyr::pull(.data[[gene_rank_by]], name = .data$Feature)
+        dplyr::pull(.data[[gene_rank_by]], name = Feature)
 
     if (any(is.na(rank_list)) || any(is.nan(rank_list)) ||
             any(is.infinite(rank_list))) {

@@ -3,7 +3,8 @@
 #'   with clusterProfiler, allowing for using different or same background
 #'   genes for each gene set
 #'
-#' @param gene_list A list of gene sets (vectors)
+#' @param gene_list A named list of gene vectors, or a data.frame
+#'   with `Feature` and `Module` columns from `WGCNA_module()`.
 #' @param keyType (Optional) Available options are
 #'   `AnnotationDbi::keytypes(OrgDb)` (default is "SYMBOL")
 #' @param OrgDb Organism database, e.g. org.Hs.eg.db, org.Mm.eg.db
@@ -46,15 +47,11 @@
 #' library(org.Mm.eg.db)
 #' library(clusterProfiler)
 #' data(example_net)
-#' example_module <- data.frame(Module = as.factor(example_net$colors)) %>%
-#'     tibble::rownames_to_column("Feature") %>% dplyr::arrange(Module)
 #' # select two modules for demonstration
-#' example_module_list <- example_module %>% 
-#'     dplyr::filter(Module %in% c(1, 2)) %>%
-#'     split(as.character(.$Module)) %>%
-#'     lapply(`[[`, "Feature")
+#' example_module <- WGCNA_module(example_net) %>%
+#'     dplyr::filter(Module %in% c("1", "2"))
 #' # set cutoff to 1 to show all results for demonstration
-#' example_go_list = enrichGO_list(example_module_list, OrgDb = org.Mm.eg.db,
+#' example_go_list = enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
 #'     universe = example_module$Feature,
 #'     pvalueCutoff = 1, qvalueCutoff = 1,
 #'     category = "BP", simplify = FALSE)
@@ -82,6 +79,8 @@ enrichGO_list <- function(gene_list, keyType = "SYMBOL",
         stop("Invalid GO category. Please choose from 'BP', 'MF', 'CC'.")
     }
 
+    gene_list <- .prepare_gene_list(gene_list)
+
     if (!is.null(universe) & !is.null(universe_list)) {
         stop("Please provide only one of universe or universe_list.")
     }
@@ -96,9 +95,8 @@ enrichGO_list <- function(gene_list, keyType = "SYMBOL",
         }
     }
 
-    if (is.null(names(gene_list)) || is.null(names(universe_list))) {
-        stop("Input gene_list (and universe_list if applicable) must be ",
-        "named lists.")
+    if (is.null(names(universe_list))) {
+        stop("Input universe_list must be a named list.")
     }
     if (!all(names(gene_list) %in% names(universe_list))) {
         stop("Names of gene_list and universe_list must match.")
@@ -110,7 +108,7 @@ enrichGO_list <- function(gene_list, keyType = "SYMBOL",
         message("Performing GO enrichment for category: ", cate)
 
         for (clus in names(gene_list)) {
-            if (gene_list[[clus]] %>% length() == 0) {
+            if (length(gene_list[[clus]]) == 0) {
                 message("Gene list ", clus, " is empty. Skipping.")
                 next
             } else {
@@ -128,15 +126,18 @@ enrichGO_list <- function(gene_list, keyType = "SYMBOL",
                 qvalueCutoff = qvalueCutoff,
                 ...
             )
+        }
 
-            # remove NULL entries
-            go_list[[cate]] <- go_list[[cate]][
-                !vapply(go_list[[cate]], is.null, logical(1))
-            ]
+        go_list[[cate]] <- go_list[[cate]][
+            !vapply(go_list[[cate]], is.null, logical(1))
+        ]
 
-            if (simplify & length(go_list[[cate]]) > 0) {
-                message("Simplifying GO terms." )
+        if (simplify && length(go_list[[cate]]) > 0) {
+            message("Simplifying GO terms for category: ", cate)
 
+            n_before <- length(go_list[[cate]])
+
+            for (clus in names(go_list[[cate]])) {
                 go_list_simplify[[cate]][[clus]] <-
                     clusterProfiler::simplify(go_list[[cate]][[clus]],
                         cutoff = simplify_cutoff,
@@ -144,11 +145,17 @@ enrichGO_list <- function(gene_list, keyType = "SYMBOL",
                         select_fun = simplify_select_fun,
                         measure = simplify_measure
                     )
+            }
 
-                # remove NULL entries
-                go_list_simplify[[cate]] <- go_list_simplify[[cate]][
-                    !vapply(go_list_simplify[[cate]], is.null, logical(1))
-                ]
+            go_list_simplify[[cate]] <- go_list_simplify[[cate]][
+                !vapply(go_list_simplify[[cate]], is.null, logical(1))
+            ]
+
+            n_after <- length(go_list_simplify[[cate]])
+            if (n_after < n_before) {
+                message(n_before - n_after,
+                    " input gene set(s) dropped after simplification ", 
+                    "(no terms retained).")
             }
         }
     }

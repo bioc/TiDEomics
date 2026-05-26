@@ -22,9 +22,9 @@ Group, Exp_threshold, T_exp (number of time points with values >
 Exp_threshold), T_total
 (total number of time points), P_trend (p-value from Bartels' test for
 randomness against a trend), Max_FC (maximum fold change across time
-points), Max_FC_time (time difference between max and min expression,
-positive if max occurs after min, negative otherwise), Exp_ratio
-(T_exp / T_total).
+points), Max_FC_time (difference between the time points at which maximum
+and minimum expression occur; positive if max occurs after min, negative
+otherwise), Exp_ratio (T_exp / T_total).
 }
 \description{
 Calculate randomness p-value, maximum fold change along time

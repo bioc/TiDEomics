@@ -26,15 +26,11 @@
 #' library(magrittr)
 #' library(org.Mm.eg.db)
 #' data(example_net)
-#' example_module <- data.frame(Module = as.factor(example_net$colors)) %>%
-#'     tibble::rownames_to_column("Feature") %>% dplyr::arrange(Module)
 #' # select two modules for demonstration
-#' example_module_list <- example_module %>%
-#'     dplyr::filter(Module %in% c(1, 2)) %>%
-#'     split(as.character(.$Module)) %>%
-#'     lapply(`[[`, "Feature")
+#' example_module <- WGCNA_module(example_net) %>%
+#'     dplyr::filter(Module %in% c("1", "2"))
 #' # set cutoff to 1 to show all results for demonstration
-#' example_go_list = enrichGO_list(example_module_list, OrgDb = org.Mm.eg.db,
+#' example_go_list = enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
 #'     universe = example_module$Feature,
 #'     pvalueCutoff = 1, qvalueCutoff = 1,
 #'     category = "BP", simplify = FALSE)
@@ -54,15 +50,14 @@ plot_GO <- function(
 ) {
     if (length(intersect(names(go_list), c("BP", "MF", "CC"))) == 0) {
         if ("all" %in% names(go_list) | "simplified" %in% names(go_list)) {
-            message("The input list contains 'all' or 'simplified' sublists. ",
-            "Please specify one of them to visualize the GO enrichment ",
-            "results.")
+            stop("The input list contains 'all' or 'simplified' sublists. ",
+            "Please specify one of them, e.g. go_list$all, ",
+            "to visualize the GO enrichment results.")
         } else {
-            message("No valid GO category ('BP', 'MF', 'CC') found in ",
+            stop("No valid GO category ('BP', 'MF', 'CC') found in ",
             "the input list. Please check to ensure it contains the expected ",
             "GO enrichment results.")
         }
-        return()
     }
 
     if (!plot_dotplot & !plot_cnetplot & !plot_emapplot) {

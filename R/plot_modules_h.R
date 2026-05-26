@@ -1,7 +1,7 @@
 #' Plot modules (horizontal layout)
 #'
 #' @description Plot WGCNA modules' heatmaps, mean expression profiles,
-#' and GO terms, align horizontally.
+#' and enrichment terms, aligned horizontally.
 #'
 #' Different from running WGCNA, the input data should have the
 #' replicates merged, instead of having multiple samples per group, time and
@@ -29,15 +29,16 @@
 #' (default is 3 (cm))
 #' @param profile_link_width Width of the link in cm between heatmap
 #' and mean expression profile plot (default is 1)
-#' @param go_list A list of GO enrichment results for WGCNA modules, as produced
-#' by the `enrichGO_list()` function. If NULL (default), no GO terms will
-#' be displayed.
-#' @param go_category Category of GO terms to display, one of "BP", "MF",
-#' or "CC" (default is "BP")
-#' @param go_rank_by Column name in the GO enrichment result to rank the
-#' GO terms (default is "p.adjust")
-#' @param go_top_n Number of top GO terms to display for each module
-#' (default is 3)
+#' @param enrich_list A named list of enrichment results for WGCNA modules,
+#'   as produced by `enrichGO_list()$all`. Each named element should be a
+#'   data.frame with columns `Cluster`, `Description`, and the rank column.
+#'   If NULL (default), no enrichment terms will be displayed.
+#' @param enrich_category Name of the enrichment category to display
+#'   (default is `"BP"`).
+#' @param enrich_rank_by Column name to rank enrichment terms by
+#'   (default is `"p.adjust"`).
+#' @param enrich_top_n Number of top enrichment terms to display per module
+#'   (default is 3)
 #' @param fontsize Font size (default is 8)
 #' @param heatmap_width Width of the heatmap body in cm (default is 8)
 #' @param heatmap_height Height of the heatmap body in cm (default is 8)
@@ -50,8 +51,8 @@
 #' @import ggplot2
 #' @import SummarizedExperiment
 #'
-#' @returns A combined plot of heatmap, mean expression profile, and GO terms
-#' for each WGCNA module
+#' @returns A combined plot of heatmap, mean expression profile, and enrichment
+#' terms for each WGCNA module
 #' @export
 #' @examples
 #' library(magrittr)
@@ -64,16 +65,11 @@
 #' example_obj_merged <- merge_groups(example_obj_merged_list)
 #'
 #' data(example_net)
-#' example_module <- data.frame(Module = as.factor(example_net$colors)) %>%
-#'     tibble::rownames_to_column("Feature") %>% dplyr::arrange(Module)
-#'
 #' # select two modules for demonstration
-#' example_module_list <- example_module %>% 
-#'     dplyr::filter(Module %in% c(1, 2)) %>%
-#'     split(as.character(.$Module)) %>%
-#'     lapply(`[[`, "Feature")
+#' example_module <- WGCNA_module(example_net) %>%
+#'     dplyr::filter(Module %in% c("1", "2"))
 #' # set cutoff to 1 to show all results for demonstration
-#' example_go_list = enrichGO_list(example_module_list, OrgDb = org.Mm.eg.db,
+#' example_go_list = enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
 #'     universe = example_module$Feature,
 #'     pvalueCutoff = 1, qvalueCutoff = 1,
 #'     category = "BP", simplify = FALSE)
@@ -83,7 +79,7 @@
 #' plot_modules_h(example_module %>% dplyr::filter(Module != '0'),
 #'     example_obj_merged, scale = TRUE,
 #'     ylabel = "Z-score of log2 expression",
-#'     go_list = example_go_list$all, go_category = "BP",
+#'     enrich_list = example_go_list$all, enrich_category = "BP",
 #'     heatmap_width = 6, heatmap_height = 4)
 #' @references https://github.com/junjunlab/ClusterGVis
 plot_modules_h <- function(
@@ -97,10 +93,10 @@ plot_modules_h <- function(
     save = NULL,
     profile_width = 3,
     profile_link_width = 1,
-    go_list = NULL,
-    go_category = "BP",
-    go_rank_by = "p.adjust",
-    go_top_n = 3,
+    enrich_list = NULL,
+    enrich_category = "BP",
+    enrich_rank_by = "p.adjust",
+    enrich_top_n = 3,
     fontsize = 8,
     heatmap_width = 8,
     heatmap_height = 8,
@@ -195,14 +191,14 @@ plot_modules_h <- function(
     max_val <- max(mat, na.rm = TRUE)
 
     # GO terms of the specified category
-    if (!is.null(go_list[[go_category]])) {
-        termanno <- go_list[[go_category]] %>%
+    if (!is.null(enrich_list[[enrich_category]])) {
+        termanno <- enrich_list[[enrich_category]] %>%
             as.data.frame() %>%
             dplyr::mutate(id = as.character(Cluster)) %>%
             dplyr::filter(id %in% levels(data_module_long$Module)) %>%
             dplyr::group_by(id) %>%
-            dplyr::slice_min(order_by = .data[[go_rank_by]],
-                n = go_top_n, with_ties = FALSE) %>%
+            dplyr::slice_min(order_by = .data[[enrich_rank_by]],
+                n = enrich_top_n, with_ties = FALSE) %>%
             dplyr::mutate(term = Description) %>%
 
             dplyr::select(id, term)
@@ -275,9 +271,10 @@ plot_modules_h <- function(
             )
         )
     } else {
-        if (!is.null(go_list)) { # & is.null(go_list[[category]])
-            message("GO category '", go_category, "' not found in go_list, ",
-                "skipping GO term annotation")
+        if (!is.null(enrich_list)) { # & is.null(enrich_list[[category]])
+            message("GO category '", enrich_category, 
+                "' not found in enrich_list, ",
+                "skipping enrichment term annotation")
         }
 
         p <- ComplexHeatmap::Heatmap(mat,

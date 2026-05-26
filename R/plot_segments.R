@@ -32,17 +32,9 @@
 #' # no missing value in the example dataset, so imputation is not necessary
 #' example_obj_merged_imp_list <- impute_groups(example_obj_merged_list)
 #'
-#' # "untreated" group has only 3 time points, so Trendy analysis will not be
-#' # performed for this group
-#' # example_res_list <- run_Trendy(example_obj_merged_imp_list, maxK = 1,
-#' #     minNumInSeg = 2, meanCut = 0)
 #' data("example_res_list")
-#'
 #' plot_segments(example_obj_merged_imp_list, example_res_list,
 #'     feature = c("Mctp1"))
-#' plot_breakpoints(example_res_list)
-#' trendy_summary <- summarise_Trendy(example_res_list)
-#' trendy_list <- extract_segment_trends(trendy_summary)
 plot_segments <- function(se_obj_imp_list, res_list, feature,
     group = NULL, nrow = NULL, ...) {
     if (is.null(group)) {
@@ -56,7 +48,7 @@ plot_segments <- function(se_obj_imp_list, res_list, feature,
     for (i in group) {
         message("Plotting segmented regression for group: ", i)
         .plot_segments_one_group(se_obj_imp_list[[i]], res_list[[i]],
-            feature, group = i, nrow = NULL, ...)
+            feature, group = i, nrow = nrow, ...)
     }
 }
 

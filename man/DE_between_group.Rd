@@ -62,6 +62,12 @@ filtered DE results for each pair of groups based on the specified
 thresholds including only significant features. The function can also plot
 the number of DE features between groups over time.
 }
+\details{
+Only time points present in both groups are compared. No multiple-testing
+correction is applied across the pairwise group-by-time comparisons; each
+comparison is independent. Apply your own correction (e.g.,
+\code{stats::p.adjust()}) across combined results if needed.
+}
 \examples{
 data("example")
 example_obj <- normalise_to_start(example_obj)

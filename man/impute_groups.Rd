@@ -4,27 +4,31 @@
 \alias{impute_groups}
 \title{Impute missing values}
 \usage{
-impute_groups(se_obj_list, fun = min)
+impute_groups(se_obj_list, fun = min, impute_by = c("group", "subject"))
 }
 \arguments{
 \item{se_obj_list}{A list of SummarizedExperiment objects, created by
 \code{split_groups()} or \code{merge_replicates()}, each corresponds to one group
 of samples.}
 
-\item{fun}{Function applied to the non-NA values in each group to
-generate the replacement value. Default: \code{min}. Use
-\code{function(x) min(x) / 2} for half-minimum, \code{median} for median
-imputation, etc.}
+\item{fun}{Function applied to the non-NA values to generate the
+replacement value. Default: \code{min}. Use \code{function(x) min(x) / 2}
+for half-minimum, \code{median} for median imputation, etc.}
+
+\item{impute_by}{\code{"group"} (default): compute replacement value from
+all non-NA values in the group. \code{"subject"}: compute per-subject
+replacement value (requires Subject column). If a subject is all
+NA, fall back to group-level replacement.}
 }
 \value{
-A list of SummarizedExperiment objects with the missing values
-imputed for each group. Each object in the list corresponds to one group
-of samples.
+A list of SummarizedExperiment objects with missing values
+imputed. Each object corresponds to one group of samples.
 }
 \description{
 Impute missing values for each group of samples in a list of
 SummarizedExperiment objects. By default, replaces NA with the minimum
-value in the group. A custom function can be supplied for other strategies.
+non-NA value per group / subject.
+A custom function can be supplied for other strategies.
 
 The input samples can contain replicates, or merged replicates (mean of
 replicates).

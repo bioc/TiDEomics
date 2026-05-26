@@ -12,7 +12,7 @@ run_Trendy(
   maxK = 1,
   meanCut = 0,
   minNumInSeg = 3,
-  NCores = 2,
+  NCores = 1,
   ...
 )
 }

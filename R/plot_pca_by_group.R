@@ -133,6 +133,7 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
             arrows[which(arrows$Time == time_series[i + 1]), "y_start"]
     }
 
+    arrows <- arrows[!is.na(arrows$x_end), ]
     if (circle & arrow) {
         p1 <- pc %>%
             dplyr::mutate(Time = factor(Time, 

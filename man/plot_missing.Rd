@@ -37,7 +37,7 @@ colnames(na_data)[-1] <- paste0("Sample", 1:100)
 
 na_obj <- create_input(na_data,
     data.frame(Sample = paste0("Sample", 1:100),
-    Time = rep(rep(1:10, each = 5)), 2,
+    Time = rep(rep(1:10, each = 5), 2),
     Group = rep(c("A", "B"), each = 50),
     Replicate = rep(1:5, 20)))
 plot_ID(na_obj)

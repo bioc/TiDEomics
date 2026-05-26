@@ -8,8 +8,7 @@ test_that("plot_modules_v works", {
     example_obj_merged <- merge_groups(example_obj_merged_list)
 
     data(example_net)
-    example_module <- data.frame(Module = as.factor(example_net$colors)) %>%
-        tibble::rownames_to_column("Feature") %>% dplyr::arrange(Module)
+    example_module <- WGCNA_module(example_net) 
 
     pq <- plot_modules_v(example_module %>% dplyr::filter(Module != '0'),
         example_obj_merged, scale = TRUE,
