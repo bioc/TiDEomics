@@ -53,7 +53,7 @@ impute_groups <- function(se_obj_list, fun = min,
 
         # Report missing value status
         n_na <- sum(is.na(assays(input)[[1]]))
-        n_total <- length(assays(input)[[1]])
+        n_total <- length(as.matrix(assays(input)[[1]]))
         if (n_na > 0) {
             message(sprintf("Group %s: %d missing values (%.1f%%).",
                 i, n_na, 100 * n_na / n_total))
