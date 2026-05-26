@@ -37,6 +37,7 @@ run_WGCNA <- function(wgcna_input, power, numericLabels = TRUE, ...) {
     net <- WGCNA::blockwiseModules(wgcna_input$data,
         power = power,
         networkType = wgcna_input$networkType,
+        numericLabels = numericLabels,
         ...
     )
     cor <- stats::cor
