@@ -103,18 +103,13 @@ DE_between_group <- function(
             dropped1 <- setdiff(time_series_1, time_series_2)
             dropped2 <- setdiff(time_series_2, time_series_1)
             if (length(dropped1) > 0 || length(dropped2) > 0) {
-                msg <- sprintf(
-                "Comparing %s vs %s: time points only in %s: %s; only in %s: %s.",
-                cond2, 
-                cond1,
-                cond1, 
-                if (length(dropped1) > 0) 
-                    paste(dropped1, collapse = ", ") else "none",
-                cond2, 
-                if (length(dropped2) > 0) 
-                    paste(dropped2, collapse = ", ") else "none"
-                )
-                message(msg)
+                message("Comparing ", cond2, " vs ", cond1, 
+                    ": time points only in ", cond1, ": ",
+                    if (length(dropped1) > 0) 
+                        paste(dropped1, collapse = ", ") else "none",
+                    "; only in ", cond2, ": ",
+                    if (length(dropped2) > 0)                    
+                        paste(dropped2, collapse = ", ") else "none")
             }
             label_comparison <- paste0(cond2, "-", cond1)
             outlist_limma[[label_comparison]] <- list()

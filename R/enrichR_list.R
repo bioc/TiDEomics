@@ -25,7 +25,10 @@
 #' @param universe_list Background genes for each input gene set,
 #'   a list of gene vectors with the same names as `gene_list`.
 #' @param pvalueCutoff Adjusted p-value cutoff for filtering enriched
-#'   terms (default: 0.05).
+#'   terms (default: 0.05)
+#' @param include_overlap Parameter passed to `enrichR::enrichr()`. 
+#' If `TRUE`, databases are downloaded during each query to 
+#' output 'Overlap' when analysing with a background. (default: `FALSE`)
 #'
 #' @returns A named list of data.frames, one per database. Each data.frame
 #'   has columns `Cluster`, `Description`, `p.adjust` 
@@ -50,32 +53,20 @@ enrichR_list <- function(
     site = "Enrichr",
     universe = NULL,
     universe_list = NULL,
-    pvalueCutoff = 0.05
+    pvalueCutoff = 0.05,
+    include_overlap = FALSE
 ) {
     if (!requireNamespace("enrichR", quietly = TRUE)) {
         stop("Package 'enrichR' is required. Install with: ",
             "install.packages('enrichR')")
     }
-
-    old_site <- getOption("enrichR.base.address")
-
-    # enrichR stores all options in .onAttach, which requireNamespace skips.
-    # Set the minimum required options manually (mirrors .onAttach).
-    if (is.null(getOption("enrichR.quiet"))) {
-        options(enrichR.sites.base.address = "https://maayanlab.cloud/")
-        options(enrichR.live = TRUE)
-        options(enrichR.quiet = FALSE)
-        options(enrichR.sites = c("Enrichr", "FlyEnrichr", "WormEnrichr",
-            "YeastEnrichr", "FishEnrichr", "OxEnrichr"))
-    }
-
-    on.exit(options(enrichR.base.address = old_site), add = TRUE)
+    loadNamespace("enrichR")
+    getNamespace("enrichR")$.onAttach(NULL, "enrichR")
 
     site <- match.arg(site, c("Enrichr", "FlyEnrichr", "WormEnrichr",
         "YeastEnrichr", "FishEnrichr", "OxEnrichr"))
-    
-    options(enrichR.base.address = paste0(
-        "https://maayanlab.cloud/", site, "/"))
+
+    enrichR::setEnrichrSite(site)
 
     gene_list <- .prepare_gene_list(gene_list)
 
@@ -116,24 +107,29 @@ enrichR_list <- function(
         stop("Names of gene_list and universe_list must match.")
     }
 
-    # Collect results per database
+    # Query all databases per gene list to minimise API calls
     db_tables <- list()
-    for (db in databases) {
-        db_rows <- list()
-        for (i in names(gene_list)) {
-            if (length(gene_list[[i]]) == 0) next
-            enr <- enrichR::enrichr(gene_list[[i]],
-                databases = db,
-                background = universe_list[[i]]
-            )
+    for (i in names(gene_list)) {
+        if (length(gene_list[[i]]) == 0) next
+        enr <- enrichR::enrichr(gene_list[[i]],
+            databases = databases,
+            background = universe_list[[i]],
+            include_overlap = include_overlap
+        )
+        for (db in databases) {
             if (is.null(enr[[db]]) || nrow(enr[[db]]) == 0) next
-            db_rows[[i]] <- enr[[db]] %>%
-                dplyr::filter(Adjusted.P.value < pvalueCutoff) %>%
-                dplyr::mutate(Cluster = i)
+            db_tables[[db]] <- rbind(
+                db_tables[[db]],
+                enr[[db]] %>%
+                    dplyr::filter(Adjusted.P.value < pvalueCutoff) %>%
+                    dplyr::mutate(Cluster = i)
+            )
         }
-        if (length(db_rows) == 0) next
-        db_tables[[db]] <- do.call(rbind, db_rows) %>%
-            dplyr::rename(Description = Term, 
+    }
+
+    for (db in names(db_tables)) {
+        db_tables[[db]] <- db_tables[[db]] %>%
+            dplyr::rename(Description = Term,
                         p.adjust = Adjusted.P.value) %>%
             dplyr::select(Cluster, Description, p.adjust,
                 Odds.Ratio, Combined.Score, Genes,

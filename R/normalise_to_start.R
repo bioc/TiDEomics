@@ -74,7 +74,8 @@ normalise_to_start <- function(se_obj, by_subject = FALSE) {
     } else {
         # ---- Group-level normalisation (original behaviour) ----
         message(
-            "Normalising to group baseline at each feature's first non-NA time point."
+            "Normalising to group baseline at each feature's ",
+            "first non-NA time point."
         )
 
         for (i in unique(colData(se_obj)$Group)) {
@@ -105,9 +106,11 @@ normalise_to_start <- function(se_obj, by_subject = FALSE) {
                 na.rm = TRUE
             )
             if (n_later > 0) {
-                message(sprintf(
-                    "Group %s: %d feature(s) have first non-NA at a later time point (not time 0).",
-                    i, n_later))
+                message(
+                    "Group ", i, ": ", n_later, 
+                    " feature(s) used first non-NA ",
+                    "at a later time point to normalise (not time 0)."
+                )
             }
 
             d_list_0norm[[as.character(i)]] <- sweep(assays(input)[[1]],

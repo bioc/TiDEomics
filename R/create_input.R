@@ -71,7 +71,8 @@ create_input <- function(data, sample_ann, subject_col = NULL) {
             dplyr::summarise(n_tp = dplyr::n_distinct(Time), .groups = "drop")
         n_groups_per_subj <- sample_ann %>%
             dplyr::group_by(Subject) %>%
-            dplyr::summarise(n_grp = dplyr::n_distinct(Group), .groups = "drop")
+            dplyr::summarise(n_grp = dplyr::n_distinct(Group), 
+                .groups = "drop")
 
         message(sprintf(
             "Subject column '%s' recognized:", subject_col
@@ -113,7 +114,8 @@ create_input <- function(data, sample_ann, subject_col = NULL) {
 
     # ---- Replicate handling ----
     if (!("Replicate" %in% names(sample_ann))) {
-        message("No 'Replicate' column provided. Auto-generating replicate IDs.")
+        message("No 'Replicate' column provided. ",
+            "Auto-generating replicate IDs.")
         if ("Subject" %in% names(sample_ann)) {
             sample_ann <- sample_ann %>%
                 dplyr::group_by(Subject, Group, Time) %>%

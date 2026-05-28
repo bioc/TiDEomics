@@ -10,7 +10,8 @@ enrichR_list(
   site = "Enrichr",
   universe = NULL,
   universe_list = NULL,
-  pvalueCutoff = 0.05
+  pvalueCutoff = 0.05,
+  include_overlap = FALSE
 )
 }
 \arguments{
@@ -33,7 +34,11 @@ used if \code{universe_list} is not provided.}
 a list of gene vectors with the same names as \code{gene_list}.}
 
 \item{pvalueCutoff}{Adjusted p-value cutoff for filtering enriched
-terms (default: 0.05).}
+terms (default: 0.05)}
+
+\item{include_overlap}{Parameter passed to \code{enrichR::enrichr()}.
+If \code{TRUE}, databases are downloaded during each query to
+output 'Overlap' when analysing with a background. (default: \code{FALSE})}
 }
 \value{
 A named list of data.frames, one per database. Each data.frame
