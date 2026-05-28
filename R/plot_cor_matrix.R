@@ -38,7 +38,7 @@ plot_cor_matrix <- function(
     title = "Correlation between samples",
     ...
 ) {
-    if (is.null(method) | length(method) != 1) {
+    if (is.null(method) || length(method) != 1) {
         method <- "spearman"
     } else if (!method %in% c("spearman", "pearson", "kendall")) {
         stop("Invalid correlation method. Please choose one of 'spearman', ",

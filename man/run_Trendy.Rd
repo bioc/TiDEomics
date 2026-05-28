@@ -41,7 +41,7 @@ required for a feature to be included in the analysis (default is 0)}
 \item{minNumInSeg}{Parameter of \code{Trendy::trendy()}, minimum number of
 samples required in each segment (default is 3)}
 
-\item{NCores}{Number of cores to use for parallel processing (default is 2)}
+\item{NCores}{Number of cores to use for parallel processing (default is 1)}
 
 \item{...}{Additional arguments to be passed to the \code{Trendy::trendy()}}
 }

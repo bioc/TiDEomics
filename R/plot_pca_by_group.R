@@ -134,7 +134,7 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
     }
 
     arrows <- arrows[!is.na(arrows$x_end), ]
-    if (circle & arrow) {
+    if (circle && arrow) {
         p1 <- pc %>%
             dplyr::mutate(Time = factor(Time, 
                 levels = unique(pc$Time) %>% sort())) %>%
@@ -144,8 +144,8 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
                     x = x_start, y = y_start,
                     xend = x_end, yend = y_end
                 ),
-                arrow = arrow(length = unit(0.25, "cm")), alpha = 0.75,
-                color = "black"
+                arrow = arrow(length = unit(0.25, "cm")),
+                alpha = 0.75, color = "black"
             ) +
             geom_point(size = 3) +
             ggforce::geom_mark_ellipse(aes(fill = Time),

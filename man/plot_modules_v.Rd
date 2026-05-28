@@ -27,7 +27,7 @@ plot_modules_v(
 feature at each time point in each group (replicates merged). The colData of
 the object should contain columns "Sample", "Group", and "Time". The object
 can be produced by \code{split_groups()}, \code{merge_replicates()} and
-\code{merge_group()}.}
+\code{merge_groups()}.}
 
 \item{scale}{Whether to scale the data (z-score) across samples for each
 feature (default is TRUE)}

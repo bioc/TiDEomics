@@ -62,7 +62,7 @@ impute_groups <- function(se_obj_list, fun = min,
         }
 
         assay_list <- list()
-        for (assay in seq(1, length(assays(input)))) {
+        for (assay in seq_along(assays(input))) {
             M_na <- assays(input)[[assay]]
             M_imp <- M_na
 

@@ -1,4 +1,4 @@
-# Tests for plotting functions — validate returns and no-error behavior
+# Tests for plotting functions - validate returns and no-error behavior
 
 test_that("plot_variance returns ggplot", {
     data("example")
@@ -18,10 +18,9 @@ test_that("plot_trend with errorbar prints without error", {
     se <- normalise_to_start(example_obj)
     tbl <- calc_mean_sd(se)
 
-    expect_error(
+    expect_no_error(
         plot_trend(tbl$orig,
-            features = head(unique(tbl$orig$Feature), 3)),
-        NA
+            features = head(unique(tbl$orig$Feature), 3))
     )
 })
 
@@ -30,11 +29,10 @@ test_that("plot_trend without errorbar prints without error", {
     se <- normalise_to_start(example_obj)
     tbl <- calc_mean_sd(se)
 
-    expect_error(
+    expect_no_error(
         plot_trend(tbl$orig,
             features = head(unique(tbl$orig$Feature), 3),
-            errorbar = FALSE),
-        NA
+            errorbar = FALSE)
     )
 })
 
@@ -44,20 +42,18 @@ test_that("plot_trend with specified groups and title", {
     tbl <- calc_mean_sd(se)
     grp <- as.character(unique(tbl$orig$Group)[1])
 
-    expect_error(
+    expect_no_error(
         plot_trend(tbl$orig,
             features = head(unique(tbl$orig$Feature), 2),
-            groups = grp, title = "Test", ylab = "Value"),
-        NA
+            groups = grp, title = "Test", ylab = "Value")
     )
 })
 
 test_that("plot_cor_matrix runs without error", {
     data("example")
     se <- normalise_to_start(example_obj)
-    expect_error(
-        plot_cor_matrix(se, method = "spearman"),
-        NA
+    expect_no_error(
+        plot_cor_matrix(se, method = "spearman")
     )
 })
 
@@ -116,33 +112,30 @@ test_that("plot_pca with plot=FALSE returns data", {
 test_that("plot_pca with plot=TRUE runs", {
     data("example")
     se <- normalise_to_start(example_obj)
-    expect_error(
+    expect_no_error(
         plot_pca(se, plot = TRUE, plot_screeplot = FALSE,
             plot_loadings = FALSE, plot_morepc = FALSE,
-            circle = FALSE),
-        NA
+            circle = FALSE)
     )
 })
 
 test_that("plot_pca with circle=TRUE runs", {
     data("example")
     se <- normalise_to_start(example_obj)
-    expect_error(
+    expect_no_error(
         plot_pca(se, plot = TRUE, plot_screeplot = FALSE,
             plot_loadings = FALSE, plot_morepc = FALSE,
-            circle = TRUE),
-        NA
+            circle = TRUE)
     )
 })
 
 test_that("plot_pca with screeplot and loadings", {
     data("example")
     se <- normalise_to_start(example_obj)
-    expect_error(
+    expect_no_error(
         plot_pca(se, plot = TRUE, plot_screeplot = TRUE,
             plot_loadings = TRUE, plot_morepc = FALSE,
-            circle = FALSE),
-        NA
+            circle = FALSE)
     )
 })
 
@@ -159,18 +152,16 @@ test_that("plot_umap with plot=FALSE returns data", {
 test_that("plot_umap with circle=TRUE runs without error", {
     data("example")
     se <- normalise_to_start(example_obj)
-    expect_error(
-        plot_umap(se, circle = TRUE, seed = 42),
-        NA
+    expect_no_error(
+        plot_umap(se, circle = TRUE, seed = 42)
     )
 })
 
 test_that("plot_umap with plot_ID=TRUE runs without error", {
     data("example")
     se <- normalise_to_start(example_obj)
-    expect_error(
-        plot_umap(se, plot_ID = TRUE, seed = 42),
-        NA
+    expect_no_error(
+        plot_umap(se, plot_ID = TRUE, seed = 42)
     )
 })
 
@@ -179,9 +170,8 @@ test_that("plot_pca_3D runs without error", {
     se <- normalise_to_start(example_obj)
     pca_res <- plot_pca(se, plot = FALSE, plot_screeplot = FALSE,
         plot_loadings = FALSE, plot_morepc = FALSE)
-    expect_error(
-        plot_pca_3D(pca_res, pcs = 1:3),
-        NA
+    expect_no_error(
+        plot_pca_3D(pca_res, pcs = 1:3)
     )
 })
 
@@ -201,9 +191,8 @@ test_that("plot_DE_between_time runs", {
     data("example")
     se <- normalise_to_start(example_obj)
     de_out <- suppressMessages(DE_between_time(se, assay = 1, filter = 1))
-    expect_error(
-        plot_DE_between_time(se, de_list = de_out$de_list, fontsize = 8),
-        NA
+    expect_no_error(
+        plot_DE_between_time(se, de_list = de_out$de_list, fontsize = 8)
     )
 })
 

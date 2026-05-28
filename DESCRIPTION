@@ -62,7 +62,7 @@ Suggests:
     rmarkdown,
     BiocStyle,
     sessioninfo,
-    testthat,
+    testthat (>= 3.1.0),
     plotly,
     enrichR,
     org.Hs.eg.db,

@@ -29,7 +29,7 @@ interaction variance. Default: FALSE.}
 
 \item{assay}{1 for original data, or 2 for data normalised to time 0}
 
-\item{core}{Number of cores for parallel processing (default: 2)}
+\item{core}{Number of cores for parallel processing (default: 1)}
 }
 \value{
 A data frame with variance decomposition results (percentages).

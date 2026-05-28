@@ -45,16 +45,20 @@ test_that("plot_volcano works", {
         group2 = "IFNbeta", time = 24, label = TRUE)
 
     expect_error(plot_volcano(DE_between_group_out, group1 = "untreated",
-        group2 = "IFNbeta", time = 30))
+        group2 = "IFNbeta", time = 30),
+        "No DE results found")
 
     expect_error(plot_volcano(DE_between_group_out, group1 = "untreated",
-        group2 = "Nonexisiting", time = 24))
+        group2 = "Nonexisiting", time = 24),
+        "No DE results found")
 
     expect_error(plot_volcano(DE_between_group_out, group = "untreated",
-        group2 = "IFNbeta", time = 24))
+        group2 = "IFNbeta", time = 24),
+        "provide either")
 
     expect_error(plot_volcano(DE_between_group_out, group1 = "untreated",
-        group2 = "IFNbeta", time1 = 24))
+        group2 = "IFNbeta", time1 = 24),
+        "provide either")
 
     DE_between_time_out <- DE_between_time(example_obj, assay = 1)
 
@@ -65,14 +69,18 @@ test_that("plot_volcano works", {
         time2 = 24)
 
     expect_error(plot_volcano(DE_between_time_out, group = "IFNbeta", time1 = 0,
-        time2 = 30))
+        time2 = 30),
+        "No DE results found")
 
     expect_error(plot_volcano(DE_between_time_out, group = "Nonexisting",
-        time1 = 0, time2 = 24))
+        time1 = 0, time2 = 24),
+        "No DE results found")
 
     expect_error(plot_volcano(DE_between_time_out, group1 = "IFNbeta",
-        time1 = 0, time2 = 24))
+        time1 = 0, time2 = 24),
+        "provide either")
 
     expect_error(plot_volcano(DE_between_time_out, group = "IFNbeta",
-        time = 0, time2 = 24))
+        time = 0, time2 = 24),
+        "provide either")
 })

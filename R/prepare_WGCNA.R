@@ -62,6 +62,7 @@ prepare_WGCNA <- function(
 
     .cor_orig <- cor
     cor <- WGCNA::cor
+    on.exit(cor <- .cor_orig)
     sft <- WGCNA::pickSoftThreshold(data_wgcna,
         powerVector = powers,
         verbose = 5,
@@ -69,7 +70,6 @@ prepare_WGCNA <- function(
         RsquaredCut = RsquaredCut,
         ...
     )
-    cor <- .cor_orig
 
     # for reuse in `run_WGCNA()`
     sft$data <- data_wgcna

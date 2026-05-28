@@ -49,7 +49,7 @@ plot_GO <- function(
     ...
 ) {
     if (length(intersect(names(go_list), c("BP", "MF", "CC"))) == 0) {
-        if ("all" %in% names(go_list) | "simplified" %in% names(go_list)) {
+        if ("all" %in% names(go_list) || "simplified" %in% names(go_list)) {
             stop("The input list contains 'all' or 'simplified' sublists. ",
             "Please specify one of them, e.g. go_list$all, ",
             "to visualize the GO enrichment results.")
@@ -60,7 +60,7 @@ plot_GO <- function(
         }
     }
 
-    if (!plot_dotplot & !plot_cnetplot & !plot_emapplot) {
+    if (!plot_dotplot && !plot_cnetplot && !plot_emapplot) {
         message("Please specify at least one plot type to visualize ",
         "the GO enrichment results.")
     }

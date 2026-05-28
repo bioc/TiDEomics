@@ -74,5 +74,5 @@ test_that("prepare_WGCNA validates assay index", {
 
 test_that("plot_WGCNA runs without error", {
     data("example_net")
-    expect_error(plot_WGCNA(example_net, fontsize = 8), NA)
+    expect_no_error(plot_WGCNA(example_net, fontsize = 8))
 })

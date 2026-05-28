@@ -31,9 +31,9 @@
 #' output 'Overlap' when analysing with a background. (default: `FALSE`)
 #'
 #' @returns A named list of data.frames, one per database. Each data.frame
-#'   has columns `Cluster`, `Description`, `p.adjust` 
+#'   has columns `Cluster`, `Description`, `p.adjust`
 #'   (Adjusted.P.value from enrichR output),
-#'   `Odds.Ratio`, `Combined.Score`, `Genes`, and any additional
+#'   `Combined.Score`, `Genes`, and any additional
 #'   columns returned by the enrichR API. Compatible with
 #'   `plot_modules_h(enrich_list = result, enrich_category = "DSigDB")`.
 #' @export
@@ -92,7 +92,7 @@ enrichR_list <- function(
         stop("None of the requested databases are available.")
     }
 
-    if (!is.null(universe) & !is.null(universe_list)) {
+    if (!is.null(universe) && !is.null(universe_list)) {
         stop("Please provide only one of universe or universe_list.")
     }
 
@@ -104,6 +104,10 @@ enrichR_list <- function(
         } else {
             universe_list <- lapply(gene_list, function(x) universe)
         }
+    }
+
+    if (!is.null(universe_list) && is.null(names(universe_list))) {
+        stop("Input universe_list must be a named list.")
     }
 
     if (!is.null(names(universe_list)) &&

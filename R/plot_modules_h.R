@@ -14,7 +14,7 @@
 #' feature at each time point in each group (replicates merged). The colData of
 #' the object should contain columns "Sample", "Group", and "Time". The object
 #' can be produced by `split_groups()`, `merge_replicates()` and
-#' `merge_group()`.
+#' `merge_groups()`.
 #' @param assay The assay index in the SummarizedExperiment object to use
 #' (default is 2, time 0 normalised data)
 #' @param scale Whether to scale the data (z-score) across samples for each
@@ -22,7 +22,9 @@
 #' @param ylabel Y axis label prefix (default is "Abundance")
 #' @param suffix Suffix for the saved image file name (default is an empty
 #' string)
-#' @param device Image file format for saving (default is "png")
+#' @param device Image file format(s) for saving. Can be a character
+#'   vector with one or more of `"png"`, `"pdf"`, `"tiff"`, `"jpeg"`
+#'   (default: `"png"`)
 #' @param save Directory to save the plot, no saving if is NULL
 #' (default is NULL)
 #' @param profile_width Width of the mean expression profile plot
@@ -89,7 +91,7 @@ plot_modules_h <- function(
     assay = 2,
     ylabel = "Log2 abundance",
     suffix = "",
-    device = c("png", "pdf", "tiff", "jpeg"),
+    device = "png",
     save = NULL,
     profile_width = 3,
     profile_link_width = 1,
@@ -349,6 +351,7 @@ plot_modules_h <- function(
                 message("Unsupported device: ", ext, ", skipping.")
                 next
             }
+            on.exit(try(grDevices::dev.off(), silent = TRUE), add = TRUE)
             grid::grid.draw(p)
             grDevices::dev.off()
         }

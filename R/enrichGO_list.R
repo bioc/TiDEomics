@@ -81,7 +81,7 @@ enrichGO_list <- function(gene_list, keyType = "SYMBOL",
 
     gene_list <- .prepare_gene_list(gene_list)
 
-    if (!is.null(universe) & !is.null(universe_list)) {
+    if (!is.null(universe) && !is.null(universe_list)) {
         stop("Please provide only one of universe or universe_list.")
     }
 

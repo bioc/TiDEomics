@@ -35,52 +35,33 @@ plot_trend <- function(table_mean_sd, groups = NULL, features,
         message(sprintf("Group not specified. Plotting all groups: %s",
             paste(groups, collapse = ", ")))
     } else if (!all(groups %in% unique(table_mean_sd$Group))) {
-        stop("At least one of the specified groups is not found in the input.")
+        stop("At least one of the specified groups is not found ",
+            "in the input.")
     }
 
+    p <- table_mean_sd %>%
+        dplyr::filter(Group %in% groups & Feature %in% features) %>%
+        dplyr::mutate(Feature = factor(Feature, levels = features)) %>%
+        ggplot(aes(x = Time, y = Mean, group = Group, color = Group)) +
+        geom_line(linewidth = 0.7) +
+        geom_point(size = 0.3) +
+        scale_color_manual(values = get_custom_palette(groups)) +
+        theme_custom(
+            panel_border = TRUE, legend_position = "bottom",
+            base_size = fontsize
+        ) +
+        ggtitle(paste0(title, " in ", paste(groups, collapse = ", "))) +
+        xlab("Time") +
+        ylab(ylab) +
+        facet_wrap(~Feature, scales = "free_y")
+
     if (errorbar) {
-        p <- table_mean_sd %>%
-            dplyr::filter(Group %in% groups & Feature %in% features) %>%
-            # dplyr::filter(!is.na(Mean)) %>% 
-            # filtering out will make non-NA points directly connected
-            # by the input order
-            dplyr::mutate(Feature = factor(Feature, levels = features)) %>%
-            ggplot(aes(x = Time, y = Mean, group = Group, color = Group)) +
-            geom_line(linewidth = 0.7) +
-            geom_point(size = 0.3) +
-            geom_errorbar(aes(ymin = Mean - SD, ymax = Mean + SD),
-                width = 0.5,
-                linewidth = 0.7,
-                position = position_dodge(0.05),
-            ) +
-            scale_color_manual(values = get_custom_palette(groups)) +
-            theme_custom(
-                panel_border = TRUE, legend_position = "bottom",
-                base_size = fontsize
-            ) +
-            ggtitle(paste0(title, " in ", paste(groups, collapse = ", "))) +
-            xlab("Time") +
-            ylab(ylab) +
-            facet_wrap(~Feature, scales = "free_y")
-    } else {
-        p <- table_mean_sd %>%
-            dplyr::filter(Group %in% groups & Feature %in% features) %>%
-            # dplyr::filter(!is.na(Mean)) %>% 
-            # filtering out will make non-NA points directly connected
-            # by the input order
-            dplyr::mutate(Feature = factor(Feature, levels = features)) %>%
-            ggplot(aes(x = Time, y = Mean, group = Group, color = Group)) +
-            geom_line(linewidth = 0.7) +
-            geom_point(size = 0.3) +
-            scale_color_manual(values = get_custom_palette(groups)) +
-            theme_custom(
-                panel_border = TRUE, legend_position = "bottom",
-                base_size = fontsize
-            ) +
-            ggtitle(paste0(title, " in ", paste(groups, collapse = ", "))) +
-            xlab("Time") +
-            ylab(ylab) +
-            facet_wrap(~Feature, scales = "free_y")
+        p <- p + geom_errorbar(aes(ymin = Mean - SD, ymax = Mean + SD),
+            width = 0.5,
+            linewidth = 0.7,
+            position = position_dodge(0.05)
+        )
     }
+
     print(p)
 }

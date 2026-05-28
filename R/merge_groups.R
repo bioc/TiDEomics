@@ -26,7 +26,7 @@ merge_groups <- function(se_obj_list) {
         se_obj <- se_obj_list[[i]]
 
         # assay data
-        for (j in seq(1, length(assays(se_obj)))) {
+        for (j in seq_along(assays(se_obj))) {
             df <- assays(se_obj)[[j]]
             colnames(df) <- paste0(i, "_", colnames(df))
 

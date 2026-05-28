@@ -300,7 +300,8 @@ Please note that the example data only has two replicates per time point. More r
 DE_between_time():
 
 ```{r de-between-time, fig.width = 8, fig.height = 2, warning = FALSE}
-DE_between_time_out <- DE_between_time(data_obj, assay = 1, filter = 1, trend = TRUE)
+DE_between_time_out <- DE_between_time(data_obj, assay = 1,
+    filter = 1, trend = TRUE)
 ```
 
 ```{r de-between-time-all}
@@ -321,7 +322,8 @@ plot_DE_between_time(data_obj,
 DE_between_group():
 
 ```{r de-between-group, fig.width = 3, fig.height = 2, out.width = "70%"}
-DE_between_group_out <- DE_between_group(data_obj, assay = 2, filter = 1, trend = TRUE)
+DE_between_group_out <- DE_between_group(data_obj, assay = 2,
+    filter = 1, trend = TRUE)
 ```
 
 ```{r de-between-group-all}
@@ -627,7 +629,8 @@ plot_trend(table_mean_sd_orig,
 
 plot_trend(table_mean_sd_orig,
     features = var_decomp %>%
-        dplyr::arrange(dplyr::desc(Residual)) %>% head(12) %>% dplyr::pull(Feature),
+        dplyr::arrange(dplyr::desc(Residual)) %>%
+        head(12) %>% dplyr::pull(Feature),
     title = "Features with highest residual variance"
 )
 ```

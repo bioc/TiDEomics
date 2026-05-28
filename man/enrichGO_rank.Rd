@@ -45,7 +45,7 @@ BP, MF, CC)}
 \item{...}{additional arguments passed to \code{clusterProfiler::gseGO()}}
 }
 \value{
-A list of \code{gseaResult}objects containing the GSEA results
+A list of \code{gseaResult} objects containing the GSEA results
 }
 \description{
 Gene ontology enrichment analysis of a ranked gene list

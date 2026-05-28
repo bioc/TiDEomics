@@ -22,7 +22,7 @@
 #' (default is "BH")
 #' @param ... additional arguments passed to `clusterProfiler::gseGO()`
 #'
-#' @returns A list of `gseaResult`objects containing the GSEA results
+#' @returns A list of `gseaResult` objects containing the GSEA results
 #' @export
 #'
 #' @examples

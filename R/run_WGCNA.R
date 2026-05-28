@@ -35,13 +35,13 @@ run_WGCNA <- function(wgcna_input, power, numericLabels = TRUE, ...) {
 
     .cor_orig <- cor
     cor <- WGCNA::cor
+    on.exit(cor <- .cor_orig)
     net <- WGCNA::blockwiseModules(wgcna_input$data,
         power = power,
         networkType = wgcna_input$networkType,
         numericLabels = numericLabels,
         ...
     )
-    cor <- .cor_orig
 
     net$input_data <- wgcna_input$data
     net$sample_info <- wgcna_input$sample_info # colData(se_obj)

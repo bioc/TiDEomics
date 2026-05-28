@@ -3,8 +3,6 @@
 #'
 #' @param res_list A list of Trendy analysis results, output of `run_Trendy()`
 #' @param ... Additional arguments to be passed to the `Trendy::topTrendy()`
-
-#' @import magrittr
 #'
 #' @returns A data frame of summary results of Trendy, including breakpoints,
 #' segment slopes and p-values for each fitted feature in each group. A

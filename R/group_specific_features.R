@@ -81,14 +81,20 @@ group_specific_features <- function(
         }
     }
 
-    if (genename | GO) {
-        if (is.null(OrgDb) | is.null(keytype)) {
+    if (genename || GO) {
+        if (is.null(OrgDb) || is.null(keytype)) {
             stop("Both 'OrgDb' and 'keytype' must be provided when ",
             "'genename' or 'GO' is TRUE.")
         }
     }
 
     threshold <- property_random_fc$Exp_threshold %>% unique()
+    if (length(threshold) > 1) {
+        stop("Multiple Exp_threshold values found across groups. ",
+            "All groups should use the same threshold in ",
+            "calc_feature_property().")
+    }
+
 
     # count of included expressed groups for each feature
     filter_count_groups <- property_random_fc %>%
@@ -137,7 +143,7 @@ group_specific_features <- function(
         return(NULL)
     }
 
-    if (genename & length(unique_genes) > 0) {
+    if (genename && length(unique_genes) > 0) {
         unique_genes %>%
             clusterProfiler::bitr(
                 fromType = keytype, toType = c(keytype, "GENENAME"),
@@ -157,7 +163,7 @@ group_specific_features <- function(
             print()
     }
 
-    if (GO == TRUE & length(unique_genes) > 0) {
+    if (GO == TRUE && length(unique_genes) > 0) {
         unique_genes_go <- enrichGO_list(list("Unique" = unique_genes),
             OrgDb = OrgDb,
             universe = property_random_fc$Feature,

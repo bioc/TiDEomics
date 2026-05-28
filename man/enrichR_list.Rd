@@ -44,7 +44,7 @@ output 'Overlap' when analysing with a background. (default: \code{FALSE})}
 A named list of data.frames, one per database. Each data.frame
 has columns \code{Cluster}, \code{Description}, \code{p.adjust}
 (Adjusted.P.value from enrichR output),
-\code{Odds.Ratio}, \code{Combined.Score}, \code{Genes}, and any additional
+\code{Combined.Score}, \code{Genes}, and any additional
 columns returned by the enrichR API. Compatible with
 \code{plot_modules_h(enrich_list = result, enrich_category = "DSigDB")}.
 }

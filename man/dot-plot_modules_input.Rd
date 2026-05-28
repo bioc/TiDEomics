@@ -13,7 +13,7 @@
 feature at each time point in each group (replicates merged). The colData of
 the object should contain columns "Sample", "Group", and "Time". The object
 can be produced by \code{split_groups()}, \code{merge_replicates()} and
-\code{merge_group()}.}
+\code{merge_groups()}.}
 
 \item{assay}{The assay index in the SummarizedExperiment object to use}
 

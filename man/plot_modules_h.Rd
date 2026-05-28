@@ -11,7 +11,7 @@ plot_modules_h(
   assay = 2,
   ylabel = "Log2 abundance",
   suffix = "",
-  device = c("png", "pdf", "tiff", "jpeg"),
+  device = "png",
   save = NULL,
   profile_width = 3,
   profile_link_width = 1,
@@ -34,7 +34,7 @@ plot_modules_h(
 feature at each time point in each group (replicates merged). The colData of
 the object should contain columns "Sample", "Group", and "Time". The object
 can be produced by \code{split_groups()}, \code{merge_replicates()} and
-\code{merge_group()}.}
+\code{merge_groups()}.}
 
 \item{scale}{Whether to scale the data (z-score) across samples for each
 feature (default is TRUE)}
@@ -47,7 +47,9 @@ feature (default is TRUE)}
 \item{suffix}{Suffix for the saved image file name (default is an empty
 string)}
 
-\item{device}{Image file format for saving (default is "png")}
+\item{device}{Image file format(s) for saving. Can be a character
+vector with one or more of \code{"png"}, \code{"pdf"}, \code{"tiff"}, \code{"jpeg"}
+(default: \code{"png"})}
 
 \item{save}{Directory to save the plot, no saving if is NULL
 (default is NULL)}

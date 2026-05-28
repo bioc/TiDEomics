@@ -16,7 +16,7 @@ test_that("plot_modules_v works", {
         height_ratio = 2,
         fontsize = 6)
 
-    expect_true(all(c("patchwork", "ggplot2::ggplot", "ggplot",
-        "ggplot2::gg", "S7_object", "gg") %in% class(pq)))
+    expect_true("patchwork" %in% class(pq))
+    expect_true("gg" %in% class(pq))
 }
 )

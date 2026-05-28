@@ -11,7 +11,7 @@ utils::globalVariables(c(
     "Exp_ratio", "SYMBOL", "CV", "value", "Missing",
     "Adjusted.P.value", "name", ".", "Breakpoint", "Freq", "Color",
     "Database", "MeanConn", "Power", "SignedR2",
-    "Combined.Score", "Genes", "Odds.Ratio", "Term"
+    "Combined.Score", "Genes", "Term"
 ))
 
 #' Custom ggplot2 theme
@@ -26,6 +26,8 @@ utils::globalVariables(c(
 #' @param legend_position Legend position (default: "right").
 #'
 #' @return A ggplot2 theme object.
+#' @import ggplot2
+
 #' @export
 #'
 #' @examples

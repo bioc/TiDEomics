@@ -57,7 +57,7 @@ DE_between_time <- function(se_obj, group = NULL, filter = NULL,
         "time points: ", filter)
     }
 
-    if (length(assay) > 1 | is.null(assay)) {
+    if (length(assay) > 1 || is.null(assay)) {
         assay <- 1
         message("Using assay 1 (original data) for DE analysis.")
     } else if (!(assay %in% seq_along(assays(se_obj)))) {
@@ -91,7 +91,7 @@ DE_between_time <- function(se_obj, group = NULL, filter = NULL,
                         rowSums(!is.na(assays(d_cond2)[[assay]])) %>% 
                         as.data.frame()
 
-                    if (filter > dim(assays(d_cond1)[[assay]])[2] | 
+                    if (filter > dim(assays(d_cond1)[[assay]])[2] ||
                         filter > dim(assays(d_cond2)[[assay]])[2]) {
                         stop("Filter value is larger than the number of ", 
                         "replicates in one or both conditions.")

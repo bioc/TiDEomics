@@ -12,7 +12,7 @@
 #' feature at each time point in each group (replicates merged). The colData of
 #' the object should contain columns "Sample", "Group", and "Time". The object
 #' can be produced by `split_groups()`, `merge_replicates()` and
-#' `merge_group()`.
+#' `merge_groups()`.
 #' @param scale Whether to scale the data (z-score) across samples for each
 #' feature
 #' @param assay The assay index in the SummarizedExperiment object to use

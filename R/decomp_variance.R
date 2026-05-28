@@ -27,7 +27,7 @@
 #'   `(1|Subject:Time)` when Subject present) to the model to capture
 #'   interaction variance. Default: FALSE.
 #' @param assay 1 for original data, or 2 for data normalised to time 0
-#' @param core Number of cores for parallel processing (default: 2)
+#' @param core Number of cores for parallel processing (default: 1)
 #'
 #' @import SummarizedExperiment
 #' @import magrittr
@@ -174,6 +174,7 @@ decomp_variance <- function(
 
     rowN <- row.names(mat)
     op <- pbapply::pboptions(type = "none")
+    on.exit(pbapply::pboptions(op))
 
     lmem_res <- pbapply::pblapply(seq_len(length(rowN)), cl = core,
         function(gn) {

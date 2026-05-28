@@ -39,7 +39,7 @@ merge_replicates <- function(se_obj_list) {
         input <- se_obj_list[[i]]
 
         assay_list <- list()
-        for (assay in seq(1, length(assays(input)))) {
+        for (assay in seq_along(assays(input))) {
             d_mean <- data.frame(row.names = row.names(input))
 
             for (j in sort(unique(colData(input)$Time))) {

@@ -35,7 +35,7 @@
 #' required for a feature to be included in the analysis (default is 0)
 #' @param minNumInSeg Parameter of `Trendy::trendy()`, minimum number of
 #' samples required in each segment (default is 3)
-#' @param NCores Number of cores to use for parallel processing (default is 2)
+#' @param NCores Number of cores to use for parallel processing (default is 1)
 #' @param ... Additional arguments to be passed to the `Trendy::trendy()`
 #'
 #' @import SummarizedExperiment
@@ -130,7 +130,7 @@ run_Trendy <- function(se_obj_imp_list, group = NULL,
 #' required for a feature to be included in the analysis (default is 0)
 #' @param minNumInSeg Parameter of `Trendy::trendy()`, minimum number of
 #' samples required in each segment (default is 3)
-#' @param NCores Number of cores to use for parallel processing (default is 2)
+#' @param NCores Number of cores to use for parallel processing (default is 1)
 #' @param ... Additional arguments to be passed to the `Trendy::trendy()`
 #'
 #' @import SummarizedExperiment
@@ -148,7 +148,8 @@ run_Trendy <- function(se_obj_imp_list, group = NULL,
         group <- se_obj_imp$Group %>% unique()
         message("Trendy analysis is not performed for group ", group,
             ": number of time points (", n_time_points,
-            ") less than 2 * minNumInSeg")
+            ") less than required ((maxK + 1) * minNumInSeg = ",
+            ((maxK + 1) * minNumInSeg))
         return(NULL)
     }
 

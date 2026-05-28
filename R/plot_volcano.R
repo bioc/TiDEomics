@@ -52,17 +52,23 @@ plot_volcano <- function(DE_out,
     logFC_thres = NULL, adjP_thres = NULL,
     label = FALSE, fontsize = 8, ...) {
 
-    if (!("all_list" %in% names(DE_out)) | !("de_list" %in% names(DE_out))) {
+    if (!("all_list" %in% names(DE_out)) || !("de_list" %in% names(DE_out))) {
         stop("DE_out must be the output of DE_between_group() or ",
             "DE_between_time()")
     }
+    n_params_1 <- sum(!c(missing(group1), missing(group2), missing(time)))
+    n_params_2 <- sum(!c(missing(group), missing(time1), missing(time2)))
+    if (n_params_1 == 3 && n_params_2 == 0) {
+        de_analysis_type <- "DE_between_group"
+    } else if (n_params_1 == 0 && n_params_2 == 3) {
+        de_analysis_type <- "DE_between_time"
+    } else {
+        stop("Please provide either 'group1', 'group2', and 'time' for ",
+            "output of DE_between_group(), or ",
+            "'group', 'time1', and 'time2' for output of DE_between_time().")
+    }
 
-    if (missing(group) | missing(time1) | missing(time2)) {
-        if (missing(group1) | missing(group2) | missing(time)) {
-            stop("Please provide either 'group', 'time1', and 'time2' for ",
-            "output of DE_between_time(), or ",
-            "'group1', 'group2', and 'time' for output of DE_between_group().")
-        }
+    if (de_analysis_type == "DE_between_group") {
         # DE_between_group
         volcano_tb <- DE_out$all_list[[paste0(group2, "-",
             group1)]][[as.character(time)]]
@@ -71,7 +77,7 @@ plot_volcano <- function(DE_out,
                 "Please check the input parameters.")
         }
 
-        if (is.null(logFC_thres) & is.null(adjP_thres)) {
+        if (is.null(logFC_thres) && is.null(adjP_thres)) {
             de_tb <- DE_out$de_list[[paste0(group2, "-", group1)]] %>%
                 dplyr::filter(Time == time)
             message("No logFC or adjusted p-value threshold provided. ",
@@ -112,7 +118,7 @@ plot_volcano <- function(DE_out,
                 "Please check the input parameters.")
         }
 
-        if (is.null(logFC_thres) & is.null(adjP_thres)) {
+        if (is.null(logFC_thres) && is.null(adjP_thres)) {
             de_tb <-
                 DE_out$de_list[[group]][[paste0("t", time2, "-t", time1)]]
             message("No logFC or adjusted p-value threshold provided. ",
