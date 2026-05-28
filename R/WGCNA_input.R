@@ -19,9 +19,14 @@
 #' to remove bad samples and features, ready for use in `prepare_WGCNA()`.
 #' @keywords internal
 .WGCNA_input <- function(se_obj, assay) {
-    if (assay > length(assays(se_obj))) {
-        stop("The input object does not have assay 2: time 0 normalised ", 
-        "data. Please run `normalise_to_start()` to create the time 0 ", 
+    n_assays <- length(assays(se_obj))
+    if (assay < 1 || assay > n_assays) {
+        stop("Invalid assay index: ", assay, ". The object has ", n_assays,
+            " assay(s). Please provide a valid assay index.")
+    }
+    if (assay == 2 && n_assays < 2) {
+        stop("The input object does not have assay 2: time 0 normalised ",
+        "data. Please run `normalise_to_start()` to create the time 0 ",
         "normalised data in assay 2.")
     }
 

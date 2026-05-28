@@ -33,6 +33,7 @@
 run_WGCNA <- function(wgcna_input, power, numericLabels = TRUE, ...) {
     WGCNA::allowWGCNAThreads()
 
+    .cor_orig <- cor
     cor <- WGCNA::cor
     net <- WGCNA::blockwiseModules(wgcna_input$data,
         power = power,
@@ -40,7 +41,7 @@ run_WGCNA <- function(wgcna_input, power, numericLabels = TRUE, ...) {
         numericLabels = numericLabels,
         ...
     )
-    cor <- stats::cor
+    cor <- .cor_orig
 
     net$input_data <- wgcna_input$data
     net$sample_info <- wgcna_input$sample_info # colData(se_obj)

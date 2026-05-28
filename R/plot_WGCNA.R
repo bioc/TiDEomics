@@ -102,7 +102,7 @@ plot_WGCNA <- function(net, fontsize = 8) {
         clusterMEs = TRUE
     )
 
-    dissimME <- 1 - (t(stats::cor(MEs, method = "p", use = "p"))) / 2
+    dissimME <- (1 - t(stats::cor(MEs, method = "p", use = "p"))) / 2
     hclustdatME <- stats::hclust(stats::as.dist(dissimME), method = "average")
     graphics::par(mfrow = c(1, 1))
     graphics::plot(hclustdatME, 

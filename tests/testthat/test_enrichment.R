@@ -15,7 +15,8 @@ test_that("enrichGO_rank works with variance decomposition output", {
 
     # May return NULL if no significant terms
     if (!is.null(res)) {
-        expect_s4_class(res, "gseaResult")
+        expect_type(res, "list")
+        expect_s4_class(res$BP, "gseaResult")
     }
 })
 

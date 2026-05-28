@@ -17,8 +17,8 @@ output:
     code_folding: show
     highlight: tango
     df_print: paged
-date: "`r doc_date()`"
-package: "`r pkg_ver('TiDEomics')`"
+date: "`r BiocStyle::doc_date()`"
+package: "`r BiocStyle::pkg_ver('TiDEomics')`"
 vignette: >
   %\VignetteIndexEntry{TiDEomics Tutorial}
   %\VignetteEngine{knitr::rmarkdown}
@@ -556,13 +556,13 @@ Functions in TiDEomics wrap `clusterProfiler::enrichGO()` and `clusterProfiler::
 For ranked gene list (e.g., ranked by Time or Group contribution from variance decomposition), use `enrichGO_rank()` and plot with `enrichplot::gseaplot2()`.
 
 ```{r go_rank, fig.width=6, fig.height=4}
-gse_group <- enrichGO_rank(var_decomp, 
-    gene_rank_by = "Group", 
+gse_group <- enrichGO_rank(var_decomp,
+    gene_rank_by = "Group",
     OrgDb = org.Mm.eg.db,
     keyType = "SYMBOL", category = "BP",
     go_rank_by = "p.adjust")
 
-enrichplot::gseaplot2(gse_group, geneSetID = 1:3, base_size = 8) 
+enrichplot::gseaplot2(gse_group[["BP"]], geneSetID = 1:3, base_size = 8)
 ```
 
 For multiple defined gene sets (e.g. WGCNA modules, DE genes by feature classification), use `enrichGO_list()` and plot with `plot_GO()`. 

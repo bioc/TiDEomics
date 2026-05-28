@@ -98,10 +98,15 @@ create_input <- function(data, sample_ann, subject_col = NULL) {
         if (all(subj_times$n_tp == 1)) {
             warning(
                 "Subject column '", subject_col, "' found but every value ",
-                "appears at only one time point, ", 
+                "appears at only one time point, ",
                 "no repeated measures detected. ",
                 "Treating samples as independent."
             )
+            # Make Replicate IDs unique across dropped subjects to
+            # avoid false-positive duplicate errors from the
+            # Group+Time-only validation below.
+            sample_ann$Replicate <- paste(sample_ann$Subject,
+                                    sample_ann$Replicate, sep = "_")
             sample_ann$Subject <- NULL
         }
     } else {

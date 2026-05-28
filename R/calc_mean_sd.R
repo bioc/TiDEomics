@@ -38,6 +38,9 @@ calc_mean_sd <- function(se_obj) {
                 sp_s <- sp[, sp$Subject == s]
                 rowMeans(assays(sp_s)[[assay]], na.rm = TRUE)
             }, FUN.VALUE = numeric(nrow(sp)))
+            if (!is.matrix(subj_means)) {
+                subj_means <- matrix(subj_means, ncol = 1)
+            }
             table_mean <- data.frame(
                 Mean = rowMeans(subj_means, na.rm = TRUE),
                 SD = apply(subj_means, 1, stats::sd, na.rm = TRUE)

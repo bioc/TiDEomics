@@ -45,7 +45,7 @@ BP, MF, CC)}
 \item{...}{additional arguments passed to \code{clusterProfiler::gseGO()}}
 }
 \value{
-A \code{gseaResult}object containing the GO enrichment results
+A list of \code{gseaResult}objects containing the GSEA results
 }
 \description{
 Gene ontology enrichment analysis of a ranked gene list
@@ -59,5 +59,5 @@ example_obj <- normalise_to_start(example_obj)
 var_decomp <- decomp_variance(example_obj, assay = 1)
 example_go_rank <- enrichGO_rank(var_decomp, gene_rank_by = "Time",
     OrgDb = org.Mm.eg.db, keyType = "SYMBOL", category = "BP")
-enrichplot::gseaplot2(example_go_rank, geneSetID = 1:2)
+enrichplot::gseaplot2(example_go_rank$BP, geneSetID = 1:2)
 }

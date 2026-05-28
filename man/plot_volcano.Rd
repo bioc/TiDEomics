@@ -73,7 +73,7 @@ data("example")
 example_obj <- normalise_to_start(example_obj)
 
 DE_between_group_out <- DE_between_group(example_obj, assay = 2)
-plot_volcano(DE_between_group_out, group1 = "untreated", 
+plot_volcano(DE_between_group_out, group1 = "untreated",
     group2 = "IFNbeta", time = 24,
     logFC_thres = 0.5, adjP_thres = 0.05, label = TRUE)
 }

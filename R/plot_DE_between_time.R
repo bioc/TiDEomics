@@ -42,7 +42,11 @@ plot_DE_between_time <- function(
     # heatmap of DE numbers
     de_num_list <- list()
     de_num_max <- 0
-    time_series <- sort(unique(colData(se_obj)$Time)) %>% as.character() 
+    time_series <- sort(unique(colData(se_obj)$Time)) %>% as.character()
+    if (length(time_series) < 2) {
+        stop("Need at least 2 time points for DE-between-time plot, ",
+            "found ", length(time_series), ".")
+    }
     # groups may have different time points
 
     for (i in names(de_list)) {

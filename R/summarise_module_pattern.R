@@ -31,7 +31,7 @@ summarise_module_pattern <- function(module, trendy_summary,
             id_cols = Feature)
 
     module <- module %>%
-        dplyr::filter(Module != "0") %>%
+        dplyr::filter(!Module %in% c("0", "grey", "gray")) %>%
         dplyr::mutate(Module = droplevels(Module))
     module_levels <- levels(module$Module)
 
@@ -63,14 +63,20 @@ summarise_module_pattern <- function(module, trendy_summary,
     }
 
     for (lvl in module_levels) {
-        message(sprintf("Module %s: %s", lvl,
-            trendy_genes_pattern_list[[lvl]][1, 1]))
+        tp <- trendy_genes_pattern_list[[lvl]]
+        if (is.null(tp) || nrow(tp) == 0) {
+            message("Module ", lvl, ": no patterns found.")
+        } else {
+            message(sprintf("Module %s: %s", lvl, tp[1, 1]))
+        }
     }
 
     if (print_top_n) {
         for (lvl in module_levels) {
+            tp <- trendy_genes_pattern_list[[lvl]]
+            if (is.null(tp) || nrow(tp) == 0) next
             message(sprintf("Module %s top %d patterns:", lvl, top_n))
-            print(utils::head(trendy_genes_pattern_list[[lvl]], n = top_n))
+            print(utils::head(tp, n = top_n))
         }
     }
 

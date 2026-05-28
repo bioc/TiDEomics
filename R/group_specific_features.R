@@ -143,7 +143,7 @@ group_specific_features <- function(
                 fromType = keytype, toType = c(keytype, "GENENAME"),
                 OrgDb = OrgDb
             ) %>%
-            dplyr::arrange(SYMBOL) %>%
+            dplyr::arrange(.data[[keytype]]) %>%
             DT::datatable(
                 options = list(pageLength = 10),
                 caption = paste0(

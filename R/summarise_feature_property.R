@@ -31,6 +31,9 @@
 #'     calc_feature_property(example_obj_merged_list, threshold = 0)
 #' property_random_fc <- summarise_feature_property(example_obj_merged_list)
 summarise_feature_property <- function(se_obj_merged_list) {
+    if (length(se_obj_merged_list) == 0) {
+        stop("'se_obj_merged_list' is empty.")
+    }
     required_cols <- c("Exp_ratio", "P_trend", "Max_FC")
     if (!all(required_cols %in% colnames(rowData(se_obj_merged_list[[1]])))) {
         stop("The input object does not contain the expected properties (",

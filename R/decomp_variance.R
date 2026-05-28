@@ -234,6 +234,10 @@ decomp_variance <- function(
 
     # Convert to numeric and sort by Group
     temp <- apply(lmem_res[, -1, drop = FALSE], 1, function(x) as.numeric(x))
+    if (!is.matrix(temp)) {
+        temp <- t(as.matrix(temp))
+        rownames(temp) <- rownames(lmem_res)
+    }
     row.names(temp) <- colnames(lmem_res)[-1]
     lmem_res <- data.frame(
         Feature = colnames(temp), t(temp), check.names = FALSE,

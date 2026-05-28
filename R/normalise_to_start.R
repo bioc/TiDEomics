@@ -81,7 +81,7 @@ normalise_to_start <- function(se_obj, by_subject = FALSE) {
         for (i in unique(colData(se_obj)$Group)) {
             input <- se_obj[, se_obj$Group == i]
 
-            time_series <- sort(unique(colData(se_obj)$Time))
+            time_series <- sort(unique(colData(input)$Time))
 
             mean_by_time <- vapply(time_series, function(t) {
                 cols_t <- input[, input$Time == t]

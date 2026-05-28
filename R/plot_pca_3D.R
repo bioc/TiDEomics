@@ -51,7 +51,7 @@ plot_pca_3D <- function(pca, pcs = seq(1, 3)) {
         z = pc[[paste0("PC", pcs[3])]],
         color = ~Group, size = ~Time, text = ~Sample,
         type = "scatter3d", mode = "markers",
-        colors = get_custom_palette(levels(pca$metadata$Group))
+        colors = get_custom_palette(unique(pca$metadata$Group))
     ) %>%
         plotly::layout(
             scene = list(

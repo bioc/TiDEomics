@@ -77,6 +77,10 @@ enrichR_list <- function(
             return(NULL)
         }
     )
+    if (is.null(dbs_available)) {
+        stop("No enrichR databases available. Please check the enrichR" , 
+        " site and your internet connection.")
+    }
 
     missing <- setdiff(databases, dbs_available$libraryName)
     if (length(missing) > 0) {
@@ -132,7 +136,7 @@ enrichR_list <- function(
             dplyr::rename(Description = Term,
                         p.adjust = Adjusted.P.value) %>%
             dplyr::select(Cluster, Description, p.adjust,
-                Odds.Ratio, Combined.Score, Genes,
+                Combined.Score, Genes,
                 dplyr::everything()) %>%
             dplyr::arrange(Cluster, p.adjust)
         rownames(db_tables[[db]]) <- NULL

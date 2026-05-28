@@ -22,7 +22,7 @@
 #' (default is "BH")
 #' @param ... additional arguments passed to `clusterProfiler::gseGO()`
 #'
-#' @returns A `gseaResult`object containing the GO enrichment results
+#' @returns A list of `gseaResult`objects containing the GSEA results
 #' @export
 #'
 #' @examples
@@ -33,7 +33,7 @@
 #' var_decomp <- decomp_variance(example_obj, assay = 1)
 #' example_go_rank <- enrichGO_rank(var_decomp, gene_rank_by = "Time",
 #'     OrgDb = org.Mm.eg.db, keyType = "SYMBOL", category = "BP")
-#' enrichplot::gseaplot2(example_go_rank, geneSetID = 1:2)
+#' enrichplot::gseaplot2(example_go_rank$BP, geneSetID = 1:2)
 enrichGO_rank <- function(
     rank_table,
     gene_rank_by,
@@ -75,35 +75,44 @@ enrichGO_rank <- function(
         rank_list <- rank_list[!is.infinite(rank_list)]
     }
 
-    gse_rank <- clusterProfiler::gseGO(
-        geneList = rank_list,
-        OrgDb = OrgDb,
-        keyType = keyType,
-        ont = category,
-        pvalueCutoff = pvalueCutoff,
-        pAdjustMethod = pAdjustMethod,
-        ...
-    )
+    gse_list <- list()
+    for (ont in category) {
+        gse_rank <- clusterProfiler::gseGO(
+            geneList = rank_list,
+            OrgDb = OrgDb,
+            keyType = keyType,
+            ont = ont,
+            pvalueCutoff = pvalueCutoff,
+            pAdjustMethod = pAdjustMethod,
+            ...
+        )
+        if (is.null(gse_rank) || is.null(gse_rank@result) ||
+            nrow(gse_rank@result) == 0) {
+            message("No significant GO terms found for category: ", ont)
+            next
+        }
 
-    message("Removing NA ID gene sets.")
+        message("Removing NA ID gene sets for ", ont, ".")
 
-    gse_rank@result <- gse_rank@result %>%
-        dplyr::filter(!is.na(ID))
+        gse_rank@result <- gse_rank@result %>%
+            dplyr::filter(!is.na(ID))
 
-    if (is.null(gse_rank) || is.null(gse_rank@result) ||
-        dim(gse_rank@result)[1] == 0) {
-        message("No significant GO terms found.")
+        if (go_rank_by %in% colnames(gse_rank@result)) {
+            gse_rank@result <- gse_rank@result %>%
+                dplyr::arrange(.data[[go_rank_by]])
+        } else {
+            message("GO term ranking variable not found in the result: ",
+                paste(setdiff(go_rank_by, colnames(gse_rank@result)),
+                collapse = ", "), ". Returning results in original order.")
+        }
+
+        gse_list[[ont]] <- gse_rank
+    }
+
+    if (length(gse_list) == 0) {
+        message("No significant GO terms found in any category.")
         return(NULL)
     }
 
-    if (go_rank_by %in% colnames(gse_rank@result)) {
-        gse_rank@result <- gse_rank@result %>%
-            dplyr::arrange(.data[[go_rank_by]])
-    } else {
-        message("GO term ranking variable not found in the result: ",
-            paste(setdiff(go_rank_by, colnames(gse_rank@result)),
-            collapse = ", "), ". Returning results in original order.")
-    }
-
-    return(gse_rank)
+    return(gse_list)
 }

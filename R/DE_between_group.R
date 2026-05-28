@@ -81,7 +81,7 @@ DE_between_group <- function(
     # compare all time point by all time point
     outlist_limma <- list()
 
-    groups <- levels(se_obj$Group)
+    groups <- unique(as.character(se_obj$Group))
 
     for (i in group) { # all groups if unselected
 

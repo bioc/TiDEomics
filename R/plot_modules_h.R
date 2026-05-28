@@ -322,35 +322,36 @@ plot_modules_h <- function(
             suffix <- paste0(suffix, "_")
         }
 
-        if (device == "pdf") {
-            grDevices::pdf(
-                file = file.path(save, paste0("WGCNA_h_", suffix,
-                    Sys.Date(), ".", device)),
-                width = width / 2.54,
-                height = height / 2.54
-            )
-        } else {
-            if (device == "png") {
-                device_fun <- grDevices::png
-            } else if (device == "tiff") {
-                device_fun <- grDevices::tiff
-            } else if (device == "jpeg") {
-                device_fun <- grDevices::jpeg
+        for (ext in device) {
+            if (ext == "pdf") {
+                grDevices::pdf(
+                    file = file.path(save, paste0("WGCNA_h_", suffix,
+                        Sys.Date(), ".", ext)),
+                    width = width / 2.54,
+                    height = height / 2.54
+                )
+            } else if (ext == "png") {
+                grDevices::png(file.path(save, paste0("WGCNA_h_",
+                    suffix, Sys.Date(), ".", ext)),
+                    width = width, height = height,
+                    units = "cm", res = res)
+            } else if (ext == "tiff") {
+                grDevices::tiff(file.path(save, paste0("WGCNA_h_",
+                    suffix, Sys.Date(), ".", ext)),
+                    width = width, height = height,
+                    units = "cm", res = res)
+            } else if (ext == "jpeg") {
+                grDevices::jpeg(file.path(save, paste0("WGCNA_h_",
+                    suffix, Sys.Date(), ".", ext)),
+                    width = width, height = height,
+                    units = "cm", res = res)
             } else {
-                message("Unsupported device type for saving image: ", device)
-                message("Defaulting to png.")
-                device_fun <- grDevices::png
+                message("Unsupported device: ", ext, ", skipping.")
+                next
             }
-
-            device_fun(file.path(save, paste0("WGCNA_h_", suffix,
-                    Sys.Date(), ".", device)),
-                width = width,
-                height = height,
-                units = "cm",
-                res = res)
+            grid::grid.draw(p)
+            grDevices::dev.off()
         }
-        grid::grid.draw(p)
-        grDevices::dev.off()
     }
 
     grid::grid.newpage()

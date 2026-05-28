@@ -55,7 +55,7 @@ Imports:
     WGCNA,
     DT
 Depends: 
-    R (>= 4.4.0)
+    R (>= 4.6.0)
 LazyData: false
 Suggests:
     knitr,
