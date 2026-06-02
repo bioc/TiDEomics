@@ -49,14 +49,17 @@ plot_DE_between_time <- function(
     }
     # groups may have different time points
 
+    # Last time point has no later points to compare to — exclude it
+    time_rows <- time_series[-length(time_series)]
+
     for (i in names(de_list)) {
-        de_num <- matrix(data = NA, nrow = length(time_series),
+        de_num <- matrix(data = NA, nrow = length(time_rows),
             ncol = length(time_series) - 1)
 
         colnames(de_num) <- time_series[-1]
-        rownames(de_num) <- time_series
+        rownames(de_num) <- time_rows
 
-        for (d1 in time_series) {
+        for (d1 in time_rows) {
             for (d2 in time_series[-1]) {
                 if (as.numeric(d1) < as.numeric(d2)) {
                     label <- paste0("t", d2, "-t", d1)
