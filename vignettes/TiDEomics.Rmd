@@ -605,29 +605,30 @@ Enrichment of other gene sets (e.g., drug signatures, TF targets, pathways) can 
 
 ### Universal: plot features of interest
 
-Selected features can be plotted with `plot_trend()`, which shows the mean and standard deviation of replicates at each time point. Input should be the output of `calc_mean_sd()`, which calculates the mean and standard deviation of replicates for each feature at each time point.
+Selected features can be plotted with `plot_trend()`, which shows the mean and standard deviation of replicates at each time point. 
 
 ```{r plot-feature}
-table_mean_sd_list <- calc_mean_sd(data_obj)
-table_mean_sd_orig <- table_mean_sd_list$orig
-table_mean_sd_norm <- table_mean_sd_list$norm0
-
-plot_trend(table_mean_sd_orig, features = c("Actb", "Cd69", "Fosb", "Il23a"),
+plot_trend(data_obj, assay = 1, features = c("Actb", "Cd69", "Fosb", "Il23a"),
     title = "Example features")
-plot_trend(table_mean_sd_norm, features = c("Actb", "Cd69", "Fosb", "Il23a"),
+plot_trend(data_obj, assay = 2, features = c("Actb", "Cd69", "Fosb", "Il23a"),
     title = "Example features with time 0 normalisation")
+
+# Or pre-calculate mean and sd with calc_mean_sd()
+# table_mean_sd_orig <- calc_mean_sd(data_obj)$orig
+# plot_trend(table_mean_sd_orig, features = c("Actb", "Cd69", "Fosb", "Il23a"),
+#     title = "Example features")
 ```
 
 Visualisation of features with high & low residual variance justify the filtering strategy for WGCNA input. 
 
 ```{r plot-residual}
-plot_trend(table_mean_sd_orig,
+plot_trend(data_obj, assay = 1,
     features = var_decomp %>%
         dplyr::arrange(Residual) %>% head(12) %>% dplyr::pull(Feature),
     title = "Features with lowest residual variance"
 )
 
-plot_trend(table_mean_sd_orig,
+plot_trend(data_obj, assay = 1,
     features = var_decomp %>%
         dplyr::arrange(dplyr::desc(Residual)) %>%
         head(12) %>% dplyr::pull(Feature),
@@ -640,7 +641,7 @@ plot_trend(table_mean_sd_orig,
 TiDEomics supports two experimental designs, auto-detected from the sample annotation:
 
 - **Cell culture / independent samples**: `create_input(data, sample_ann)` -- each sample is independent. LMM uses `(1|Group) + (1|Time)`. DE uses unpaired designs.
-- **Patient / repeated-measures**: `create_input(data, sample_ann, subject_col = "PatientID")` -- same subjects tracked across time points. LMM adds `(1|Subject)`. `DE_between_time()` uses paired design via `limma::duplicateCorrelation()`. `normalise_to_start(by_subject = TRUE)` subtracts each subject's own baseline. `merge_replicates()` and `calc_mean_sd()` compute statistics across subjects.
+- **Patient / repeated-measures**: `create_input(data, sample_ann, subject_col = "PatientID")` -- same subjects tracked across time points. LMM adds `(1|Subject)`. `DE_between_time()` uses paired design via `limma::duplicateCorrelation()`. `normalise_to_start(by_subject = TRUE)` subtracts each subject's own baseline. `merge_replicates()` and `plot_trend()` compute statistics across subjects.
 
 Users can ask different biological questions and use different functions in TiDEomics to answer them. For example:
 

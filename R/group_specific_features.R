@@ -166,21 +166,26 @@ group_specific_features <- function(
     if (GO == TRUE && length(unique_genes) > 0) {
         unique_genes_go <- enrichGO_list(list("Unique" = unique_genes),
             OrgDb = OrgDb,
-            universe = property_random_fc$Feature,
+            universe = property_random_fc$Feature %>% unique(),
             keyType = keytype, ...
         )
 
-        plot_GO(unique_genes_go$all,
-            plot_dotplot = TRUE,
-            showCategory_dotplot = 10,
-            label = paste0(
-                "features with >=", 100 * filter_ratio,
-                "% ", if (is.na(threshold)) "non-NA time points"
-                else paste0("values >", threshold), " in >=",
-                group_num, " of groups: ",
-                paste(groups, collapse = ", ")
-            )
-        ) %>% print()
+        if (length(intersect(names(unique_genes_go$all),
+                c("BP", "MF", "CC"))) == 0) {
+            message("No GO terms enriched for these features. Skipping plot.")
+        } else {
+            plot_GO(unique_genes_go$all,
+                plot_dotplot = TRUE,
+                showCategory_dotplot = 10,
+                label = paste0(
+                    "features with >=", 100 * filter_ratio,
+                    "% ", if (is.na(threshold)) "non-NA time points"
+                    else paste0("values >", threshold), " in >=",
+                    group_num, " of groups: ",
+                    paste(groups, collapse = ", ")
+                )
+            ) %>% print()
+        }
     }
 
     return(unique_genes)

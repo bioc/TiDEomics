@@ -1,12 +1,17 @@
 #' Plot feature abundance over time
 #'
 #' @description Plot trend of feature abundances / expression over time by
-#' mean and standard deviation (SD) for each group.
+#' mean and standard deviation (SD) for each group. Accepts either a
+#' SummarizedExperiment object (computing mean/SD internally via
+#' `calc_mean_sd()`) or a pre-computed table from
+#' `calc_mean_sd()`.
 #'
-#' @param table_mean_sd Output by `calc_mean_sd()`, a dataframe with columns:
-#' Feature, Time, Group, Mean, SD
+#' @param se_obj A SummarizedExperiment object, or a data.frame from
+#'   `calc_mean_sd()` with columns: Feature, Time, Group, Mean, SD.
+#' @param assay Assay index when `se_obj` is a SummarizedExperiment
+#'   (default: 1 = original, 2 = time-0 normalised).
 #' @param groups Groups to be plotted, if NULL, all groups will be used
-#' (default is NULL)
+#'   (default is NULL)
 #' @param features Features to be plotted, if NULL, an error will be raised
 #' @param title Title of the plot (default is "Feature")
 #' @param ylab Y axis label of the plot (default is "Abundance")
@@ -18,16 +23,36 @@
 #' @export
 #' @examples
 #' data("example")
-#' table_mean_sd_list <- calc_mean_sd(example_obj)
-#' table_mean_sd <- table_mean_sd_list$norm0
-#' plot_trend(table_mean_sd,
-#'     features = sample(unique(table_mean_sd$Feature), 4))
-plot_trend <- function(table_mean_sd, groups = NULL, features,
+#' plot_trend(example_obj,
+#'     features = sample(rownames(example_obj), 4))
+plot_trend <- function(se_obj, assay = 1, groups = NULL, features,
     title = "Feature", ylab = "Abundance", errorbar = TRUE, fontsize = 8) {
-    # table_mean_sd = table_mean_sd_orig or table_mean_sd_norm
 
     if (is.null(features)) {
         stop("Please specify features to be plotted.")
+    }
+
+    # Accept either an SE object or a pre-computed table_mean_sd
+    if (inherits(se_obj, "SummarizedExperiment")) {
+        if (length(assay) > 1 || is.null(assay)) assay <- 1
+        if (assay > length(assays(se_obj))) {
+            stop("Input se_obj does not contain assay ", assay, ". ",
+                "Run normalise_to_start() to add assay 2.")
+        }
+        # Subset to features to be plotted only
+        keep <- intersect(rownames(se_obj), features)
+        se_obj <- se_obj[keep, , drop = FALSE]
+        tbl_list <- calc_mean_sd(se_obj)
+        table_mean_sd <- if (assay == 2 && length(tbl_list) >= 2) {
+            tbl_list$norm0
+        } else {
+            tbl_list$orig
+        }
+    } else if (is.data.frame(se_obj)) {
+        table_mean_sd <- se_obj
+    } else {
+        stop("se_obj must be a SummarizedExperiment object or a data.frame ",
+            "produced by calc_mean_sd().")
     }
 
     if (is.null(groups)) {

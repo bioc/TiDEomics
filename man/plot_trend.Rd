@@ -5,7 +5,8 @@
 \title{Plot feature abundance over time}
 \usage{
 plot_trend(
-  table_mean_sd,
+  se_obj,
+  assay = 1,
   groups = NULL,
   features,
   title = "Feature",
@@ -15,8 +16,11 @@ plot_trend(
 )
 }
 \arguments{
-\item{table_mean_sd}{Output by \code{calc_mean_sd()}, a dataframe with columns:
-Feature, Time, Group, Mean, SD}
+\item{se_obj}{A SummarizedExperiment object, or a data.frame from
+\code{calc_mean_sd()} with columns: Feature, Time, Group, Mean, SD.}
+
+\item{assay}{Assay index when \code{se_obj} is a SummarizedExperiment
+(default: 1 = original, 2 = time-0 normalised).}
 
 \item{groups}{Groups to be plotted, if NULL, all groups will be used
 (default is NULL)}
@@ -36,12 +40,13 @@ Plot of feature abundances over time by mean and SD
 }
 \description{
 Plot trend of feature abundances / expression over time by
-mean and standard deviation (SD) for each group.
+mean and standard deviation (SD) for each group. Accepts either a
+SummarizedExperiment object (computing mean/SD internally via
+\code{calc_mean_sd()}) or a pre-computed table from
+\code{calc_mean_sd()}.
 }
 \examples{
 data("example")
-table_mean_sd_list <- calc_mean_sd(example_obj)
-table_mean_sd <- table_mean_sd_list$norm0
-plot_trend(table_mean_sd,
-    features = sample(unique(table_mean_sd$Feature), 4))
+plot_trend(example_obj,
+    features = sample(rownames(example_obj), 4))
 }
