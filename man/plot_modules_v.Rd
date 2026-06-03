@@ -40,7 +40,9 @@ feature (default is TRUE)}
 \item{suffix}{Suffix for the saved image file name (default is an empty
 string)}
 
-\item{device}{Image file format for saving (default is "png")}
+\item{device}{Image file format(s) for saving. Can be a character
+vector, e.g. \code{c("png", "pdf")}, to save in multiple formats
+(default: \code{"png"}).}
 
 \item{save}{Directory to save the plot, no saving if is NULL
 (default is NULL)}

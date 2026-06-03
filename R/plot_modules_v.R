@@ -21,7 +21,9 @@
 #' @param ylabel Y axis label prefix (default is "Abundance")
 #' @param suffix Suffix for the saved image file name (default is an empty
 #' string)
-#' @param device Image file format for saving (default is "png")
+#' @param device Image file format(s) for saving. Can be a character
+#'   vector, e.g. `c("png", "pdf")`, to save in multiple formats
+#'   (default: `"png"`).
 #' @param save Directory to save the plot, no saving if is NULL
 #' (default is NULL)
 #' @param fontsize Font size (default is 8)
@@ -129,16 +131,18 @@ plot_modules_v <- function(
         if (suffix != "") {
             suffix <- paste0(suffix, "_")
         }
-        ggsave(paste0("WGCNA_v_", suffix, Sys.Date(), ".", device),
-            plot = pq,
-            device = device,
-            path = save,
-            dpi = res,
-            width = width,
-            height = height,
-            units = "cm",
-            limitsize = FALSE
-        )
+        for (ext in device) {
+            ggsave(paste0("WGCNA_v_", suffix, Sys.Date(), ".", ext),
+                plot = pq,
+                device = ext,
+                path = save,
+                dpi = res,
+                width = width,
+                height = height,
+                units = "cm",
+                limitsize = FALSE
+            )
+        }
     }
 
     return(pq)
