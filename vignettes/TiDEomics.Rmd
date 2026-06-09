@@ -1,15 +1,15 @@
 ---
 title: "TiDEomics Tutorial"
-author: 
+author:
   - name: Tianen He
     affiliation:
     - University of Oxford
     email: tianen.he@ndm.ox.ac.uk
-output: 
+output:
   BiocStyle::html_document:
     self_contained: true
     toc: true
-    toc_float: 
+    toc_float:
       collapsed: true
       smooth_scroll: false
     toc_depth: 3
@@ -22,7 +22,7 @@ package: "`r BiocStyle::pkg_ver('TiDEomics')`"
 vignette: >
   %\VignetteIndexEntry{TiDEomics Tutorial}
   %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8} 
+  %\VignetteEncoding{UTF-8}
 bibliography: references.bib
 nocite: '@*'
 ---
@@ -31,7 +31,9 @@ nocite: '@*'
 knitr::opts_chunk$set(
     collapse = TRUE,
     comment = "#>",
-    crop = NULL, ## Related to https://stat.ethz.ch/pipermail/bioc-devel/2020-April/016656.html
+    crop = NULL,
+    # Related to https://stat.ethz.ch/pipermail/bioc-devel/
+    # 2020-April/016656.html
     dpi = 96,
     fig.width = 6,
     fig.height = 4,
@@ -55,31 +57,50 @@ local({
 
 ## Introduction
 
-[**TiDEomics**](https://github.com/hte123/TiDEomics) is an R package designed to streamline analysis of time-course omics data (e.g. proteomics, transcriptomics), compatible with both single group analysis and multiple group comparison, and accommodating data with missing values. 
+[**TiDEomics**](https://github.com/hte123/TiDEomics) is an R package designed
+to streamline analysis of time-course omics data (e.g. proteomics,
+transcriptomics), compatible with both single group analysis and multiple group
+comparison, and accommodating data with missing values.
 
-This tutorial demonstrates a basic workflow, explains key parameters, and gives practical tips.
+This tutorial demonstrates a basic workflow, explains key parameters, and gives
+practical tips.
 
 Key features covered:
 
-- *Preparing input* - Create a `SummarizedExperiment` object with the data matrix and sample annotation, with checks for correct formatting.
+- *Preparing input*: Create a `SummarizedExperiment` object with the data
+    matrix and sample annotation, with checks for correct formatting.
 
-- *Quality control* - Check value distributions and missingness patterns.
+- *Quality control*: Check value distributions and missingness patterns.
 
-- *Normalisation, grouping and merging replicates* - Normalise each feature to the starting time point when focused on changes from baseline. Transform the data for analyses that require single groups or single time series.
+- *Normalisation, grouping and merging replicates*: Normalise each feature to
+    the starting time point when focused on changes from baseline. Transform
+    the data for analyses that require single groups or single time series.
 
-- *Sample relationships visualisation (correlation matrix, PCA, UMAP)* - Explore global structure and major sources of variance, check for batch effects, and identify features driving PCs.
+- *Sample relationships visualisation (correlation matrix, PCA, UMAP)*: Explore
+    global structure and major sources of variance, check for batch effects,
+    and identify features driving PCs.
 
-- *Pairwise differential expression (by time or group)* - Identify DE features between pairs of time points within each group, and between pairs of groups at each time point.
+- *Pairwise differential expression (by time or group)*: Identify DE features
+    between pairs of time points within each group, and between pairs of groups
+    at each time point.
 
-- *Classification by feature property (randomness and overall fold change)* - Classify features into different categories (e.g., non-random vs. random, differentially expressed vs. stable) based on properties including trend significance and maximum fold change.
+- *Classification by feature property (randomness and overall fold change)*:
+    Classify features into different categories (e.g., non-random vs. random,
+    differentially expressed vs. stable) based on properties including trend
+    significance and maximum fold change.
 
-- *Segmented regression with Trendy* - Estimate breakpoints for each feature in each group and summarise dynamic patterns.
+- *Segmented regression with Trendy*: Estimate breakpoints for each feature in
+    each group and summarise dynamic patterns.
 
-- *Variance decomposition modified from PALMO* - Quantify relative contributions from `Time`, `Group`, and `Residual`, distinguish time or group-dependent DE features and "noisy" features.
+- *Variance decomposition modified from PALMO*: Quantify relative contributions
+    from `Time`, `Group`, and `Residual`, distinguish time or group-dependent
+    DE features and "noisy" features.
 
-- *Module identification with WGCNA* - Identify co-expression modules with different temporal and group-specific patterns.
+- *Module identification with WGCNA*: Identify co-expression modules with
+    different temporal and group-specific patterns.
 
-- *Functional enrichment (gene ontology, drugs, etc.)* - Interpret biological meaning of identified DE features and modules.
+- *Functional enrichment (gene ontology, drugs, etc.)*: Interpret biological
+    meaning of identified DE features and modules.
 
 ## Installation
 
@@ -100,29 +121,36 @@ library(org.Mm.eg.db)
 
 TiDEomics expects:
 
-- `data`: log2-transformed data.frame, rows = features (e.g. genes, proteins), columns = samples. First column should be feature names. Missing values (NA) are allowed.
+- `data`: log2-transformed data.frame, rows = features (e.g. genes, proteins),
+    columns = samples. First column should be feature names.
+    Missing values (NA) are allowed.
 - `sample_ann`: data.frame with columns:
     - `Sample`: sample names, match column names of `data`
     - `Group`: experimental group
     - `Time`: numeric time point
     - `Replicate`: replicate ID (optional, auto-generated if absent)
     - `Batch`: batch ID (optional)
-    - `Subject`: biological subject ID for repeated-measures designs (optional, set via `subject_col`)
+    - `Subject`: biological subject ID for repeated-measures designs
+        (optional, set via `subject_col`)
 
-Example: subset of [GSE263759](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE263759) data set published in @Traxler2025.
+Example: subset of
+[GSE263759](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE263759)
+data set published in @Traxler2025.
 
 - Ensembl IDs were mapped to symbols, genes with all zero counts were excluded.
 - Use time 0 untreated samples for other groups' time 0.
 - Sample 500 random genes.
 
-Code for preparing the example data is available in `data-raw/tutorial_input.R` and the resulting data is stored in `data/tutorial_sample_info.rda` and `data/tutorial_data.rda`.
+Code for preparing the example data is available in `data-raw/tutorial_input.R`
+and the resulting data is stored in `data/tutorial_sample_info.rda` and
+`data/tutorial_data.rda`.
 
 ```{r load-example}
 data("tutorial_sample_info", package = "TiDEomics")
 data("tutorial_data", package = "TiDEomics")
 
 data_obj <- create_input(
-    data = tutorial_data, 
+    data = tutorial_data,
     sample_ann = tutorial_sample_info)
 
 # Log-transform the data when not already done
@@ -145,7 +173,10 @@ We present the workflow as below sections, explaining the usage and parameters.
 
 ### Optional: custom color palette
 
-By default, TiDEomics generates a default color palette (`scales::pal_hue()`) based on the number of groups. A custom palette for each group can be set with `set_custom_palette()`, which will be used in all subsequent plotting functions where applicable.
+By default, TiDEomics generates a default color palette (`scales::pal_hue()`)
+based on the number of groups. A custom palette for each group can be set with
+`set_custom_palette()`, which will be used in all subsequent plotting functions
+where applicable.
 
 ```{r palette}
 custom_palette <- c(
@@ -161,29 +192,46 @@ set_custom_palette(custom_palette)
 plot_distribution(data_obj, facet_by = "Group")
 ```
 
-If distributions differ drastically, consider global normalisation (e.g., quantile, median) *before* using TiDEomics. 
+If distributions differ drastically, consider global normalisation (e.g.,
+quantile, median) *before* using TiDEomics.
 
-For data with missing values (e.g., proteomics), `plot_ID()` and `plot_missing()` can be used to check missingness patterns.
+For data with missing values (e.g., proteomics), `plot_ID()` and
+`plot_missing()` can be used to check missingness patterns.
 
 ### Normalisation to Time 0
 
-`normalise_to_start()` subtracts the baseline value from each feature (at time 0 or the first available time point if the feature is missing at time 0). Two modes are available for defining the baseline:
+`normalise_to_start()` subtracts the baseline value from each feature (at time
+0 or the first available time point if the feature is missing at time 0). Two
+modes are available for defining the baseline:
 
-- `by_subject = FALSE` (default): group-level baseline, mean of all samples at time 0 in the group. This is used when no subject-level information is available or when between-subject baseline differences are of interest.
+- `by_subject = FALSE` (default): group-level baseline, mean of all samples at
+    time 0 in the group. This is used when no subject-level information is
+    available or when between-subject baseline differences are of interest.
 
-- `by_subject = TRUE`: subject-level baseline, mean of all samples at time 0 for each subject. This is used when subject-level information is available and the focus is on subject-specific changes from baseline.
+- `by_subject = TRUE`: subject-level baseline, mean of all samples at time 0
+    for each subject. This is used when subject-level information is available
+    and the focus is on subject-specific changes from baseline.
 
 ```{r norm0}
-data_obj <- normalise_to_start(data_obj) 
+data_obj <- normalise_to_start(data_obj)
 ```
 
-Both original and time-0 normalised data are stored in the `SummarizedExperiment` object and downstream functions allow to specify which to use for each analysis (`assay = 1` for original, `assay = 2` for time-0 normalised).
+Both original and time-0 normalised data are stored in the
+`SummarizedExperiment` object and downstream functions allow to specify which
+to use for each analysis (`assay = 1` for original, `assay = 2` for time-0
+normalised).
 
-**When not to normalise**: Use original data when absolute abundance differences across groups are of interest (e.g., constitutively different baseline levels).
+**When not to normalise**: Use original data when absolute abundance
+differences across groups are of interest (e.g., constitutively different
+baseline levels).
 
 ### Splitting groups and merging replicates
 
-Use `split_groups()` to obtain group-specific `SummarizedExperiment` objects and `merge_replicates()` to average replicates for analyses / visualisation that require single time series for features, including `calc_feature_property()`, `run_Trendy()`, `plot_modules_v()` and `plot_modules_h()`.
+Use `split_groups()` to obtain group-specific `SummarizedExperiment` objects
+and `merge_replicates()` to average replicates for analyses / visualisation
+that require single time series for features, including
+`calc_feature_property()`, `run_Trendy()`, `plot_modules_v()` and
+`plot_modules_h()`.
 
 ```{r split}
 data_obj_list <- split_groups(data_obj)
@@ -199,7 +247,8 @@ data_obj_merged <- merge_groups(data_obj_merged_list)
 
 ### Sample relationships (correlation, PCA, UMAP)
 
-Correlation matrix can be plotted with `plot_cor_matrix()` to check sample relationships and potential batch effects. 
+Correlation matrix can be plotted with `plot_cor_matrix()` to check sample
+relationships and potential batch effects.
 
 ```{r cormat}
 plot_cor_matrix(data_obj,
@@ -209,11 +258,14 @@ plot_cor_matrix(data_obj,
 )
 ```
 
-High within-replicate correlation and clustering by `Group` or `Time` increase confidence in data quality and downstream analysis. If batch effects are present, consider batch correction before using TiDEomics.
+High within-replicate correlation and clustering by `Group` or `Time` increase
+confidence in data quality and downstream analysis. If batch effects are
+present, consider batch correction before using TiDEomics.
 
 There are multiple functions for PCA and UMAP:
 
-- Use `plot_pca()` to visualise sample relationships in 2D. Output loadings can be used to identify features driving the principal components.
+- Use `plot_pca()` to visualise sample relationships in 2D. Output loadings
+    can be used to identify features driving the principal components.
 
 - Use `plot_pca_3D()` to visualise sample relationships in 3D.
 
@@ -221,7 +273,10 @@ There are multiple functions for PCA and UMAP:
 
 - Use `plot_umap()` for UMAP and set `seed` for reproducibility.
 
-Features with missing values (NA) are automatically excluded from PCA and UMAP. Consider imputation (e.g., group-wise minimum imputation with `split_groups()`, `impute_groups()` and `merge_groups()`) to include features with missing values in PCA and UMAP.
+Features with missing values (NA) are automatically excluded from PCA and
+UMAP. Consider imputation (e.g., group-wise minimum imputation with
+`split_groups()`, `impute_groups()` and `merge_groups()`) to include features
+with missing values in PCA and UMAP.
 
 ```{r pca}
 PC <- plot_pca(data_obj,
@@ -239,7 +294,8 @@ PC <- plot_pca(data_obj,
 plot_pca_3D(PC, pcs = 1:3)
 ```
 
-Note: the 3D plot may not display properly in some html, but should work in an interactive R session.
+Note: the 3D plot may not display properly in some html, but should work in an
+interactive R session.
 
 ```{r pca-eigencor}
 PCAtools::eigencorplot(PC,
@@ -254,9 +310,12 @@ PCAtools::eigencorplot(PC,
 umap_layout <- plot_umap(data_obj, seed = 1234)
 ```
 
-PCA and UMAP can also be performed separately on each group to explore within-group structure and dynamics.
+PCA and UMAP can also be performed separately on each group to explore
+within-group structure and dynamics.
 
-By default, when plotting PCA by group, circles and arrows are added to show the trajectory of samples along time course. Set `circle = FALSE` or `arrow = FALSE` to remove circles and arrows.
+By default, when plotting PCA by group, circles and arrows are added to show
+the trajectory of samples along time course. Set `circle = FALSE` or
+`arrow = FALSE` to remove circles and arrows.
 
 ```{r pca-umap-group, fig.width = 8, fig.height = 2.5}
 plot_pca_by_group(data_obj, circle = TRUE, arrow = TRUE, legend_pos = "top")
@@ -268,34 +327,46 @@ plot_umap_by_group(data_obj, seed = 1234, legend_pos = "top")
 
 ### Pairwise differential expression
 
-The two DE functions for pairwise comparison between time points and groups are built based on the limma package [@limma].
+The two DE functions for pairwise comparison between time points and groups are
+built based on the limma package [@limma].
 
 `DE_between_time()`:
 
-- Compare pairs of time points within each group. 
+- Compare pairs of time points within each group.
 
-- Output: Nested lists of DE statistics tables, including all features or only significant features.
+- Output: Nested lists of DE statistics tables, including all features or
+    only significant features.
 
-- Use `plot_DE_between_time()` to summarise number of DE features per pair of time points 
-per group.
+- Use `plot_DE_between_time()` to summarise number of DE features per pair of
+    time points per group.
 
 `DE_between_group()`:
 
-- Compare pairs of groups at each time point. 
+- Compare pairs of groups at each time point.
 
-- Output: Nested lists of DE statistics tables, including all features or only significant features, and line plots summarising number of DE features (can be removed by setting `plot = FALSE`).
+- Output: Nested lists of DE statistics tables, including all features or
+    only significant features, and line plots summarising number of DE features
+    (can be removed by setting `plot = FALSE`).
 
 Common parameters for both functions:
 
-- `assay`: index of assay to use (1 = original, 2 = time0-normalised if available)
+- `assay`: index of assay to use (1 = original, 2 = time0-normalised if
+    available)
 
-- `filter`: minimal number of non-NA replicates for the feature to be included in DE testing (e.g., `filter = 1` means requiring features to have at least 1 non-NA value at both time points in the specific group, or in both groups at the specific time point).
+- `filter`: minimal number of non-NA replicates for the feature to be included
+    in DE testing (e.g., `filter = 1` means requiring features to have at least
+    1 non-NA value at both time points in the specific group, or in both groups
+    at the specific time point).
 
-- `trend`: passed to `limma::eBayes(trend=)`. Set to `TRUE` for RNA-seq count-derived data to model the mean-variance trend. Leave as `FALSE` (default) for proteomics, metabolomics, or other log-intensity data where the mean-variance relationship is typically flat.
+- `trend`: passed to `limma::eBayes(trend=)`. Set to `TRUE` for RNA-seq
+    count-derived data to model the mean-variance trend. Leave as `FALSE`
+    (default) for proteomics, metabolomics, or other log-intensity data where
+    the mean-variance relationship is typically flat.
 
 - Default thresholds for DE are `p.adj < 0.05` and `|log2FC| > 1`.
 
-Please note that the example data only has two replicates per time point. More replicates are recommended for robust pairwise DE analysis.
+Please note that the example data only has two replicates per time point.
+More replicates are recommended for robust pairwise DE analysis.
 
 DE_between_time():
 
@@ -334,7 +405,9 @@ DE_between_group_out$all_list$`IFNgamma-untreated`$`24` %>% head()
 DE_between_group_out$de_list$`IFNgamma-untreated` %>% head()
 ```
 
-Output of `DE_between_group()`and `DE_between_time()` can be plotted with `plot_volcano()` to visualise DE features of selected group(s) and time point(s).
+Output of `DE_between_group()`and `DE_between_time()` can be plotted with
+`plot_volcano()` to visualise DE features of selected group(s) and time
+point(s).
 
 ```{r volcano}
 plot_volcano(DE_between_group_out,
@@ -344,33 +417,65 @@ plot_volcano(DE_between_group_out,
 
 #### Statistical notes
 
-Both DE functions use `limma::lmFit()` followed by `limma::eBayes()` with empirical Bayes variance moderation, which stabilises variance estimates when the number of replicates is small. The input data should be log-transformed and normalised before analysis.
+Both DE functions use `limma::lmFit()` followed by `limma::eBayes()` with
+empirical Bayes variance moderation, which stabilises variance estimates when
+the number of replicates is small. The input data should be log-transformed
+and normalised before analysis.
 
-For **RNA-seq** data with log-transformed counts (e.g., `log2(count + 1)` as used in this tutorial), set `trend = TRUE` to let limma model the mean-variance relationship - low-abundance features typically have higher variance. For **proteomics** (log~2~ intensity) and many other data, the mean-variance trend is typically weak or absent, so `trend = FALSE` (default) is commonly appropriate. However, this should be verified (e.g. with `limma::plotSA()`).
+For **RNA-seq** data with log-transformed counts (e.g., `log2(count + 1)` as
+used in this tutorial), set `trend = TRUE` to let limma model the mean-variance
+relationship - low-abundance features typically have higher variance.
+For **proteomics** (log~2~ intensity) and many other data, the mean-variance
+trend is typically weak or absent, so `trend = FALSE` (default) is commonly
+appropriate. However, this should be verified (e.g. with `limma::plotSA()`).
 
-When a Subject column is provided via `subject_col` in `create_input()`, `DE_between_time()` automatically uses a paired design via `limma::duplicateCorrelation(block = Subject)`. For independent-sample designs (no Subject), all replicates are treated as independent.
+When a Subject column is provided via `subject_col` in `create_input()`,
+`DE_between_time()` automatically uses a paired design via
+`limma::duplicateCorrelation(block = Subject)`. For independent-sample designs
+(no Subject), all replicates are treated as independent.
 
 ### Feature properties and classification
 
 `calc_feature_property()` computes per-feature properties:
 
-- `P_trend`: calculated with `randtests::bartels.rank.test()`, testing for non-randomness of the time profile (i.e., whether the feature shows a significant overall trend across time points).
+- `P_trend`: calculated with `randtests::bartels.rank.test()`, testing for
+    non-randomness of the time profile (i.e., whether the feature shows a
+    significant overall trend across time points).
 
-- `Max_FC`: maximum fold change across time points, calculated as the difference between the feature's maximum and minimum abundance across time points. This captures the overall magnitude of change across the time course, regardless of the specific time points at which changes occur.
+- `Max_FC`: maximum fold change across time points, calculated as the
+    difference between the feature's maximum and minimum abundance across time
+    points. This captures the overall magnitude of change across the time
+    course, regardless of the specific time points at which changes occur.
 
-- `Max_FC_time`: the difference between time points with maximum and minimum abundance, providing information about the direction (up or down) and duration of changing.
+- `Max_FC_time`: the difference between time points with maximum and minimum
+    abundance, providing information about the direction (up or down) and
+    duration of changing.
 
-- `Exp_threshold`: user-set value threshold for a feature to be considered expressed in a sample. This can be used to filter features based on expression level, e.g. setting `threshold = 0` means that only values > 0 (log2(raw count + 1) > 0, i.e. raw count > 0 in the tutorial dataset) are considered expressed. The default is NULL, which means all non-NA values are considered expressed.
+- `Exp_threshold`: user-set value threshold for a feature to be considered
+    expressed in a sample. This can be used to filter features based on
+    expression level, e.g. setting `threshold = 0` means that only values
+    > 0 (log2(raw count + 1) > 0, i.e. raw count > 0 in the tutorial dataset)
+    are considered expressed. The default is NULL, which means all non-NA
+    values are considered expressed.
 
-- `T_total`, `T_exp` and `Exp_ratio`: number of total time points, number of expressed time points with values > `Exp_threshold` (or non-NA values if `threshold = NULL`), and proportion of expressed time points, which can be used to filter features based on completeness or expression level.
+- `T_total`, `T_exp` and `Exp_ratio`: number of total time points, number of
+    expressed time points with values > `Exp_threshold` (or non-NA values if
+    `threshold = NULL`), and proportion of expressed time points, which can be
+    used to filter features based on completeness or expression level.
 
-The property values can be used to classify features into different categories (e.g., non-random vs. random, differentially expressed vs. stable) for downstream analysis and interpretation. For example, features with `P_trend < 0.05` and `Max_FC >= 1` can be candidates for non-randomly overall-changing DE features. 
+The property values can be used to classify features into different categories
+(e.g., non-random vs. random, differentially expressed vs. stable) for
+downstream analysis and interpretation. For example, features with
+`P_trend < 0.05` and `Max_FC >= 1` can be candidates for non-randomly
+overall-changing DE features.
 
 Note:
 
-- When replicates are present, the input should be the mean of replicates at each time point, output of `merge_replicates()`.
+- When replicates are present, the input should be the mean of replicates at
+    each time point, output of `merge_replicates()`.
 
-- The function is set to require at least 3 values > threshold to calculate `P_trend`.
+- The function is set to require at least 3 values > threshold to
+    calculate `P_trend`.
 
 ```{r property}
 data_obj_merged_list <- calc_feature_property(data_obj_merged_list,
@@ -380,7 +485,9 @@ property_tb <- summarise_feature_property(data_obj_merged_list)
 head(property_tb)
 ```
 
-Features expressed in only a subset of groups can be extracted with `group_specific_features()` based on the output table of `summarise_feature_property()`.
+Features expressed in only a subset of groups can be extracted with
+`group_specific_features()` based on the output table of
+`summarise_feature_property()`.
 
 ```{r group-specific}
 group_specific_features(property_tb, groups = c("untreated"),
@@ -390,21 +497,33 @@ group_specific_features(property_tb, groups = c("untreated"),
 
 ### Segmented regression analysis
 
-`run_Trendy` fits segmented linear models to the time course for each feature to estimate breakpoints with Trendy package [@Trendy], see [Trendy documentation](https://bioconductor.org/packages/release/bioc/html/Trendy.html) for details.
+`run_Trendy` fits segmented linear models to the time course for each feature
+to estimate breakpoints with Trendy package [@Trendy], see
+[Trendy](https://bioconductor.org/packages/release/bioc/html/Trendy.html)
+for details.
 
-**Notes**: 
+**Notes**:
 
-- The function requires complete input (no NA). When data contains missing values (e.g. proteomics), use `impute_groups()` to impute (default: group minimum; pass `fun = function(x) min(x) / 2` for half-minimum, `fun = median` for median imputation, etc.), or restrict to features with complete data.
+- The function requires complete input (no NA). When data contains missing
+    values (e.g. proteomics), use `impute_groups()` to impute (default: group
+    minimum; pass `fun = function(x) min(x) / 2` for half-minimum,
+    `fun = median` for median imputation, etc.), or restrict to features with
+    complete data.
 
-- If `feature` is not specified, the function will run on all features filtered by expression / missing rate, which requires running `calc_feature_property()` before `impute_groups()`.
+- If `feature` is not specified, the function will run on all features
+    filtered by expression / missing rate, which requires running
+    `calc_feature_property()` before `impute_groups()`.
 
-- Number of time points needed = [# segments] x [minimum number of samples in a segment]. For example, when # segments = 2 (maxK = 1) and minNumInSeg = 2, at least 4 time points are needed.
+- Number of time points needed = [# segments] x [minimum number of samples in
+    a segment]. For example, when # segments = 2 (maxK = 1) and
+    minNumInSeg = 2, at least 4 time points are needed.
 
 ```{r impute}
 data_obj_merged_imp_list <- impute_groups(data_obj_merged_list)
 ```
 
-A subset of features is used for demonstration as `run_Trendy()` can be time-consuming.
+A subset of features is used for demonstration as `run_Trendy()` can be
+time-consuming.
 
 ```{r trendy-run}
 set.seed(1234)
@@ -418,7 +537,8 @@ example_res_list <- run_Trendy(data_obj_merged_imp_list,
 )
 ```
 
-Use `plot_segments()`to plot the fitted segments and breakpoints for selected features.
+Use `plot_segments()`to plot the fitted segments and breakpoints for
+selected features.
 
 ```{r trendy-plot, fig.height = 2.5, fig.width = 8}
 plot_segments(data_obj_merged_imp_list,
@@ -428,7 +548,10 @@ plot_segments(data_obj_merged_imp_list,
 )
 ```
 
-Plot the distribution of breakpoints across time points with `plot_breakpoints()` in each group, and summarise the temporal patterns (combination of trends of each segment) of features with `summarise_Trendy()` and `extract_segment_trends()`.
+Plot the distribution of breakpoints across time points with
+`plot_breakpoints()` in each group, and summarise the temporal patterns
+(combination of trends of each segment) of features with `summarise_Trendy()`
+and `extract_segment_trends()`.
 
 ```{r trendy-summary, fig.height = 2, fig.width = 4}
 plot_breakpoints(example_res_list)
@@ -444,19 +567,34 @@ trendy_list$IFNbeta
 
 ### Variance decomposition
 
-Variance of each feature is decomposed by linear mixed models (LMM) into contributions from `Group`, `Subject` (when present), `Time`, `Residual`, and optionally `Group:Time` (or `Subject:Time`) interaction, which captures group-specific temporal patterns. This helps to identify time-dependent features, group-dependent features, and "noisy" features with high residual variance.
+Variance of each feature is decomposed by linear mixed models (LMM) into
+contributions from `Group`, `Subject` (when present), `Time`, `Residual`, and
+optionally `Group:Time` (or `Subject:Time`) interaction, which captures
+group-specific temporal patterns. This helps to identify time-dependent
+features, group-dependent features, and "noisy" features with high residual
+variance.
 
 **Interpreting the components:**
 
-- High `Time`: time-dependent features, dynamic along time course consistently across groups. Good candidates for `run_Trendy()` or other time-focused analysis.
+- High `Time`: time-dependent features, dynamic along time course consistently
+    across groups. Good candidates for `run_Trendy()` or other time-focused
+    analysis.
 
-- High `Group`: group-dependent features, stable along time but differentially expressed between groups. May be baseline biological markers.
+- High `Group`: group-dependent features, stable along time but differentially
+    expressed between groups. May be baseline biological markers.
 
-- High `Subject` (when present): features with baseline differences between individuals, biologically meaningful in patient studies.
+- High `Subject` (when present): features with baseline differences between
+    individuals, biologically meaningful in patient studies.
 
-- High `Residual`: unexplained variation, consider excluding for downstream analysis.
+- High `Residual`: unexplained variation, consider excluding for
+    downstream analysis.
 
-The function `decomp_variance()` is inspired by `PALMO::lmeVariance()`[@PALMO]. Group and Time are always included (auto-skipped if only 1 group or time point present). `Subject` is included when present in colData. Set `interaction = TRUE` to add `Group:Time` (or `Subject:Time` with Subject) as a variance component capturing group-specific temporal patterns. Sufficient replicates per combination are required for stable estimates.
+The function `decomp_variance()` is inspired by `PALMO::lmeVariance()`[@PALMO].
+Group and Time are always included (auto-skipped if only 1 group or time point
+present). `Subject` is included when present in colData. Set
+`interaction = TRUE` to add `Group:Time` (or `Subject:Time` with Subject) as a
+variance component capturing group-specific temporal patterns. Sufficient
+replicates per combination are required for stable estimates.
 
 ```{r variance-decomposition, fig.height = 3}
 # filter genes for variance decomposition:
@@ -478,17 +616,28 @@ plot_variance(var_decomp, rank = "Group", top_n = 20)
 
 ### WGCNA (co-expression modules)
 
-Detailed tutorials of weighted gene correlation network analysis ([WGCNA](https://cran.r-project.org/web/packages/WGCNA/index.html))[@WGCNA_1; @WGCNA_2] can be found [online](https://github.com/edo98811/WGCNA_official_documentation/). The following is a brief demonstration of how to prepare input and run WGCNA with TiDEomics functions.
+Detailed tutorials of weighted gene correlation network analysis
+([WGCNA](https://cran.r-project.org/web/packages/WGCNA/index.html))
+[@WGCNA_1; @WGCNA_2] can be found
+[online](https://github.com/edo98811/WGCNA_official_documentation/).
+The following is a brief demonstration of how to prepare input and run WGCNA
+with TiDEomics functions.
 
 **Filtering strategies**:
 
-- Features with too many missing values can be removed, with `WGCNA::goodGenes()` included in the `prepare_WGCNA()` function, or pre-filter with the calculated feature property (output of `calc_feature_property()` and `summarise_feature_property()`).
+- Features with too many missing values will be automatically removed with
+    `WGCNA::goodGenes()` included in the `prepare_WGCNA()` function, and can
+    also be pre-filtered with the calculated feature property (output of
+    `calc_feature_property()` and `summarise_feature_property()`).
 
-<!-- - Features flagged as random (no trend) across groups can be excluded, based on the calculated feature property (e.g., remove features with `P_trend >= 0.05` in all groups). -->
+<!-- - Features flagged as random (no trend) across groups can be -->
+<!--     excluded, based on the calculated feature property (e.g., remove -->
+<!--     features with `P_trend >= 0.05` in all groups). -->
 
 - Residual variance can be used to exclude noisy features.
 
-- It is not recommended to filter by differential expression before WGCNA, see [WGCNA package FAQ](https://edo98811.github.io/WGCNA_official_documentation/faq.html).
+- It is not recommended to filter by differential expression before WGCNA, see
+[WGCNA FAQ](https://edo98811.github.io/WGCNA_official_documentation/faq.html).
 
 ```{r wgcna-prepare}
 # Example filtering by residual variance < Q3
@@ -501,9 +650,15 @@ data_obj_wgcna <- data_obj[filter_wgcna, ]
 
 **Prepare data format and choose power**:
 
-`prepare_WGCNA()` prepares the input for WGCNA and helps to choose the soft-thresholding power. Check the scale-free topology fit indices to confirm that the chosen power is appropriate. 
+`prepare_WGCNA()` prepares the input for WGCNA and helps to choose the
+soft-thresholding power. Check the scale-free topology fit indices to confirm
+that the chosen power is appropriate.
 
-Reasonable powers are less than 15 for unsigned or signed hybrid networks, and less than 30 for signed networks, to reach scale-free topology fit index > 0.8, and mean connectivity (mean.k) not too high (in the hundreds or above). See [WGCNA package FAQ](https://edo98811.github.io/WGCNA_official_documentation/faq.html) for details.
+Reasonable powers are less than 15 for unsigned or signed hybrid networks, and
+less than 30 for signed networks, to reach scale-free topology fit index > 0.8,
+and mean connectivity (mean.k) not too high (in the hundreds or above). See
+[WGCNA FAQ](https://edo98811.github.io/WGCNA_official_documentation/faq.html)
+for details.
 
 ```{r choose-power}
 wgcna_input <- prepare_WGCNA(data_obj_wgcna, assay = 2,
@@ -517,9 +672,13 @@ picked_power
 
 **Run WGCNA**:
 
-Use `run_WGCNA()` with the output of `prepare_WGCNA()`, and visualise the resulting modules with `plot_WGCNA()`.
+Use `run_WGCNA()` with the output of `prepare_WGCNA()`, and visualise the
+resulting modules with `plot_WGCNA()`.
 
-`run_WGCNA()` is a wrapper of `WGCNA::blockwiseModules()`, which runs the WGCNA analysis and returns the module assignment for each feature. Parameters for `WGCNA::blockwiseModules()` can be set with `run_WGCNA()`, e.g., `corType` for correlation method.
+`run_WGCNA()` is a wrapper of `WGCNA::blockwiseModules()`, which runs the WGCNA
+analysis and returns the module assignment for each feature. Parameters for
+`WGCNA::blockwiseModules()` can be set with `run_WGCNA()`, e.g., `corType`
+for correlation method.
 
 ```{r run-wgcna}
 net <- run_WGCNA(wgcna_input,
@@ -541,7 +700,7 @@ gene_module %>%
     dplyr::summarise(n = dplyr::n())
 ```
 
-**Plot module profiles**: 
+**Plot module profiles**:
 
 ```{r plot-wgcna-modules, fig.width = 6, fig.height = 6}
 plot_modules_v(gene_module,
@@ -553,11 +712,15 @@ plot_modules_v(gene_module,
 
 ### Functional enrichment
 
-Functions in TiDEomics wrap `clusterProfiler::enrichGO()` and `clusterProfiler::gseGO()`[@clusterProfiler_1; @clusterProfiler_2; @clusterProfiler_3; @clusterProfiler_4] to run GO enrichment efficiently on gene sets and ranked gene list. 
+Functions in TiDEomics wrap `clusterProfiler::enrichGO()` and
+`clusterProfiler::gseGO()`[@clusterProfiler_1; @clusterProfiler_2;
+@clusterProfiler_3; @clusterProfiler_4]
+to run GO enrichment efficiently on gene sets and ranked gene list.
 
-For ranked gene list (e.g., ranked by Time or Group contribution from variance decomposition), use `enrichGO_rank()` and plot with `enrichplot::gseaplot2()`.
+For ranked gene list (e.g., ranked by Time or Group contribution from variance
+decomposition), use `enrichGO_rank()` and plot with `enrichplot::gseaplot2()`.
 
-```{r go_rank, fig.width=6, fig.height=4}
+```{r go_rank, fig.width=5, fig.height=3}
 gse_group <- enrichGO_rank(var_decomp,
     gene_rank_by = "Group",
     OrgDb = org.Mm.eg.db,
@@ -567,12 +730,14 @@ gse_group <- enrichGO_rank(var_decomp,
 enrichplot::gseaplot2(gse_group[["BP"]], geneSetID = 1:3, base_size = 8)
 ```
 
-For multiple defined gene sets (e.g. WGCNA modules, DE genes by feature classification), use `enrichGO_list()` and plot with `plot_GO()`. 
+For multiple defined gene sets (e.g. WGCNA modules, DE genes by feature
+classification), use `enrichGO_list()` and plot with `plot_GO()`.
 
-Optionally, use `simplify = TRUE` with `enrichGO_list()` to simplify the GO results by removing redundant terms (default: FALSE).
+Optionally, use `simplify = TRUE` with `enrichGO_list()` to simplify the GO
+results by removing redundant terms (default: FALSE).
 
 ```{r go-example, fig.width = 6}
-background_wgcna <- gene_module$Feature
+background_wgcna <- colnames(wgcna_input$data)
 
 go_list <- enrichGO_list(
     gene_list = gene_module, OrgDb = org.Mm.eg.db,
@@ -582,13 +747,17 @@ go_list <- enrichGO_list(
     simplify = FALSE,
     keyType = "SYMBOL"
 )
-plot_GO(go_list$all, plot_dotplot = TRUE, 
+plot_GO(go_list$all, plot_dotplot = TRUE,
     plot_emapplot = FALSE,
     plot_cnetplot = FALSE,
     showCategory_dotplot = 3)
 ```
 
-Enriched GO terms can be added to the module profile plot with `plot_modules_h()`, which is similar to `plot_modules_v()` above but horizontally aligned with annotation of the modules with their top enriched GO terms. The plotting function is adapted from ClusterGVis package [@ClusterGVis].
+Enriched GO terms can be added to the module profile plot with
+`plot_modules_h()`, which is similar to `plot_modules_v()` above but
+horizontally aligned with annotation of the modules with their top enriched
+GO terms. The plotting function is adapted from ClusterGVis
+package [@ClusterGVis].
 
 ```{r plot-wgcna-modules-go, fig.width = 9}
 plot_modules_h(gene_module,
@@ -601,11 +770,16 @@ plot_modules_h(gene_module,
 )
 ```
 
-Enrichment of other gene sets (e.g., drug signatures, TF targets, pathways) can be performed with `enrichR_list()`, which wraps `enrichR::enrichr()`. It returns a named list of data.frames (one per database) with `Cluster` and `Description` columns, compatible with `plot_modules_h()`. Available databases can be checked with `enrichR::listEnrichrDbs()`. 
+Enrichment of other gene sets (e.g., drug signatures, TF targets, pathways) can
+be performed with `enrichR_list()`, which wraps `enrichR::enrichr()`. It
+returns a named list of data.frames (one per database) with `Cluster` and
+`Description` columns, compatible with `plot_modules_h()`. Available databases
+can be checked with `enrichR::listEnrichrDbs()`.
 
 ### Universal: plot features of interest
 
-Selected features can be plotted with `plot_trend()`, which shows the mean and standard deviation of replicates at each time point. 
+Selected features can be plotted with `plot_trend()`, which shows the mean and
+standard deviation of replicates at each time point.
 
 ```{r plot-feature}
 plot_trend(data_obj, assay = 1, features = c("Actb", "Cd69", "Fosb", "Il23a"),
@@ -619,7 +793,8 @@ plot_trend(data_obj, assay = 2, features = c("Actb", "Cd69", "Fosb", "Il23a"),
 #     title = "Example features")
 ```
 
-Visualisation of features with high & low residual variance justify the filtering strategy for WGCNA input. 
+Visualisation of features with high & low residual variance justify the
+filtering strategy for WGCNA input.
 
 ```{r plot-residual}
 plot_trend(data_obj, assay = 1,
@@ -638,30 +813,55 @@ plot_trend(data_obj, assay = 1,
 
 ## Common usage scenarios
 
-TiDEomics supports two experimental designs, auto-detected from the sample annotation:
+TiDEomics supports two experimental designs, auto-detected from the sample
+annotation:
 
-- **Cell culture / independent samples**: `create_input(data, sample_ann)` -- each sample is independent. LMM uses `(1|Group) + (1|Time)`. DE uses unpaired designs.
-- **Patient / repeated-measures**: `create_input(data, sample_ann, subject_col = "PatientID")` -- same subjects tracked across time points. LMM adds `(1|Subject)`. `DE_between_time()` uses paired design via `limma::duplicateCorrelation()`. `normalise_to_start(by_subject = TRUE)` subtracts each subject's own baseline. `merge_replicates()` and `plot_trend()` compute statistics across subjects.
+- **Cell culture / independent samples**: `create_input(data, sample_ann)`
+    -- each sample is independent. LMM uses `(1|Group) + (1|Time)`. DE uses
+    unpaired designs.
+- **Patient / repeated-measures**:
+    `create_input(data, sample_ann, subject_col = "PatientID")` -- same
+    subjects tracked across time points. LMM adds `(1|Subject)`.
+    `DE_between_time()` uses paired design via `limma::duplicateCorrelation()`.
+    `normalise_to_start(by_subject = TRUE)` subtracts each subject's own
+    baseline. `merge_replicates()` and `plot_trend()` compute statistics across
+    subjects.
 
-Users can ask different biological questions and use different functions in TiDEomics to answer them. For example:
+Users can ask different biological questions and use different functions in
+TiDEomics to answer them. For example:
 
-- Which features change over time in each sample group? -> `DE_between_time()`, `calc_feature_property()`, `run_Trendy()`.
+- Which features change over time in each sample group? -> `DE_between_time()`,
+    `calc_feature_property()`, `run_Trendy()`.
 
-- Which features differ between groups at the same time point? -> `DE_between_group()` (For time 0, use `assay = 1`; for later time points, use `assay = 1` for original input data, or use `assay = 2` for change-from-baseline).
+- Which features differ between groups at the same time point? ->
+    `DE_between_group()` (For time 0, use `assay = 1`; for later time points,
+    use `assay = 1` for original input data, or use `assay = 2` for
+    change-from-baseline).
 
-- What is the temporal pattern for individual features? -> `run_Trendy()` + `summarise_Trendy()` + `extract_segment_trends()`.
+- What is the temporal pattern for individual features? -> `run_Trendy()` +
+    `summarise_Trendy()` + `extract_segment_trends()`.
 
-- Which features are noisy vs biologically driven? -> `decomp_variance()` + `plot_variance()`, noisiness can be represented by `Residual` variance.
+- Which features are noisy vs biologically driven? -> `decomp_variance()` +
+    `plot_variance()`, noisiness can be represented by `Residual` variance.
 
-- What co-expression modules are present and what are their temporal profiles? -> `prepare_WGCNA()` + `run_WGCNA()` + `plot_modules_v()` or `plot_modules_h()`.
+- What co-expression modules are present and what are their temporal profiles?
+    -> `prepare_WGCNA()` + `run_WGCNA()` + `plot_modules_v()` or
+    `plot_modules_h()`.
 
-- What biological processes are associated with the genes of interest (e.g. co-expression modules, differentially expressed genes in each sample group)? -> `enrichGO_list()` + `plot_GO()`.
+- What biological processes are associated with the genes of interest (e.g.
+    co-expression modules, differentially expressed genes in each sample
+    group)? -> `enrichGO_list()` + `plot_GO()`.
 
-- What biological processes are associated with the genes ranked by their property (e.g. time or group contributed variance)? -> `enrichGO_rank()`.
+- What biological processes are associated with the genes ranked by their
+    property (e.g. time or group contributed variance)? -> `enrichGO_rank()`.
 
-- How to normalise the data? -> `normalise_to_start()` to focus on changes from baseline; apply global normalisation (quantile, median) and batch correction when appropriate, before `create_input()`.
+- How to normalise the data? -> `normalise_to_start()` to focus on changes
+    from baseline; apply global normalisation (quantile, median) and batch
+    correction when appropriate, before `create_input()`.
 
-- How to handle missing values? -> `impute_groups()` for `run_Trendy`. `plot_pca()` and `plot_umap()` automatically excluded features with missing values. `prepare_WGCNA()` filter out features with too many missing values.
+- How to handle missing values? -> `impute_groups()` for `run_Trendy`.
+    `plot_pca()` and `plot_umap()` automatically excluded features with missing
+    values. `prepare_WGCNA()` filter out features with too many missing values.
 
 ## Session information
 

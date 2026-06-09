@@ -56,7 +56,7 @@ prepare_WGCNA <- function(
     if (is.null(powers)) {
         powers <- c(seq(1, 10, by = 1), seq(12, 20, by = 2))
     } else if (length(powers) == 0 || !all(powers %% 1 == 0) ||
-               !all(powers > 0)) {
+            !all(powers > 0)) {
         stop("Powers must be a non-empty vector of positive integers.")
     }
 
