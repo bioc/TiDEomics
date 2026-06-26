@@ -61,11 +61,6 @@ wgcna_input <- prepare_WGCNA(example_obj, assay = 2, powers = seq(1, 30),
     networkType = "signed", RsquaredCut = 0.8)
 wgcna_input$fitIndices
 picked_power <- wgcna_input$powerEstimate
-# example_net <- run_WGCNA(wgcna_input,
-#    power = picked_power,
-#    minModuleSize = 10, # only 100 genes in the example data
-#    numericLabels = TRUE)
-# plot_WGCNA(example_net, fontsize = 8)
 }
 \references{
 https://github.com/edo98811/WGCNA_official_documentation/

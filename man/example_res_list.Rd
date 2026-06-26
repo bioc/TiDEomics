@@ -15,6 +15,6 @@ GSE263759
 data(example_res_list)
 }
 \description{
-Code for preparing the data is available in \code{run_Trendy()} examples
+Code for preparing the data is available in \code{inst/script/generate_example_res_list.R}
 }
 \keyword{datasets}

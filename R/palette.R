@@ -38,6 +38,8 @@ set_custom_palette <- function(palette) {
 #' @examples
 #' get_custom_palette(c("untreated", "IFNbeta"))
 get_custom_palette <- function(groups) {
+    groups <- as.character(groups)
+    if (length(groups) == 0) stop("'groups' must not be empty.")
     pal <- getOption("custom.palette")
 
     if (is.null(pal)) { # no custom palette set, return default palette
@@ -57,7 +59,7 @@ get_custom_palette <- function(groups) {
     }
 
     # return colors in the order of the specified groups
-    pal <- pal[groups %>% as.character()] 
+    pal <- pal[groups |> as.character()] 
 
     return(pal)
 }

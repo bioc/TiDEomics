@@ -25,7 +25,7 @@ A subset of GSE263759 data set published in
 \href{https://doi.org/10.1016/j.cels.2025.101346}{Integrated time-series analysis and high-content CRISPR screening delineate the dynamics of macrophage immune regulation}
 }
 \details{
-Code for preparing the data is available in \code{data-raw/tutorial_input.R}
+Code for preparing the data is available in \code{inst/script/tutorial_input.R}
 \itemize{
 \item Ensembl IDs were mapped to symbols, genes with all zero counts
 were excluded.

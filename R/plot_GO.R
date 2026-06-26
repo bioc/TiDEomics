@@ -23,11 +23,10 @@
 #' @returns A series of plots visualizing the GO enrichment results.
 #' @export
 #' @examples
-#' library(magrittr)
 #' library(org.Mm.eg.db)
 #' data(example_net)
 #' # select two modules for demonstration
-#' example_module <- WGCNA_module(example_net) %>%
+#' example_module <- WGCNA_module(example_net) |>
 #'     dplyr::filter(Module %in% c("1", "2"))
 #' # set cutoff to 1 to show all results for demonstration
 #' example_go_list = enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
@@ -48,6 +47,15 @@ plot_GO <- function(
     label = "features",
     ...
 ) {
+    .check_character(label, "label")
+    .check_list(go_list, "go_list", "enrichGO_list")
+    .check_logical(plot_dotplot, "plot_dotplot")
+    .check_logical(plot_cnetplot, "plot_cnetplot")
+    .check_logical(plot_emapplot, "plot_emapplot")
+    .check_positive_int(showCategory_dotplot, "showCategory_dotplot")
+    .check_positive_int(showCategory_cnetplot, "showCategory_cnetplot")
+    .check_positive_int(showCategory_emapplot, "showCategory_emapplot")
+    .check_positive(fontsize, "fontsize")
     if (length(intersect(names(go_list), c("BP", "MF", "CC"))) == 0) {
         if ("all" %in% names(go_list) || "simplified" %in% names(go_list)) {
             stop("The input list contains 'all' or 'simplified' sublists. ",
@@ -89,9 +97,9 @@ plot_GO <- function(
     if (plot_cnetplot) {
         for (cate in intersect(names(go_list), c("BP", "MF", "CC"))) {
             if (dim(go_list[[cate]])[1] > 0) {
-                clus_names <- go_list[[cate]] %>%
-                    as.data.frame() %>%
-                    dplyr::pull(Cluster) %>%
+                clus_names <- go_list[[cate]] |>
+                    as.data.frame() |>
+                    dplyr::pull(Cluster) |>
                     unique()
 
                 print(clusterProfiler::cnetplot(go_list[[cate]],
@@ -117,9 +125,9 @@ plot_GO <- function(
     if (plot_emapplot) {
         for (cate in intersect(names(go_list), c("BP", "MF", "CC"))) {
             if (dim(go_list[[cate]])[1] > 0) {
-                clus_names <- go_list[[cate]] %>%
-                    as.data.frame() %>%
-                    dplyr::pull(Cluster) %>%
+                clus_names <- go_list[[cate]] |>
+                    as.data.frame() |>
+                    dplyr::pull(Cluster) |>
                     unique()
 
                 print(clusterProfiler::emapplot(

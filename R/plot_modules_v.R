@@ -34,7 +34,6 @@
 #' @param res Resolution of the saved image (except pdf format)
 #' (default is 300 (ppi))
 #'
-#' @import magrittr
 #' @import ggplot2
 #' @import patchwork
 #'
@@ -43,7 +42,6 @@
 #' feature expression across time points.
 #' @export
 #' @examples
-#' library(magrittr)
 #' data(example)
 #' example_obj <- normalise_to_start(example_obj)
 #' example_obj_list <- split_groups(example_obj)
@@ -51,9 +49,9 @@
 #' example_obj_merged <- merge_groups(example_obj_merged_list)
 #'
 #' data(example_net)
-#' example_module <- WGCNA_module(example_net) 
+#' example_module <- WGCNA_module(example_net)
 #'
-#' plot_modules_v(example_module %>% dplyr::filter(Module != '0'),
+#' plot_modules_v(example_module |> dplyr::filter(Module != '0'),
 #'     example_obj_merged, scale = TRUE,
 #'     ylabel = "Z-score of log2 (expression)",
 #'     height_ratio = 2,
@@ -73,11 +71,23 @@ plot_modules_v <- function(
     fontsize = 8,
     res = 300
 ) {
+    .check_df(module, "module")
+    .check_character(ylabel, "ylabel")
+    .check_character(device, "device")
+    .check_character(suffix, "suffix")
+    .check_logical(scale, "scale")
+    .check_positive(width, "width")
+    .check_positive(height, "height")
+    .check_positive(height_ratio, "height_ratio")
+    .check_positive(fontsize, "fontsize")
+    .check_positive_int(res, "res")
+    .check_se_merged(se_obj_merged, "se_obj_merged")
+    assay <- .match_assay(assay, se_obj_merged)
     data_module_long <- .plot_modules_input(module = module,
         se_obj_merged = se_obj_merged, scale = scale, assay = assay)
 
-    p <- data_module_long %>%
-        dplyr::mutate(Time = as.numeric(as.character(Time))) %>%
+    p <- data_module_long |>
+        dplyr::mutate(Time = as.numeric(as.character(Time))) |>
         ggplot(aes(x = Time, y = Abundance, group = Feature)) +
         geom_line(alpha = 0.3, color = "grey") +
         stat_summary(aes(group = Group, color = Group),
@@ -97,7 +107,7 @@ plot_modules_v <- function(
                 linewidth = 0.5)
         )
 
-    q <- data_module_long %>%
+    q <- data_module_long |>
         ggplot(aes(x = Time, y = Feature, fill = Abundance)) +
         geom_tile() +
         scale_y_discrete(

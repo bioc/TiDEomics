@@ -12,7 +12,6 @@
 #' @param ... Additional arguments to be passed to `ggsignif::geom_signif()` 
 #' function when `signif` is TRUE, for customizing the significance annotations.
 #' @import SummarizedExperiment
-#' @import magrittr
 #' @import ggplot2
 #' @returns A plot showing the missing value rate for each sample, with a 
 #' dashed line indicating the global missing value rate across all samples.
@@ -32,33 +31,36 @@
 #' plot_ID(na_obj)
 #' plot_missing(na_obj)
 plot_missing <- function(se_obj, fontsize = 8, signif = FALSE, ...) {
+    .check_se(se_obj)
+    .check_logical(signif, "signif")
+    .check_positive(fontsize, "fontsize")
     global_missing_rate <- sum(is.na(assays(se_obj)[[1]])) /
         dim(assays(se_obj)[[1]])[1] / dim(assays(se_obj)[[1]])[2]
 
-    missing_tb <- assays(se_obj)[[1]] %>%
+    missing_tb <- assays(se_obj)[[1]] |>
         dplyr::summarise(dplyr::across(dplyr::everything(), 
-            ~ sum(is.na(.)) / length(.))) %>%
+            ~ sum(is.na(.)) / length(.))) |>
         tidyr::pivot_longer(cols = dplyr::everything(), 
-            values_to = "Missing") %>%
-        merge(., colData(se_obj), by.x = "name", by.y = "Sample") %>%
-        as.data.frame() %>%
+            values_to = "Missing") |>
+        merge(colData(se_obj), by.x = "name", by.y = "Sample") |>
+        as.data.frame() |>
         dplyr::mutate(Time = as.factor(Time))
 
-    (missing_tb %>%
+    overview <- missing_tb |>
         ggplot(aes(x = Time, y = Missing, fill = Replicate)) +
         geom_bar(stat = "identity", position = "dodge", color = "black") +
         geom_hline(yintercept = global_missing_rate, linetype = "dashed") +
         facet_grid(Group ~ Time, scales = "free_x") +
         ggtitle(paste0(
-            "NA ratio (out of ", dim(assays(se_obj)[[1]])[1], 
+            "NA ratio (out of ", dim(assays(se_obj)[[1]])[1],
             " features) (global: ",
-            global_missing_rate %>% round(digits = 2), ")"
+            global_missing_rate |> round(digits = 2), ")"
         )) +
         theme_custom(base_size = fontsize) +
         theme(panel.grid.major.y = element_line(color = "grey")) +
-        ylab("Missing rate")) %>% print()
+        ylab("Missing rate")
 
-    p <- missing_tb %>%
+    p <- missing_tb |>
         ggplot(aes(x = Group, y = Missing)) +
         geom_boxplot(size = 0.2, outlier.shape = NA) +
         geom_point(aes(color = Time), size = 0.7, 
@@ -68,9 +70,11 @@ plot_missing <- function(se_obj, fontsize = 8, signif = FALSE, ...) {
     if (signif) {
         p <- p +
             ggsignif::geom_signif(
-                comparisons = utils::combn(unique(se_obj$Group) %>% 
-                as.vector(), m = 2) %>%
-                as.data.frame() %>% as.list(), ...)
+                comparisons = utils::combn(unique(se_obj$Group) |> 
+                as.vector(), m = 2) |>
+                as.data.frame() |> as.list(), ...)
     }
-    p %>% print()
+    res <- list(overview = overview, comparison = p)
+    print(res)
+    return(invisible(res))
 }

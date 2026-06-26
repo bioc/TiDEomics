@@ -28,26 +28,26 @@
 plot_trend <- function(se_obj, assay = 1, groups = NULL, features,
     title = "Feature", ylab = "Abundance", errorbar = TRUE, fontsize = 8) {
 
-    if (is.null(features)) {
-        stop("Please specify features to be plotted.")
+    if (!inherits(se_obj, "SummarizedExperiment") && !is.data.frame(se_obj)) {
+        stop("'se_obj' must be a SummarizedExperiment or a data.frame.")
+    }
+    .check_character(features, "features")
+    .check_logical(errorbar, "errorbar")
+    .check_positive(fontsize, "fontsize")
+    if (!is.null(groups)) .check_character(groups, "groups")
+
+    if (length(features) == 0) {
+        stop("'features' must not be empty.")
     }
 
     # Accept either an SE object or a pre-computed table_mean_sd
     if (inherits(se_obj, "SummarizedExperiment")) {
-        if (length(assay) > 1 || is.null(assay)) assay <- 1
-        if (assay > length(assays(se_obj))) {
-            stop("Input se_obj does not contain assay ", assay, ". ",
-                "Run normalise_to_start() to add assay 2.")
-        }
+        assay <- .match_assay(assay, se_obj)
         # Subset to features to be plotted only
         keep <- intersect(rownames(se_obj), features)
         se_obj <- se_obj[keep, , drop = FALSE]
         tbl_list <- calc_mean_sd(se_obj)
-        table_mean_sd <- if (assay == 2 && length(tbl_list) >= 2) {
-            tbl_list$norm0
-        } else {
-            tbl_list$orig
-        }
+        table_mean_sd <- tbl_list[[assay]]
     } else if (is.data.frame(se_obj)) {
         table_mean_sd <- se_obj
     } else {
@@ -64,9 +64,9 @@ plot_trend <- function(se_obj, assay = 1, groups = NULL, features,
             "in the input.")
     }
 
-    p <- table_mean_sd %>%
-        dplyr::filter(Group %in% groups & Feature %in% features) %>%
-        dplyr::mutate(Feature = factor(Feature, levels = features)) %>%
+    p <- table_mean_sd |>
+        dplyr::filter(Group %in% groups & Feature %in% features) |>
+        dplyr::mutate(Feature = factor(Feature, levels = features)) |>
         ggplot(aes(x = Time, y = Mean, group = Group, color = Group)) +
         geom_line(linewidth = 0.7) +
         geom_point(size = 0.3) +
@@ -89,4 +89,5 @@ plot_trend <- function(se_obj, assay = 1, groups = NULL, features,
     }
 
     print(p)
+    return(invisible(p))
 }

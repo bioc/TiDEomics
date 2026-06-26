@@ -26,11 +26,12 @@
 #' @param interaction Logical. If TRUE, adds `(1|Group:Time)` (or
 #'   `(1|Subject:Time)` when Subject present) to the model to capture
 #'   interaction variance. Default: FALSE.
-#' @param assay 1 for original data, or 2 for data normalised to time 0
+#' @param assay Assay to use: `"orig"` for original data, `"norm"` for
+#' normalised-to-start data. Numeric indices (1, 2) are also accepted.
+#' No default, must be specified explicitly.
 #' @param core Number of cores for parallel processing (default: 1)
 #'
 #' @import SummarizedExperiment
-#' @import magrittr
 #' @returns A data frame with variance decomposition results (percentages).
 #' @references https://github.com/aifimmunology/PALMO/blob/main/R/lmeVariance.R
 #' @export
@@ -39,21 +40,17 @@
 #' example_obj <- normalise_to_start(example_obj)
 #'
 #' var_decomp <- decomp_variance(example_obj, assay = 1)
-#' plot_variance(var_decomp, rank = "Time", top_n = 20)
 decomp_variance <- function(
     se_obj, features = NULL,
     fixed_effect_var = NULL,
     interaction = FALSE,
-    assay = c(1, 2), core = 1
+    assay, core = 1
 ) {
-    if (length(assay) > 1 || is.null(assay)) {
-        assay <- 1
-        message("Using assay 1 (original data) for variance decomposition.")
-    } else if (!(assay %in% seq_along(assays(se_obj)))) {
-        assay_avail <- paste(seq_along(assays(se_obj)), collapse = ", ")
-        stop(sprintf("Invalid assay index specified. Please choose from: %s",
-            assay_avail))
-    }
+    .check_se(se_obj)
+    .check_logical(interaction, "interaction")
+    .check_positive_int(core, "core")
+
+    assay <- .match_assay(assay, se_obj)
 
     if (!is.null(features)) {
         if (!all(features %in% rownames(se_obj))) {
@@ -66,28 +63,28 @@ decomp_variance <- function(
     required <- c("Group", "Time")
     if (!all(required %in% colnames(colData(se_obj)))) {
         stop(sprintf("Required columns not found: %s",
-            paste(setdiff(required, colnames(colData(se_obj))), 
+            paste(setdiff(required, colnames(colData(se_obj))),
                 collapse = ", ")))
     }
 
     # ---- Detect data structure ----
     has_subject <- "Subject" %in% colnames(colData(se_obj))
 
-    ann <- colData(se_obj) %>%
-        as.data.frame() %>%
+    ann <- colData(se_obj) |>
+        as.data.frame() |>
         dplyr::mutate(Sample_new = if (has_subject) {
             paste0(Group, "_", Subject, "_", Time, "_", Replicate)
         } else {
             paste0(Group, "_", Time, "_", Replicate)
-        }) %>%
+        }) |>
         dplyr::mutate(Time = factor(Time))
 
-    mat <- assays(se_obj)[[assay]] %>% as.data.frame()
-    colnames(mat) <- colnames(mat) %>%
+    mat <- assays(se_obj)[[assay]] |> as.data.frame()
+    colnames(mat) <- colnames(mat) |>
         plyr::mapvalues(from = ann$Sample, to = ann$Sample_new)
 
-    ann <- ann %>%
-        dplyr::select(-Sample) %>%
+    ann <- ann |>
+        dplyr::select(-Sample) |>
         dplyr::rename(Sample = Sample_new)
     row.names(ann) <- ann$Sample
 
@@ -104,7 +101,7 @@ decomp_variance <- function(
         if (n_subjects >= 2) {
             featureSet <- "Subject"
         } else {
-            message("Only 1 Subject level detected - ", 
+            message("Only 1 Subject level detected - ",
                 "Subject dropped from model.")
         }
     }
@@ -122,7 +119,7 @@ decomp_variance <- function(
     if (length(featureSet) == 0) {
         stop("No variable has >=2 levels. Cannot fit variance decomposition.")
     }
-    
+
     # ---- Optional interaction term ----
     if (interaction) {
         inter_term <- if (has_subject) "Subject:Time" else "Group:Time"
@@ -142,7 +139,7 @@ decomp_variance <- function(
             }
         }
     }
-    rand_terms <- paste(paste("(1|", featureSet, ")", sep = ""), 
+    rand_terms <- paste(paste("(1|", featureSet, ")", sep = ""),
         collapse = " + ")
 
     # ---- Fixed effects ----
@@ -186,6 +183,10 @@ decomp_variance <- function(
 
             # Skip features where any grouping factor has only 1 level
             gene_group <- vapply(seq_len(length(featureSet)), function(i) {
+                # Interaction terms (e.g. Group:Time): level check is
+                # redundant - if component factors pass, the interaction
+                # necessarily has >=1 level with >1 observation
+                if (grepl(":", featureSet[i])) return(1)
                 df1 <- df[!is.na(df$exp) & !is.na(df[, featureSet[i]]), ]
                 res <- data.frame(table(df1[, featureSet[i]]))
                 sum(res$Freq > 1)
@@ -210,8 +211,6 @@ decomp_variance <- function(
             lmem_re <- as.data.frame(lme4::VarCorr(lmem))
             row.names(lmem_re) <- lmem_re$grp
             lmem_re <- lmem_re[featureList, ]
-            fix_effect <- lme4::fixef(lmem)
-            lmem_re$CV <- lmem_re$sdcor / fix_effect
 
             c(
                 geneName, mean(df$exp, na.rm = TRUE),

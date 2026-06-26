@@ -11,7 +11,6 @@
 #' @param fontsize Font size for the plot (default is 8)
 #'
 #' @import ggplot2
-#' @import magrittr
 #'
 #' @returns A stacked bar plot showing the percentage of variance explained
 #' by each model component (Group, Time, Residual, plus Subject and
@@ -28,6 +27,11 @@
 plot_variance <- function(var_decomp, rank = "Group",
     features = NULL,
     top_n = 20, show_ylab = TRUE, fontsize = 8) {
+    .check_df(var_decomp, "var_decomp")
+    .check_character(rank, "rank")
+    .check_logical(show_ylab, "show_ylab")
+    .check_positive_int(top_n, "top_n")
+    .check_positive(fontsize, "fontsize")
 
     if (!rank %in% colnames(var_decomp)) {
         avail <- setdiff(colnames(var_decomp), 
@@ -46,9 +50,9 @@ plot_variance <- function(var_decomp, rank = "Group",
             message("Features not specified. Plotting top ", top_n,
                 " features ", "ranked by ", as.character(rank), ".")
         }
-        features <- var_decomp %>%
-            dplyr::arrange(dplyr::desc(!!rank)) %>%
-            dplyr::slice(seq(1, top_n)) %>%
+        features <- var_decomp |>
+            dplyr::arrange(dplyr::desc(!!rank)) |>
+            dplyr::slice(seq(1, top_n)) |>
             dplyr::pull(Feature)
     } else if (!all(features %in% var_decomp$Feature)) {
         stop("At least one of the specified features is not found in the ",
@@ -58,18 +62,18 @@ plot_variance <- function(var_decomp, rank = "Group",
     # Dynamic column detection: all variance components (not metadata columns)
     meta_cols <- c("Feature", "mean", "median", "sd", "max")
     comp_cols <- setdiff(colnames(var_decomp), meta_cols)
-    var_decomp_longer <- var_decomp %>%
-        dplyr::select(dplyr::all_of(c("Feature", comp_cols))) %>%
-        dplyr::arrange(dplyr::desc(!!rank)) %>%
+    var_decomp_longer <- var_decomp |>
+        dplyr::select(dplyr::all_of(c("Feature", comp_cols))) |>
+        dplyr::arrange(dplyr::desc(!!rank)) |>
         tidyr::pivot_longer(cols = -Feature, names_to = "Composition",
-            values_to = "Percentage") %>%
+            values_to = "Percentage") |>
         dplyr::mutate(Composition = factor(Composition,
-            levels = unique(c(as.character(rank), comp_cols)) %>% rev()
-        )) %>%
+            levels = unique(c(as.character(rank), comp_cols)) |> rev()
+        )) |>
         dplyr::mutate(Feature = factor(Feature, levels = rev(unique(Feature))))
 
-    p <- var_decomp_longer %>%
-        dplyr::filter(Feature %in% features) %>%
+    p <- var_decomp_longer |>
+        dplyr::filter(Feature %in% features) |>
         ggplot(aes(x = Feature, y = Percentage, fill = Composition)) +
         geom_bar(stat = "identity", position = "stack") +
         labs(x = "Features", y = "% Variance explained") +
@@ -93,4 +97,5 @@ plot_variance <- function(var_decomp, rank = "Group",
     }
 
     print(p)
+    return(invisible(p))
 }

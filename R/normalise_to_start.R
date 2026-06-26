@@ -16,7 +16,6 @@
 #'   use subject-level baseline (requires Subject column in colData).
 #'
 #' @import SummarizedExperiment
-#' @import magrittr
 #'
 #' @returns A SummarizedExperiment object with normalised data in the second
 #' assay slot.
@@ -24,10 +23,9 @@
 #' @examples
 #' data("example")
 #' example_obj <- normalise_to_start(example_obj)
-#' example_obj_list <- split_groups(example_obj)
-#' example_obj_merged_list <- merge_replicates(example_obj_list)
-#' example_obj_merged <- merge_groups(example_obj_merged_list)
 normalise_to_start <- function(se_obj, by_subject = FALSE) {
+    .check_se(se_obj)
+    .check_logical(by_subject, "by_subject")
     if (by_subject && !"Subject" %in% colnames(colData(se_obj))) {
         stop("by_subject = TRUE requires a 'Subject' column in colData. ",
             "Set by_subject = FALSE for group-level normalisation, or ",
@@ -119,7 +117,7 @@ normalise_to_start <- function(se_obj, by_subject = FALSE) {
     }
 
     d_0norm <- do.call(cbind, unname(d_list_0norm))
-    assay(se_obj, 2) <- d_0norm
+    assay(se_obj, "norm") <- d_0norm
 
     return(se_obj)
 }

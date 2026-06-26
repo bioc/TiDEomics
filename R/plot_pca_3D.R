@@ -11,7 +11,6 @@
 #' @param pcs A numeric vector specifying which three principal components 
 #' to plot (default is 1:3)
 #'
-#' @import magrittr
 #'
 #' @returns An interactive 3D PCA plot showing the distribution of samples 
 #' in the space defined by the specified principal components. The samples 
@@ -22,6 +21,9 @@
 #' PC = plot_pca(example_obj, morepc = seq(1, 3))
 #' plot_pca_3D(PC, pcs = seq(1, 3))
 plot_pca_3D <- function(pca, pcs = seq(1, 3)) {
+    if (is.null(pca$rotated) || is.null(pca$variance)) {
+        stop("'pca' must be a PCA result from plot_pca() or PCAtools::pca().")
+    }
     if (!requireNamespace("plotly", quietly = TRUE))
         stop("Package 'plotly' is required for 3D PCA. ", 
         "Install with: install.packages('plotly')")
@@ -52,7 +54,7 @@ plot_pca_3D <- function(pca, pcs = seq(1, 3)) {
         color = ~Group, size = ~Time, text = ~Sample,
         type = "scatter3d", mode = "markers",
         colors = get_custom_palette(unique(pca$metadata$Group))
-    ) %>%
+    ) |>
         plotly::layout(
             scene = list(
                 xaxis = list(title = xlab),

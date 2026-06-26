@@ -43,20 +43,17 @@
 #' for each GO category (BP, MF, CC).
 #' @export
 #' @examples
-#' library(magrittr)
 #' library(org.Mm.eg.db)
 #' library(clusterProfiler)
 #' data(example_net)
 #' # select two modules for demonstration
-#' example_module <- WGCNA_module(example_net) %>%
+#' example_module <- WGCNA_module(example_net) |>
 #'     dplyr::filter(Module %in% c("1", "2"))
 #' # set cutoff to 1 to show all results for demonstration
 #' example_go_list = enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
 #'     universe = example_module$Feature,
 #'     pvalueCutoff = 1, qvalueCutoff = 1,
 #'     category = "BP", simplify = FALSE)
-#' # plot_GO(example_go_list$all, plot_dotplot = TRUE,
-#' #     plot_emapplot = FALSE, plot_cnetplot = FALSE)
 enrichGO_list <- function(gene_list, keyType = "SYMBOL",
     OrgDb,
     universe = NULL,
@@ -72,11 +69,21 @@ enrichGO_list <- function(gene_list, keyType = "SYMBOL",
     simplify_measure = "Wang",
     ...
 ) {
+    .check_pval(simplify_cutoff, "simplify_cutoff")
+    .check_character(keyType, "keyType")
+    .check_character(pAdjustMethod, "pAdjustMethod")
+    .check_character(simplify_by, "simplify_by")
+    .check_character(simplify_measure, "simplify_measure")
+    .check_pval(pvalueCutoff, "pvalueCutoff")
+    .check_pval(qvalueCutoff, "qvalueCutoff")
+    .check_logical(simplify, "simplify")
+
     if (is.null(category)) {
         category <- c("BP", "MF", "CC")
         message("GO category not specified. Using all three: BP, MF, CC.")
-    } else if (!all(category %in% c("BP", "MF", "CC"))) {
-        stop("Invalid GO category. Please choose from 'BP', 'MF', 'CC'.")
+    } else {
+        category <- match.arg(category, c("BP", "MF", "CC"),
+            several.ok = TRUE)
     }
 
     gene_list <- .prepare_gene_list(gene_list)

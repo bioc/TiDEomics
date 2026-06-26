@@ -72,6 +72,11 @@ group_specific_features <- function(
     OrgDb = NULL, keytype = NULL,
     ...
 ) {
+    .check_pval(filter_ratio, "filter_ratio")
+    .check_pval(group_pct, "group_pct")
+    .check_df_feature_property(property_random_fc, "property_random_fc")
+    .check_logical(genename, "genename")
+    .check_logical(GO, "GO")
     if (is.null(groups)) {
         groups <- unique(property_random_fc$Group)
     } else {
@@ -88,7 +93,7 @@ group_specific_features <- function(
         }
     }
 
-    threshold <- property_random_fc$Exp_threshold %>% unique()
+    threshold <- property_random_fc$Exp_threshold |> unique()
     if (length(threshold) > 1) {
         stop("Multiple Exp_threshold values found across groups. ",
             "All groups should use the same threshold in ",
@@ -97,34 +102,34 @@ group_specific_features <- function(
 
 
     # count of included expressed groups for each feature
-    filter_count_groups <- property_random_fc %>%
-        dplyr::filter(Exp_ratio >= filter_ratio) %>%
-        dplyr::filter(Group %in% groups) %>%
-        dplyr::distinct(Feature, Group) %>%
-        dplyr::group_by(Feature) %>%
-        dplyr::summarise(Count = dplyr::n()) %>%
+    filter_count_groups <- property_random_fc |>
+        dplyr::filter(Exp_ratio >= filter_ratio) |>
+        dplyr::filter(Group %in% groups) |>
+        dplyr::distinct(Feature, Group) |>
+        dplyr::group_by(Feature) |>
+        dplyr::summarise(Count = dplyr::n()) |>
         dplyr::ungroup()
 
     # count of excluded expressed groups for each feature
-    filter_count_groups_op <- property_random_fc %>%
-        dplyr::filter(Exp_ratio >= filter_ratio) %>%
-        dplyr::filter(!(Group %in% groups)) %>%
-        dplyr::distinct(Feature, Group) %>%
-        dplyr::group_by(Feature) %>%
-        dplyr::summarise(Count = dplyr::n()) %>%
+    filter_count_groups_op <- property_random_fc |>
+        dplyr::filter(Exp_ratio >= filter_ratio) |>
+        dplyr::filter(!(Group %in% groups)) |>
+        dplyr::distinct(Feature, Group) |>
+        dplyr::group_by(Feature) |>
+        dplyr::summarise(Count = dplyr::n()) |>
         dplyr::ungroup()
 
     # features that are present in at least 1 excluded group
-    other_group_genes <- filter_count_groups_op %>%
-        dplyr::filter(Count > 0) %>%
+    other_group_genes <- filter_count_groups_op |>
+        dplyr::filter(Count > 0) |>
         dplyr::pull(Feature)
 
     # features that are present in at least group_pct of the included groups
     # and not present in any excluded group
     group_num <- ceiling(length(groups) * group_pct)
-    unique_genes <- filter_count_groups %>%
-        dplyr::filter(Count >= group_num) %>%
-        dplyr::pull(Feature) %>%
+    unique_genes <- filter_count_groups |>
+        dplyr::filter(Count >= group_num) |>
+        dplyr::pull(Feature) |>
         setdiff(other_group_genes)
 
     if (is.na(threshold)) {
@@ -144,12 +149,12 @@ group_specific_features <- function(
     }
 
     if (genename && length(unique_genes) > 0) {
-        unique_genes %>%
+        unique_genes |>
             clusterProfiler::bitr(
                 fromType = keytype, toType = c(keytype, "GENENAME"),
                 OrgDb = OrgDb
-            ) %>%
-            dplyr::arrange(.data[[keytype]]) %>%
+            ) |>
+            dplyr::arrange(.data[[keytype]]) |>
             DT::datatable(
                 options = list(pageLength = 10),
                 caption = paste0(
@@ -159,14 +164,14 @@ group_specific_features <- function(
                     group_num, " of groups: ",
                     paste(groups, collapse = ", ")
                 )
-            ) %>%
+            ) |>
             print()
     }
 
     if (GO == TRUE && length(unique_genes) > 0) {
         unique_genes_go <- enrichGO_list(list("Unique" = unique_genes),
             OrgDb = OrgDb,
-            universe = property_random_fc$Feature %>% unique(),
+            universe = property_random_fc$Feature |> unique(),
             keyType = keytype, ...
         )
 
@@ -184,7 +189,7 @@ group_specific_features <- function(
                     group_num, " of groups: ",
                     paste(groups, collapse = ", ")
                 )
-            ) %>% print()
+            ) |> print()
         }
     }
 

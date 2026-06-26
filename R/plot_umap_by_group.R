@@ -17,7 +17,6 @@
 #'
 #' @import ggplot2
 #' @import SummarizedExperiment
-#' @import magrittr
 #'
 #' @returns A series of UMAP plots showing the distribution of samples in
 #' each group, coloured by Time.
@@ -32,6 +31,11 @@
 plot_umap_by_group <- function(se_obj, seed = 1234, nrow = 1,
     umap_neighbors = NULL,
     fontsize = 8, assay = 1, legend_pos = "right") {
+    .check_se(se_obj)
+    .check_positive_int(seed, "seed")
+    .check_positive_int(nrow, "nrow")
+    .check_positive(fontsize, "fontsize")
+    assay <- .match_assay(assay, se_obj)
 
     if (is.list(se_obj) && !methods::is(se_obj, "SummarizedExperiment")) {
         se_list <- se_obj
@@ -56,15 +60,17 @@ plot_umap_by_group <- function(se_obj, seed = 1234, nrow = 1,
 
     ncol <- ceiling(length(umap_list) / nrow)
 
-    print(ggpubr::ggarrange(
+    p <- ggpubr::ggarrange(
         plotlist = umap_list, labels = names(umap_list),
         font.label = list(size = fontsize + 2),
         hjust = 0, vjust = 0.5,
         nrow = nrow, ncol = ncol,
         common.legend = TRUE,
         legend = legend_pos
-    ) %>%
+    ) |>
         ggpubr::annotate_figure(top =
         ggpubr::text_grob("UMAP - by group (features without missing values)\n",
-            face = "bold", size = fontsize + 4)))
+            face = "bold", size = fontsize + 4))
+    print(p)
+    return(invisible(p))
 }

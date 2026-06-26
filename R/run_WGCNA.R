@@ -27,10 +27,11 @@
 #'     power = picked_power,
 #'     minModuleSize = 10, # only 100 genes in the example data
 #'     numericLabels = TRUE)
-#' # plot_WGCNA(example_net, fontsize = 8)
-#' # use_data(example_net)
 #' @references https://github.com/edo98811/WGCNA_official_documentation/blob/main/FemaleLiver-03-relateModsToExt.R
 run_WGCNA <- function(wgcna_input, power, numericLabels = TRUE, ...) {
+    .check_list(wgcna_input, "wgcna_input", "prepare_WGCNA")
+    .check_logical(numericLabels, "numericLabels")
+    .check_positive_int(power, "power")
     WGCNA::allowWGCNAThreads()
 
     .cor_orig <- cor

@@ -33,7 +33,6 @@
 #' var_decomp <- decomp_variance(example_obj, assay = 1)
 #' example_go_rank <- enrichGO_rank(var_decomp, gene_rank_by = "Time",
 #'     OrgDb = org.Mm.eg.db, keyType = "SYMBOL", category = "BP")
-#' enrichplot::gseaplot2(example_go_rank$BP, geneSetID = 1:2)
 enrichGO_rank <- function(
     rank_table,
     gene_rank_by,
@@ -45,11 +44,19 @@ enrichGO_rank <- function(
     pAdjustMethod = "BH",
     ...
 ) {
+    .check_df(rank_table, "rank_table")
+    .check_character(gene_rank_by, "gene_rank_by")
+    .check_character(keyType, "keyType")
+    pAdjustMethod <- match.arg(pAdjustMethod,
+        c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none"))
+    .check_pval(pvalueCutoff, "pvalueCutoff")
+
     if (is.null(category)) {
         category <- c("BP", "MF", "CC")
         message("GO category not specified. Using all three: BP, MF, CC.")
-    } else if (!all(category %in% c("BP", "MF", "CC"))) {
-        stop("Invalid GO category. Please choose from 'BP', 'MF', 'CC'.")
+    } else {
+        category <- match.arg(category, c("BP", "MF", "CC"),
+            several.ok = TRUE)
     }
 
     if (is.null(gene_rank_by) || length(gene_rank_by) == 0 ||
@@ -63,8 +70,8 @@ enrichGO_rank <- function(
     }
 
     # gene set enrichment with ranked gene list
-    rank_list <- rank_table %>%
-        dplyr::arrange(dplyr::desc(.data[[gene_rank_by]])) %>%
+    rank_list <- rank_table |>
+        dplyr::arrange(dplyr::desc(.data[[gene_rank_by]])) |>
         dplyr::pull(.data[[gene_rank_by]], name = Feature)
 
     if (any(is.na(rank_list)) || any(is.nan(rank_list)) ||
@@ -94,11 +101,11 @@ enrichGO_rank <- function(
 
         message("Removing NA ID gene sets for ", ont, ".")
 
-        gse_rank@result <- gse_rank@result %>%
+        gse_rank@result <- gse_rank@result |>
             dplyr::filter(!is.na(ID))
 
         if (go_rank_by %in% colnames(gse_rank@result)) {
-            gse_rank@result <- gse_rank@result %>%
+            gse_rank@result <- gse_rank@result |>
                 dplyr::arrange(.data[[go_rank_by]])
         } else {
             message("GO term ranking variable not found in the result: ",

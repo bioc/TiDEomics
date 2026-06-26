@@ -52,6 +52,12 @@ plot_volcano <- function(DE_out,
     logFC_thres = NULL, adjP_thres = NULL,
     label = FALSE, fontsize = 8, ...) {
 
+    .check_list(DE_out, "DE_out")
+    .check_logical(label, "label")
+    .check_positive(fontsize, "fontsize")
+    if (!is.null(adjP_thres)) .check_pval(adjP_thres, "adjP_thres")
+    if (!is.null(logFC_thres)) .check_nonneg(logFC_thres, "logFC_thres")
+
     if (!("all_list" %in% names(DE_out)) || !("de_list" %in% names(DE_out))) {
         stop("DE_out must be the output of DE_between_group() or ",
             "DE_between_time()")
@@ -59,8 +65,14 @@ plot_volcano <- function(DE_out,
     n_params_1 <- sum(!c(missing(group1), missing(group2), missing(time)))
     n_params_2 <- sum(!c(missing(group), missing(time1), missing(time2)))
     if (n_params_1 == 3 && n_params_2 == 0) {
+        .check_character(group1, "group1")
+        .check_character(group2, "group2")
+        .check_numeric(time, "time")
         de_analysis_type <- "DE_between_group"
     } else if (n_params_1 == 0 && n_params_2 == 3) {
+        .check_character(group, "group")
+        .check_numeric(time1, "time1")
+        .check_numeric(time2, "time2")
         de_analysis_type <- "DE_between_time"
     } else {
         stop("Please provide either 'group1', 'group2', and 'time' for ",
@@ -78,29 +90,29 @@ plot_volcano <- function(DE_out,
         }
 
         if (is.null(logFC_thres) && is.null(adjP_thres)) {
-            de_tb <- DE_out$de_list[[paste0(group2, "-", group1)]] %>%
+            de_tb <- DE_out$de_list[[paste0(group2, "-", group1)]] |>
                 dplyr::filter(Time == time)
             message("No logFC or adjusted p-value threshold provided. ",
                 "Using thresholds from DE_between_group() results.")
         } else {
-            de_tb <- volcano_tb %>% dplyr::filter(Time == time)
+            de_tb <- volcano_tb |> dplyr::filter(Time == time)
             if (!is.null(logFC_thres)) {
-                de_tb <- de_tb %>% dplyr::filter(abs(logFC) >= logFC_thres)
+                de_tb <- de_tb |> dplyr::filter(abs(logFC) >= logFC_thres)
             } else {
                 message("No logFC threshold provided.")
             }
             if (!is.null(adjP_thres)) {
-                de_tb <- de_tb %>% dplyr::filter(adj.P.Val <= adjP_thres)
+                de_tb <- de_tb |> dplyr::filter(adj.P.Val <= adjP_thres)
             } else {
                 message("No adjusted p-value threshold provided.")
             }
         }
 
-        volcano_tb <- volcano_tb %>%
+        volcano_tb <- volcano_tb |>
             dplyr::mutate(Color = ifelse(Feature %in% de_tb$Feature,
                 ifelse(logFC > 0, "Red", "Blue"), "Grey"))
 
-        p <- volcano_tb %>%
+        p <- volcano_tb |>
             ggplot(aes(x = logFC, y = -log10(adj.P.Val))) +
             geom_point(aes(color = Color)) +
             theme_custom(base_size = fontsize) +
@@ -126,23 +138,23 @@ plot_volcano <- function(DE_out,
         } else {
             de_tb <- volcano_tb
             if (!is.null(logFC_thres)) {
-                de_tb <- de_tb %>% dplyr::filter(abs(logFC) >= logFC_thres)
+                de_tb <- de_tb |> dplyr::filter(abs(logFC) >= logFC_thres)
             } else {
                 message("No logFC threshold provided.")
             }
             if (!is.null(adjP_thres)) {
-                de_tb <- de_tb %>%
+                de_tb <- de_tb |>
                     dplyr::filter(adj.P.Val <= adjP_thres)
             } else {
                 message("No adjusted p-value threshold provided.")
             }
         }
 
-        volcano_tb <- volcano_tb %>%
+        volcano_tb <- volcano_tb |>
             dplyr::mutate(Color = ifelse(Feature %in% de_tb$Feature,
                 ifelse(logFC > 0, "Red", "Blue"), "Grey"))
 
-        p <- volcano_tb %>%
+        p <- volcano_tb |>
             ggplot(aes(x = logFC, y = -log10(adj.P.Val))) +
             geom_point(aes(color = Color)) +
             theme_custom(base_size = fontsize) +
@@ -168,4 +180,5 @@ plot_volcano <- function(DE_out,
     }
 
     print(p)
+    return(invisible(p))
 }

@@ -19,7 +19,6 @@
 #'   NA, fall back to group-level replacement.
 #'
 #' @import SummarizedExperiment
-#' @import magrittr
 #'
 #' @returns A list of SummarizedExperiment objects with missing values
 #' imputed. Each object corresponds to one group of samples.
@@ -32,6 +31,9 @@
 #' example_obj_merged_imp_list <- impute_groups(example_obj_merged_list)
 impute_groups <- function(se_obj_list, fun = min,
     impute_by = c("group", "subject")) {
+    .check_se_list(se_obj_list, "se_obj_list")
+    .check_se_list_merged(se_obj_list, "se_obj_list")
+    if (!is.function(fun)) stop("'fun' must be a function, e.g. min or median.")
     impute_by <- match.arg(impute_by)
     se_obj_imp_list <- list()
 

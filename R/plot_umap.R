@@ -28,7 +28,6 @@
 #' normalised to time 0 (if available) (default is 1)
 #'
 #' @import SummarizedExperiment
-#' @import magrittr
 #' @import ggplot2
 #'
 #' @returns A UMAP plot showing the distribution of samples. And a data
@@ -46,6 +45,13 @@ plot_umap <- function(
     fontsize = 8,
     assay = 1
 ) {
+    .check_se(se_obj)
+    .check_logical(plot, "plot")
+    .check_logical(plot_ID, "plot_ID")
+    .check_logical(circle, "circle")
+    .check_positive_int(seed, "seed")
+    .check_positive(fontsize, "fontsize")
+    assay <- .match_assay(assay, se_obj)
     M_0 <- assay(se_obj, assay)
     if (sum(is.na(M_0)) > 0) {
         message("Input data contains missing values. Only complete rows ",
@@ -60,15 +66,15 @@ plot_umap <- function(
 
     message("Using n_neighbors = ", n_neighbors)
 
-    umap <- umap::umap(M %>% t(), random_state = seed,
+    umap <- umap::umap(M |> t(), random_state = seed,
         n_neighbors = n_neighbors)
-    umap_layout <- umap$layout %>% as.data.frame()
+    umap_layout <- umap$layout |> as.data.frame()
     umap_layout$Sample <- rownames(umap_layout)
     umap_layout <- merge(umap_layout, sp_info, by = "Sample")
     umap_title <- paste0("UMAP (", nrow(M), " features without missing values)")
 
     # number of identified proteins
-    id_count <- apply(M_0, 2, function(x) sum(!is.na(x))) %>% as.data.frame()
+    id_count <- apply(M_0, 2, function(x) sum(!is.na(x))) |> as.data.frame()
     colnames(id_count) <- "ID"
     id_count$Sample <- rownames(id_count)
     umap_layout <- merge(umap_layout, id_count, by = "Sample")
@@ -120,13 +126,13 @@ plot_umap <- function(
         plotlist = umap_list,
         nrow = 2, ncol = ceiling(length(umap_list) / 2),
         common.legend = FALSE
-    ) %>%
+    ) |>
         ggpubr::annotate_figure(top = ggpubr::text_grob(
             paste0(umap_title, "\n"),
             face = "bold", size = fontsize + 2)))
 
-    p1 <- umap_layout %>%
-        dplyr::mutate(Time = Time %>% factor()) %>%
+    p1 <- umap_layout |>
+        dplyr::mutate(Time = Time |> factor()) |>
         ggplot(aes(x = V1, y = V2, fill = Group)) +
         geom_point(aes(size = Time), alpha = 0.8, shape = 21) +
         scale_fill_manual(values =

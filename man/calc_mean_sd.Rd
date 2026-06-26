@@ -23,7 +23,5 @@ and time point
 \examples{
 data("example")
 table_mean_sd_list <- calc_mean_sd(example_obj)
-table_mean_sd <- table_mean_sd_list$norm0
-plot_trend(table_mean_sd, 
-    features = sample(unique(table_mean_sd$Feature), 4))
+table_mean_sd <- table_mean_sd_list$norm
 }

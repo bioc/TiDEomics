@@ -17,7 +17,6 @@
 #' (default is 8).
 #'
 #' @import SummarizedExperiment
-#' @import magrittr
 #' @import ggplot2
 #'
 #' @returns A plot showing the density distribution of abundance values,
@@ -28,14 +27,14 @@
 #' plot_distribution(example_obj)
 #' plot_distribution(example_obj, facet_by = "Group")
 plot_distribution <- function(se_obj, facet_by = NULL, fontsize = 8) {
-    if (!is.null(facet_by) &&
-        !facet_by %in% c("Group", "Time", "Sample")) {
-        stop("Please specify 'facet_by' as either 'Group', 'Time', ",
-            "or 'Sample'.")
+    .check_se(se_obj)
+    .check_positive(fontsize, "fontsize")
+    if (!is.null(facet_by)) {
+        facet_by <- match.arg(facet_by, c("Group", "Time", "Sample"))
     }
 
     if (is.null(facet_by) || facet_by == "Sample") {
-        data_long <- assays(se_obj)[[1]] %>%
+        data_long <- assays(se_obj)[[1]] |>
             tidyr::pivot_longer(cols = dplyr::everything())
 
         p <- ggplot(data_long, aes(x = value)) +
@@ -52,10 +51,10 @@ plot_distribution <- function(se_obj, facet_by = NULL, fontsize = 8) {
     } else {
         y_var <- if (facet_by == "Group") "Time" else "Group"
 
-        data_long <- assays(se_obj)[[1]] %>%
-            tidyr::pivot_longer(cols = dplyr::everything()) %>%
-            merge(., colData(se_obj), by.x = "name", by.y = "Sample") %>%
-            as.data.frame() %>%
+        data_long <- assays(se_obj)[[1]] |>
+            tidyr::pivot_longer(cols = dplyr::everything()) |>
+            merge(colData(se_obj), by.x = "name", by.y = "Sample") |>
+            as.data.frame() |>
             dplyr::mutate(Time = as.factor(Time))
 
         p <- ggplot(data_long,
@@ -68,4 +67,5 @@ plot_distribution <- function(se_obj, facet_by = NULL, fontsize = 8) {
     }
 
     print(p)
+    return(invisible(p))
 }

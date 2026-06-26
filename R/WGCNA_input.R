@@ -13,26 +13,16 @@
 #' for WGCNA input.
 #'
 #' @import SummarizedExperiment
-#' @import magrittr
 #'
 #' @returns A data frame with samples in rows and features in columns, filtered
 #' to remove bad samples and features, ready for use in `prepare_WGCNA()`.
 #' @keywords internal
 .WGCNA_input <- function(se_obj, assay) {
-    n_assays <- length(assays(se_obj))
-    if (assay < 1 || assay > n_assays) {
-        stop("Invalid assay index: ", assay, ". The object has ", n_assays,
-            " assay(s). Please provide a valid assay index.")
-    }
-    if (assay == 2 && n_assays < 2) {
-        stop("The input object does not have assay 2: time 0 normalised ",
-        "data. Please run `normalise_to_start()` to create the time 0 ",
-        "normalised data in assay 2.")
-    }
+    assay <- .match_assay(assay, se_obj)
 
     # WGCNA requires the rows as samples, and columns as features e.g. genes.
-    data_wgcna <- assays(se_obj)[[assay]] %>%
-        t() %>% #
+    data_wgcna <- assays(se_obj)[[assay]] |>
+        t() |>
         as.data.frame()
 
     # remove bad features and samples
@@ -41,9 +31,6 @@
 
     stopifnot(sum(WGCNA::goodSamples(data_wgcna) == FALSE) == 0)
     stopifnot(sum(WGCNA::goodGenes(data_wgcna) == FALSE) == 0)
-
-    # goodSamples(data_wgcna) %>% summary
-    # goodGenes(data_wgcna) %>% summary
 
     return(data_wgcna)
 }

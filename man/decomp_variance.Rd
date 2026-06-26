@@ -9,7 +9,7 @@ decomp_variance(
   features = NULL,
   fixed_effect_var = NULL,
   interaction = FALSE,
-  assay = c(1, 2),
+  assay,
   core = 1
 )
 }
@@ -27,7 +27,9 @@ effects, or provide other columns (e.g., \code{c("Sex", "Age")}).}
 \code{(1|Subject:Time)} when Subject present) to the model to capture
 interaction variance. Default: FALSE.}
 
-\item{assay}{1 for original data, or 2 for data normalised to time 0}
+\item{assay}{Assay to use: \code{"orig"} for original data, \code{"norm"} for
+normalised-to-start data. Numeric indices (1, 2) are also accepted.
+No default, must be specified explicitly.}
 
 \item{core}{Number of cores for parallel processing (default: 1)}
 }
@@ -59,7 +61,6 @@ data("example")
 example_obj <- normalise_to_start(example_obj)
 
 var_decomp <- decomp_variance(example_obj, assay = 1)
-plot_variance(var_decomp, rank = "Time", top_n = 20)
 }
 \references{
 https://github.com/aifimmunology/PALMO/blob/main/R/lmeVariance.R

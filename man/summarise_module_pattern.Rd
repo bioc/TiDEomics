@@ -4,19 +4,13 @@
 \alias{summarise_module_pattern}
 \title{Summarise module patterns}
 \usage{
-summarise_module_pattern(module, trendy_summary, print_top_n = TRUE, top_n = 5)
+summarise_module_pattern(module, trendy_summary)
 }
 \arguments{
 \item{module}{A data frame with columns "Feature" and "Module"}
 
 \item{trendy_summary}{A data frame of trendy results, output of
 \code{summarise_Trendy()}}
-
-\item{print_top_n}{Whether to output the top n patterns per module as text
-(default is TRUE)}
-
-\item{top_n}{Number of top patterns to show per module when \code{print_top_n} is
-TRUE (default is 5)}
 }
 \value{
 A list of data frames, each data frame shows the pattern counts

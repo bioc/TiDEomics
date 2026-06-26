@@ -57,16 +57,18 @@
 #' # performed for this group
 #' example_res_list <- run_Trendy(example_obj_merged_imp_list, maxK = 1,
 #'     minNumInSeg = 2, meanCut = 0)
-#' # usethis::use_data(example_res_list)
-#'
-#' # plot_segments(example_obj_merged_imp_list, example_res_list,
-#' #     feature = c("Mctp1"))
-#' # plot_breakpoints(example_res_list)
-#' # trendy_summary <- summarise_Trendy(example_res_list)
-#' # trendy_list <- extract_segment_trends(trendy_summary)
 run_Trendy <- function(se_obj_imp_list, group = NULL,
     feature = NULL, minExp = 0.5, maxK = 1,
     meanCut = 0, minNumInSeg = 3, NCores = 1, ...) {
+    .check_se_list(se_obj_imp_list, "se_obj_imp_list")
+    .check_se_list_merged(se_obj_imp_list, "se_obj_imp_list")
+    .check_se_list_no_na(se_obj_imp_list, "se_obj_imp_list")
+    .check_pval(minExp, "minExp")
+    .check_nonneg(meanCut, "meanCut")
+    .check_positive_int(minNumInSeg, "minNumInSeg")
+    .check_positive_int(NCores, "NCores")
+    .check_positive_int(maxK, "maxK")
+
     if (is.null(group)) {
         group <- names(se_obj_imp_list)
     } else if (!all(group %in% names(se_obj_imp_list))) {
@@ -75,6 +77,7 @@ run_Trendy <- function(se_obj_imp_list, group = NULL,
     }
 
     if (is.null(feature)) {
+        .check_se_list_has_properties(se_obj_imp_list, "se_obj_imp_list")
         for (i in group) {
             if (!"Exp_ratio" %in% colnames(rowData(se_obj_imp_list[[i]]))) {
                 stop("Feature not specified and Exp_ratio haven't been ",
@@ -134,7 +137,6 @@ run_Trendy <- function(se_obj_imp_list, group = NULL,
 #' @param ... Additional arguments to be passed to the `Trendy::trendy()`
 #'
 #' @import SummarizedExperiment
-#' @import magrittr
 #'
 #' @returns Trendy analysis result, including the fitted model parameters
 #' and statistics for each feature.
@@ -145,7 +147,7 @@ run_Trendy <- function(se_obj_imp_list, group = NULL,
 
     n_time_points <- length(unique(colData(se_obj_imp)$Time))
     if (n_time_points < ((maxK + 1) * minNumInSeg)) {
-        group <- se_obj_imp$Group %>% unique()
+        group <- se_obj_imp$Group |> unique()
         message("Trendy analysis is not performed for group ", group,
             ": number of time points (", n_time_points,
             ") less than required ((maxK + 1) * minNumInSeg = ",
@@ -154,9 +156,9 @@ run_Trendy <- function(se_obj_imp_list, group = NULL,
     }
 
     if (is.null(feature)) {
-        feature <- rowData(se_obj_imp) %>%
-            as.data.frame() %>%
-            dplyr::filter(Exp_ratio >= minExp) %>%
+        feature <- rowData(se_obj_imp) |>
+            as.data.frame() |>
+            dplyr::filter(Exp_ratio >= minExp) |>
             dplyr::pull(Feature)
         message("Feature not specified. Using ", length(feature),
             " features expressed in >=", minExp * 100, "% time points.")

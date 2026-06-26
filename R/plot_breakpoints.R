@@ -9,7 +9,6 @@
 #' @param ... Additional arguments to be passed to `Trendy::topTrendy()`
 #'
 #' @import SummarizedExperiment
-#' @import magrittr
 #' @import ggplot2
 #'
 #' @returns A plot showing the distribution of breakpoints over time for 
@@ -19,6 +18,9 @@
 #' data("example_res_list")
 #' plot_breakpoints(example_res_list)
 plot_breakpoints <- function(res_list, group = NULL, fontsize = 8, ...) {
+    .check_positive(fontsize, "fontsize")
+    .check_list(res_list, "res_list", "run_Trendy")
+    if (!is.null(group)) .check_character(group, "group")
     if (is.null(group)) {
         group <- names(res_list)
     } else if (!all(group %in% names(res_list))) {
@@ -39,20 +41,20 @@ plot_breakpoints <- function(res_list, group = NULL, fontsize = 8, ...) {
         # Breakpoint distribution over the time course
         res.bp <- Trendy::breakpointDist(res.top)
 
-        res.bp.df <- res.bp %>%
-            as.data.frame() %>%
-            tibble::rownames_to_column("Day") %>%
-            dplyr::rename("Count" = ".") %>%
+        res.bp.df <- as.data.frame(res.bp)
+        res.bp.df <- tibble::rownames_to_column(res.bp.df, "Day")
+        colnames(res.bp.df)[ncol(res.bp.df)] <- "Count"
+        res.bp.df <- res.bp.df |>
             dplyr::mutate(
-                Day = as.numeric(Day) %>% factor(),
+                Day = as.numeric(Day) |> factor(),
                 Group = i
             )
 
         bp_list[[i]] <- res.bp.df
     }
 
-    res.bp.df.all <- do.call(rbind, bp_list) %>%
-        as.data.frame() %>%
+    res.bp.df.all <- do.call(rbind, bp_list) |>
+        as.data.frame() |>
         dplyr::mutate(Group = factor(Group, levels = group))
 
     p <- ggplot(res.bp.df.all, aes(x = Day, y = Count, color = Group)) +
@@ -67,4 +69,5 @@ plot_breakpoints <- function(res_list, group = NULL, fontsize = 8, ...) {
         scale_color_manual(values = get_custom_palette(group))
 
     print(p)
+    return(invisible(p))
 }

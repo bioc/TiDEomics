@@ -6,7 +6,6 @@
 #' @param net WGCNA network object output by `run_WGCNA()`
 #' @param fontsize Font size for plots (default is 8)
 #'
-#' @import magrittr
 #'
 #' @returns Plots of WGCNA module dendrogram, module eigengenes, pairwise
 #' scatterplots of eigengenes, clustering of module eigengenes, and
@@ -28,6 +27,9 @@
 #' plot_WGCNA(example_net, fontsize = 8)
 #' @references https://github.com/edo98811/WGCNA_official_documentation/blob/main/FemaleLiver-03-relateModsToExt.R
 plot_WGCNA <- function(net, fontsize = 8) {
+    .check_list(net, "net", "run_WGCNA")
+    if (!"colors" %in% names(net)) stop("'net' must contain a 'colors' element.")
+    .check_positive(fontsize, "fontsize")
     if ("numericLabels" %in% names(net$parameters)) {
         if (net$parameters$numericLabels == TRUE) {
             moduleColors <- WGCNA::labels2colors(net$colors)
@@ -50,11 +52,12 @@ plot_WGCNA <- function(net, fontsize = 8) {
     MEs0 <- WGCNA::moduleEigengenes(net$input_data, net$colors)$eigengenes
     MEs <- WGCNA::orderMEs(MEs0)
 
-    ann_row <- net$sample_info %>% # colData(se_obj) %>%
-        as.data.frame() %>%
-        set_rownames(NULL) %>%
-        tibble::column_to_rownames("Sample") %>%
-        dplyr::select(Time, Group) %>%
+    ann_row <- net$sample_info |>
+        as.data.frame()
+    rownames(ann_row) <- NULL
+    ann_row <- ann_row |>
+        tibble::column_to_rownames("Sample") |>
+        dplyr::select(Time, Group) |>
         dplyr::mutate(Time = as.numeric(Time))
     stopifnot(identical(row.names(MEs), row.names(ann_row)))
 
@@ -93,7 +96,7 @@ plot_WGCNA <- function(net, fontsize = 8) {
             title_gp = grid::gpar(fontsize = fontsize, fontface = "bold"),
             labels_gp = grid::gpar(fontsize = fontsize)
         )
-    ) %>% print()
+    ) |> print()
 
     # Pairwise scatterplots of eigengenes
     WGCNA::plotMEpairs(MEs,
@@ -111,9 +114,9 @@ plot_WGCNA <- function(net, fontsize = 8) {
     ## module-trait correlation
 
     # test correlation of modules to groups
-    datTraits <- ann_row %>%
-        dplyr::select(Group, Time) %>%
-        dplyr::mutate(Time = as.numeric(Time)) %>%
+    datTraits <- ann_row |>
+        dplyr::select(Group, Time) |>
+        dplyr::mutate(Time = as.numeric(Time)) |>
         WGCNA::binarizeCategoricalColumns(
             convertColumns = c("Group"),
             dropFirstLevelVsAll = FALSE,
@@ -123,7 +126,7 @@ plot_WGCNA <- function(net, fontsize = 8) {
     # Compute correlation and p-values
     moduleTraitCor <- stats::cor(MEs, datTraits, use = "p")
     moduleTraitPvalue <- WGCNA::corPvalueStudent(moduleTraitCor,
-        nSamples = nrow(net$input_data)) %>%
+        nSamples = nrow(net$input_data)) |>
         cut(
             breaks = c(-Inf, 0.001, 0.01, 0.05, Inf),
             labels = c("***", "**", "*", "")

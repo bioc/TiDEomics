@@ -8,7 +8,7 @@
 A data.frame with 500 rows and 41 variables:
 \describe{
 \item{Feature}{Feature ID, e.g. gene symbols}
-\item{Sample1, Sample2, ...}{Expression values for each sample}
+\item{Sample1, Sample2, ...}{log2(CPM + 1) normalised expression values}
 }
 }
 \source{
@@ -22,13 +22,14 @@ A subset of GSE263759 data set published in
 \href{https://doi.org/10.1016/j.cels.2025.101346}{Integrated time-series analysis and high-content CRISPR screening delineate the dynamics of macrophage immune regulation}
 }
 \details{
-Code for preparing the data is available in \code{data-raw/tutorial_input.R}
+Code for preparing the data is available in \code{inst/script/tutorial_input.R}
 \itemize{
 \item Ensembl IDs were mapped to symbols, genes with all zero counts
 were excluded.
 \item Use time 0 untreated samples for other groups' time 0.
 \item Include "untreated", "IFNbeta", "IFNgamma", "LPS" groups.
 \item Sample 500 random genes.
+\item Normalised to log2(CPM + 1).
 }
 }
 \keyword{datasets}

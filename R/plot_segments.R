@@ -37,8 +37,13 @@
 #'     feature = c("Mctp1"))
 plot_segments <- function(se_obj_imp_list, res_list, feature,
     group = NULL, nrow = NULL, ...) {
+    .check_character(feature, "feature")
+    .check_se_list(se_obj_imp_list, "se_obj_imp_list")
+    .check_se_list_merged(se_obj_imp_list, "se_obj_imp_list")
+    .check_se_list_no_na(se_obj_imp_list, "se_obj_imp_list")
+    .check_list(res_list, "res_list", "run_Trendy")
     if (is.null(group)) {
-        group <- names(se_obj_imp_list) %>%
+        group <- names(se_obj_imp_list) |>
             intersect(names(res_list))
     } else if (!all(group %in% names(se_obj_imp_list))) {
         stop("At least one of the specified groups is not found in the ",

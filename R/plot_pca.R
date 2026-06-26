@@ -34,7 +34,6 @@
 #'
 #' @import ggplot2
 #' @import SummarizedExperiment
-#' @import magrittr
 #'
 #' @returns A PCA plot showing the distribution of samples, other plots
 #' provided by PCAtools package, and PCAtools output object for custom plotting.
@@ -56,6 +55,16 @@ plot_pca <- function(
     fontsize = 8,
     assay = 1
 ) {
+    .check_se(se_obj)
+    .check_logical(plot, "plot")
+    .check_logical(circle, "circle")
+    .check_logical(plot_screeplot, "plot_screeplot")
+    .check_logical(plot_loadings, "plot_loadings")
+    .check_logical(plot_morepc, "plot_morepc")
+    if (!missing(pc1)) .check_positive_int(pc1, "pc1")
+    if (!missing(pc2)) .check_positive_int(pc2, "pc2")
+    .check_positive(fontsize, "fontsize")
+    assay <- .match_assay(assay, se_obj)
     M_0 <- assay(se_obj, assay)
     if (sum(is.na(M_0)) > 0) {
         message("Input data contains missing values. Only complete rows ",
@@ -96,8 +105,8 @@ plot_pca <- function(
     ylab <- paste0(pc2_name, ": ", round(pca2$variance[[pc2_name]], 2), "%")
 
     title <- paste0("PCA (", nrow(M), " features without missing values)")
-    p1 <- pc %>%
-        dplyr::mutate(Time = factor(Time)) %>%
+    p1 <- pc |>
+        dplyr::mutate(Time = factor(Time)) |>
         ggplot(aes(x = !!sym(pc1_name), y = !!sym(pc2_name),
             fill = Group, label = Sample)) +
         geom_point(aes(size = Time), alpha = 0.8, shape = 21) +
@@ -152,7 +161,7 @@ plot_pca <- function(
                 gridlines.minor = FALSE,
                 plotaxes = FALSE,
                 trianglelabSize = fontsize,
-                colkey = get_custom_palette(colData(se_obj)$Group %>% unique())
+                colkey = get_custom_palette(colData(se_obj)$Group |> unique())
             ))
         }
     }

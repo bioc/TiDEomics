@@ -14,7 +14,6 @@
 #' `split_groups()`, each corresponds to one group of samples.
 #'
 #' @import SummarizedExperiment
-#' @import magrittr
 #'
 #' @returns A list of SummarizedExperiment objects containing the mean of
 #' replicates for each feature at each time point for each group. Each object
@@ -25,8 +24,8 @@
 #' example_obj <- normalise_to_start(example_obj)
 #' example_obj_list <- split_groups(example_obj)
 #' example_obj_merged_list <- merge_replicates(example_obj_list)
-#' example_obj_merged <- merge_groups(example_obj_merged_list)
 merge_replicates <- function(se_obj_list) {
+    .check_se_list(se_obj_list, "se_obj_list")
     se_obj_merged_list <- list()
     has_subject <- "Subject" %in% colnames(colData(se_obj_list[[1]]))
 
@@ -56,7 +55,7 @@ merge_replicates <- function(se_obj_list) {
                     j_mean <- rowMeans(subj_means, na.rm = TRUE)
                 } else {
                     # Average all samples at per Group, Time
-                    j_mean <- assays(sp)[[assay]] %>%
+                    j_mean <- assays(sp)[[assay]] |>
                         apply(1, function(x) mean(x, na.rm = TRUE))
                 }
 
@@ -71,7 +70,7 @@ merge_replicates <- function(se_obj_list) {
             row.names = colnames(d_mean),
             Sample = colnames(d_mean),
             Group = i,
-            Time = colnames(d_mean) %>% as.numeric()
+            Time = colnames(d_mean) |> as.numeric()
         )
 
         se_obj_merged <- SummarizedExperiment(

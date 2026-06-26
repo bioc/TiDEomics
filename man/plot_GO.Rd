@@ -51,11 +51,10 @@ Visualization of GO enrichment analysis with dotplot,
 cnetplot, or emapplot in clusterProfiler
 }
 \examples{
-library(magrittr)
 library(org.Mm.eg.db)
 data(example_net)
 # select two modules for demonstration
-example_module <- WGCNA_module(example_net) \%>\%
+example_module <- WGCNA_module(example_net) |>
     dplyr::filter(Module \%in\% c("1", "2"))
 # set cutoff to 1 to show all results for demonstration
 example_go_list = enrichGO_list(example_module, OrgDb = org.Mm.eg.db,

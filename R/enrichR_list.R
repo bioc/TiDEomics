@@ -41,7 +41,7 @@
 #' @examples
 #' data(example_net)
 #' library(dplyr)
-#' example_module <- WGCNA_module(example_net) %>%
+#' example_module <- WGCNA_module(example_net) |>
 #'     dplyr::filter(Module %in% c("1", "2"))
 #' # Use high pvalueCutoff for demonstration
 #' # enrichr_out <- enrichR_list(example_module, 
@@ -56,6 +56,16 @@ enrichR_list <- function(
     pvalueCutoff = 0.05,
     include_overlap = FALSE
 ) {
+    .check_character(databases, "databases")
+    .check_pval(pvalueCutoff, "pvalueCutoff")
+    .check_logical(include_overlap, "include_overlap")
+    if (is.data.frame(gene_list)) {
+        .check_df(gene_list, "gene_list")
+    } else if (!is.list(gene_list)) {
+        stop("'gene_list' must be a data.frame from WGCNA_module() ",
+             "or a named list of gene vectors.")
+    }
+
     if (!requireNamespace("enrichR", quietly = TRUE)) {
         stop("Package 'enrichR' is required. Install with: ",
             "install.packages('enrichR')")
@@ -126,22 +136,22 @@ enrichR_list <- function(
         )
         for (db in databases) {
             if (is.null(enr[[db]]) || nrow(enr[[db]]) == 0) next
-            db_tables[[db]] <- rbind(
+            db_tables[[db]] <- dplyr::bind_rows(
                 db_tables[[db]],
-                enr[[db]] %>%
-                    dplyr::filter(Adjusted.P.value < pvalueCutoff) %>%
+                enr[[db]] |>
+                    dplyr::filter(Adjusted.P.value < pvalueCutoff) |>
                     dplyr::mutate(Cluster = i)
             )
         }
     }
 
     for (db in names(db_tables)) {
-        db_tables[[db]] <- db_tables[[db]] %>%
+        db_tables[[db]] <- db_tables[[db]] |>
             dplyr::rename(Description = Term,
-                        p.adjust = Adjusted.P.value) %>%
+                        p.adjust = Adjusted.P.value) |>
             dplyr::select(Cluster, Description, p.adjust,
                 Combined.Score, Genes,
-                dplyr::everything()) %>%
+                dplyr::everything()) |>
             dplyr::arrange(Cluster, p.adjust)
         rownames(db_tables[[db]]) <- NULL
     }

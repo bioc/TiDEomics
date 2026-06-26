@@ -83,18 +83,15 @@ with clusterProfiler, allowing for using different or same background
 genes for each gene set
 }
 \examples{
-library(magrittr)
 library(org.Mm.eg.db)
 library(clusterProfiler)
 data(example_net)
 # select two modules for demonstration
-example_module <- WGCNA_module(example_net) \%>\%
+example_module <- WGCNA_module(example_net) |>
     dplyr::filter(Module \%in\% c("1", "2"))
 # set cutoff to 1 to show all results for demonstration
 example_go_list = enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
     universe = example_module$Feature,
     pvalueCutoff = 1, qvalueCutoff = 1,
     category = "BP", simplify = FALSE)
-# plot_GO(example_go_list$all, plot_dotplot = TRUE,
-#     plot_emapplot = FALSE, plot_cnetplot = FALSE)
 }

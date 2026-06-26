@@ -23,6 +23,6 @@ A subset of \code{data_obj <- create_input(data = tutorial_data,  sample_ann = t
 in function documentation.
 }
 \details{
-Code for preparing the data is available in \code{data-raw/tutorial_input.R}
+Code for preparing the data is available in \code{inst/script/tutorial_input.R}
 }
 \keyword{datasets}

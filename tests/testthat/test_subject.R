@@ -22,16 +22,16 @@
     sample_ann <- merge(sample_ann, subject_group, by = "Subject")
     if (with_reps) {
         sample_ann <- rbind(sample_ann, sample_ann)
-        sample_ann <- sample_ann %>%
-            dplyr::group_by(Subject, Group, Time) %>%
-            dplyr::mutate(Replicate = dplyr::row_number()) %>%
-            dplyr::ungroup() %>%
+        sample_ann <- sample_ann |>
+            dplyr::group_by(Subject, Group, Time) |>
+            dplyr::mutate(Replicate = dplyr::row_number()) |>
+            dplyr::ungroup() |>
             as.data.frame()
     } else {
-        sample_ann <- sample_ann %>%
-            dplyr::group_by(Group, Time) %>%
-            dplyr::mutate(Replicate = dplyr::row_number()) %>%
-            dplyr::ungroup() %>%
+        sample_ann <- sample_ann |>
+            dplyr::group_by(Group, Time) |>
+            dplyr::mutate(Replicate = dplyr::row_number()) |>
+            dplyr::ungroup() |>
             as.data.frame()
     }
     sample_ann$Sample <- paste0(sample_ann$Group, "_T", sample_ann$Time,

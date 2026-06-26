@@ -14,6 +14,42 @@ utils::globalVariables(c(
     "Combined.Score", "Genes", "Term"
 ))
 
+#' Resolve assay argument
+#'
+#' Accepts assay as a name or index, validates it against the object,
+#' and returns the resolved value. Open to any assay present in the object.
+#'
+#' @param assay A numeric index or character name.
+#' @param se_obj A SummarizedExperiment object.
+#' @return The resolved assay identifier (name if available, otherwise index).
+#' @keywords internal
+.match_assay <- function(assay, se_obj) {
+    if (is.null(assay)) {
+        assay <- "orig"
+    }
+    # Resolve numeric indices to names when names are available
+    assay_names <- names(SummarizedExperiment::assays(se_obj))
+    if (!is.null(assay_names) && is.numeric(assay)) {
+        if (!assay %in% seq_along(assay_names)) {
+            stop("Assay index ", assay, " out of range. Available: ",
+                 paste(seq_along(assay_names), assay_names,
+                       sep = " = ", collapse = ", "))
+        }
+        assay <- assay_names[assay]
+    }
+    # Validate character names
+    if (is.character(assay)) {
+        if (is.null(assay_names)) {
+            stop("Assays are not named. Use a numeric index instead.")
+        }
+        if (!assay %in% assay_names) {
+            stop("Assay '", assay, "' not found. Available: ",
+                 paste(assay_names, collapse = ", "))
+        }
+    }
+    assay
+}
+
 #' Custom ggplot2 theme
 #'
 #' A minimal theme used by all TiDEomics plotting functions, built on
@@ -39,6 +75,9 @@ theme_custom <- function(
     base_size = 8, panel_border = FALSE,
     legend_position = "right"
 ) {
+    .check_character(legend_position, "legend_position")
+    .check_logical(panel_border, "panel_border")
+    .check_positive(base_size, "base_size")
     half_line <- base_size / 2
     if (panel_border) {
         panel.border <- element_rect(color = "black", fill = NA,

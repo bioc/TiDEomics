@@ -4,7 +4,7 @@ test_that("enrichGO_rank works with variance decomposition output", {
     data("example")
     se <- normalise_to_start(example_obj)
     vd <- decomp_variance(se, features = rownames(se)[1:20],
-        fixed_effect_var = NULL, core = 1)
+        fixed_effect_var = NULL, assay = "orig", core = 1)
 
     skip_if_not_installed("org.Mm.eg.db")
     library(org.Mm.eg.db)
@@ -24,7 +24,7 @@ test_that("enrichGO_rank validates gene_rank_by", {
     data("example")
     se <- normalise_to_start(example_obj)
     vd <- decomp_variance(se, features = rownames(se)[1:10],
-        fixed_effect_var = NULL, core = 1)
+        fixed_effect_var = NULL, assay = "orig", core = 1)
 
     expect_error(
         enrichGO_rank(vd, gene_rank_by = "NotAColumn",
@@ -38,7 +38,7 @@ test_that("plot_GO dotplot runs with GO enrichment output", {
     library(org.Mm.eg.db)
 
     data("example_net")
-    example_module <- WGCNA_module(example_net) 
+    example_module <- WGCNA_module(example_net)
 
     go_res <- enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
         universe = example_module$Feature,
@@ -58,7 +58,7 @@ test_that("plot_GO cnetplot runs with GO enrichment output", {
     library(org.Mm.eg.db)
 
     data("example_net")
-    example_module <- WGCNA_module(example_net) 
+    example_module <- WGCNA_module(example_net)
 
     go_res <- enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
         universe = example_module$Feature,
@@ -158,7 +158,7 @@ test_that("enrichGO_list accepts data.frame input", {
     skip_if_not_installed("org.Mm.eg.db")
     library(org.Mm.eg.db)
     data("example_net")
-    example_module <- WGCNA_module(example_net) %>%
+    example_module <- WGCNA_module(example_net) |>
         dplyr::filter(Module %in% c("1", "2"))
 
     expect_error(

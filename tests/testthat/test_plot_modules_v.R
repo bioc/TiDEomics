@@ -8,9 +8,9 @@ test_that("plot_modules_v works", {
     example_obj_merged <- merge_groups(example_obj_merged_list)
 
     data(example_net)
-    example_module <- WGCNA_module(example_net) 
+    example_module <- WGCNA_module(example_net)
 
-    pq <- plot_modules_v(example_module %>% dplyr::filter(Module != '0'),
+    pq <- plot_modules_v(example_module |> dplyr::filter(Module != '0'),
         example_obj_merged, scale = TRUE,
         ylabel = "Z-score of log2 (expression)",
         height_ratio = 2,

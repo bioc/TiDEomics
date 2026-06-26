@@ -36,11 +36,6 @@
 #'     networkType = "signed", RsquaredCut = 0.8)
 #' wgcna_input$fitIndices
 #' picked_power <- wgcna_input$powerEstimate
-#' # example_net <- run_WGCNA(wgcna_input,
-#' #    power = picked_power,
-#' #    minModuleSize = 10, # only 100 genes in the example data
-#' #    numericLabels = TRUE)
-#' # plot_WGCNA(example_net, fontsize = 8)
 #' @references https://github.com/edo98811/WGCNA_official_documentation/
 prepare_WGCNA <- function(
     se_obj, assay = 2,
@@ -50,6 +45,14 @@ prepare_WGCNA <- function(
     powers = NULL,
     fontsize = 8, ...
 ) {
+    .check_se(se_obj)
+    .check_character(networkType, "networkType")
+    .check_pval(RsquaredCut, "RsquaredCut")
+    .check_nonneg(MeanConnectivity, "MeanConnectivity")
+    .check_positive(fontsize, "fontsize")
+    if (!is.null(powers)) .check_positive(powers, "powers")
+
+    assay <- .match_assay(assay, se_obj)
     WGCNA::allowWGCNAThreads()
     data_wgcna <- .WGCNA_input(se_obj, assay = assay)
 
@@ -101,6 +104,5 @@ prepare_WGCNA <- function(
         theme_custom(base_size = fontsize)
 
     print(p1 / p2)
-
     return(sft)
 }

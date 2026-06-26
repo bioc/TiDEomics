@@ -12,9 +12,11 @@
 #' data("example")
 #' example_obj <- normalise_to_start(example_obj)
 #' example_obj_list <- split_groups(example_obj)
-#' example_obj_merged_list <- merge_replicates(example_obj_list)
-#' example_obj_merged <- merge_groups(example_obj_merged_list)
 split_groups <- function(se_obj) {
+    .check_se(se_obj)
+    if (!"Group" %in% colnames(colData(se_obj))) {
+        stop("'se_obj' must have a 'Group' column in colData.")
+    }
     se_obj_list <- list()
 
     for (i in unique(se_obj$Group)) {

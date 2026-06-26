@@ -20,7 +20,6 @@
 #' @param ... Additional arguments to be passed to `ComplexHeatmap::Heatmap()`
 #'
 #' @import SummarizedExperiment
-#' @import magrittr
 #'
 #' @returns A heatmap showing the correlation between samples.
 #' @export
@@ -38,12 +37,20 @@ plot_cor_matrix <- function(
     title = "Correlation between samples",
     ...
 ) {
+    .check_se(se_obj)
+    .check_logical(label_group, "label_group")
+    .check_logical(label_time, "label_time")
+    .check_logical(label_rep, "label_rep")
+    .check_logical(label_batch, "label_batch")
+    .check_logical(show_rownames, "show_rownames")
+    .check_logical(show_colnames, "show_colnames")
+    .check_positive(fontsize, "fontsize")
+    .check_positive(cellwidth, "cellwidth")
+    .check_positive(cellheight, "cellheight")
     if (is.null(method) || length(method) != 1) {
         method <- "spearman"
-    } else if (!method %in% c("spearman", "pearson", "kendall")) {
-        stop("Invalid correlation method. Please choose one of 'spearman', ",
-        "'pearson', or 'kendall'.")
     }
+    method <- match.arg(method, c("spearman", "pearson", "kendall"))
     cor_table <- stats::cor(assay(se_obj, 1),
         use = use,
         method = method
@@ -51,13 +58,13 @@ plot_cor_matrix <- function(
 
     ann_colors <- list(
         Group = get_custom_palette(unique(colData(se_obj)$Group)),
-        Time = scales::pal_viridis()(length(unique(colData(se_obj)$Time))) %>%
-            set_names(colData(se_obj)$Time %>% unique() %>% sort()),
+        Time = scales::pal_viridis()(length(unique(colData(se_obj)$Time))) |>
+            stats::setNames(nm = colData(se_obj)$Time |> unique() |> sort()),
         Replicate =
-            ggsci::pal_iterm()(length(unique(colData(se_obj)$Replicate))) %>%
-            set_names(colData(se_obj)$Replicate %>% unique() %>% sort()),
-        Batch = ggsci::pal_simpsons()(length(unique(colData(se_obj)$Batch))) %>%
-            set_names(colData(se_obj)$Batch %>% unique() %>% sort())
+            ggsci::pal_iterm()(length(unique(colData(se_obj)$Replicate))) |>
+            stats::setNames(nm = colData(se_obj)$Replicate |> unique() |> sort()),
+        Batch = ggsci::pal_simpsons()(length(unique(colData(se_obj)$Batch))) |>
+            stats::setNames(nm = colData(se_obj)$Batch |> unique() |> sort())
     )
 
     if (label_group) {
@@ -75,7 +82,7 @@ plot_cor_matrix <- function(
         ann <- c(ann, "Batch")
     }
 
-    ComplexHeatmap::Heatmap(cor_table,
+    ht <- ComplexHeatmap::Heatmap(cor_table,
         name = "Correlation",
         clustering_distance_rows = stats::as.dist(1 - cor_table),
         clustering_distance_columns = stats::as.dist(1 - cor_table),
@@ -89,11 +96,11 @@ plot_cor_matrix <- function(
             fontface = "bold"),
         top_annotation = if (length(ann) > 0) {
             ComplexHeatmap::HeatmapAnnotation(
-                df = colData(se_obj) %>% as.data.frame() %>%
+                df = colData(se_obj) |> as.data.frame() |>
                     dplyr::mutate(Time = factor(Time,
-                        levels = as.character(colData(se_obj)$Time %>%
-                            unique() %>% sort())
-                    )) %>%
+                        levels = as.character(colData(se_obj)$Time |>
+                            unique() |> sort())
+                    )) |>
                     dplyr::select(dplyr::all_of(ann)),
                 col = ann_colors[ann],
                 annotation_name_side = "left",
@@ -115,5 +122,7 @@ plot_cor_matrix <- function(
             labels_gp = grid::gpar(fontsize = fontsize)
         ),
         ...
-    ) %>% print()
+    )
+    print(ht)
+    return(invisible(ht))
 }

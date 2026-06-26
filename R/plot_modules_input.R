@@ -18,55 +18,56 @@
 #' @param assay The assay index in the SummarizedExperiment object to use
 #'
 #' @import SummarizedExperiment
-#' @import magrittr
 #'
 #' @returns A long-format data frame suitable for ggplot2, with columns
 #' "Feature", "Module", "Abundance", "Group", and "Time"
 #' @keywords internal
 .plot_modules_input <- function(module, se_obj_merged, assay, scale) {
     # sample annotation
-    sp_info <- colData(se_obj_merged) %>%
-        as.data.frame() %>%
+    sp_info <- colData(se_obj_merged) |>
+        as.data.frame() |>
         dplyr::select(c(Sample, Group, Time)) 
 
-    data_wgcna_merged <- assays(se_obj_merged)[[assay]] %>%
+    data_wgcna_merged <- assays(se_obj_merged)[[assay]] |>
         as.data.frame()
 
     if (scale) {
-        data_wgcna_merged <- data_wgcna_merged %>%
-            t() %>%
-            scale(center = TRUE, scale = TRUE) %>%
-            t() %>%
+        data_wgcna_merged <- data_wgcna_merged |>
+            t() |>
+            scale(center = TRUE, scale = TRUE) |>
+            t() |>
             as.data.frame()
     }
 
-    data_wgcna_merged <- data_wgcna_merged %>%
-        tibble::rownames_to_column("Feature") %>%
+    data_wgcna_merged <- data_wgcna_merged |>
+        tibble::rownames_to_column("Feature") |>
         dplyr::filter(Feature %in% module$Feature)
     
-    data_module_long <- data_wgcna_merged %>%
+    data_module_long <- data_wgcna_merged |>
         tidyr::pivot_longer(
             c(-Feature),
             names_to = "Sample",
             values_to = "Abundance"
-        ) %>%
-        merge(sp_info, by = "Sample") %>%
-        dplyr::arrange(Group, Time) %>%
-        dplyr::select(-Sample) %>%
-        dplyr::mutate(Time = as.character(Time) %>%
-            factor(levels = unique(sort(as.numeric(.))))) %>%
+        ) |>
+        merge(sp_info, by = "Sample") |>
+        dplyr::arrange(Group, Time) |>
+        dplyr::select(-Sample) |>
+        dplyr::mutate(Time = {
+            t <- as.character(Time)
+            factor(t, levels = unique(sort(as.numeric(t))))
+        }) |>
         dplyr::mutate(Feature = as.character(Feature))
         # geom_tile errors with 'AsIs' character
 
     # fill in missing time points with NA
-    data_module_long_filled <- data_module_long %>%
-        dplyr::group_by(Feature) %>%
-        tidyr::complete(Group, Time, fill = list(Abundance = NA)) %>%
+    data_module_long_filled <- data_module_long |>
+        dplyr::group_by(Feature) |>
+        tidyr::complete(Group, Time, fill = list(Abundance = NA)) |>
         dplyr::ungroup()
 
     data_module_long_filled <- merge(module, data_module_long_filled,
-        by.x = "Feature", by.y = "Feature") %>%
-        dplyr::arrange(Group, Time, Module, Feature) %>%
+        by.x = "Feature", by.y = "Feature") |>
+        dplyr::arrange(Group, Time, Module, Feature) |>
         droplevels()
 
     return(data_module_long_filled)

@@ -6,7 +6,6 @@
 #' the group names.
 #'
 #' @import SummarizedExperiment
-#' @import magrittr
 #'
 #' @returns A SummarizedExperiment object containing all samples from the input 
 #' list. The 'Group' column in the colData will indicate the group of each 
@@ -19,6 +18,8 @@
 #' example_obj_merged_list <- merge_replicates(example_obj_list)
 #' example_obj_merged <- merge_groups(example_obj_merged_list)
 merge_groups <- function(se_obj_list) {
+    .check_se_list(se_obj_list, "se_obj_list")
+    .check_se_list_merged(se_obj_list, "se_obj_list")
     assay_list <- list()
     coldata_list <- list()
 
@@ -34,16 +35,16 @@ merge_groups <- function(se_obj_list) {
                 assay_list[[j]] <- df
             } else {
                 assay_list[[j]] <- dplyr::full_join(
-                    assay_list[[j]] %>% tibble::rownames_to_column(".rowname"),
-                    df %>% tibble::rownames_to_column(".rowname"),
+                    assay_list[[j]] |> tibble::rownames_to_column(".rowname"),
+                    df |> tibble::rownames_to_column(".rowname"),
                     by = ".rowname"
-                ) %>%
+                ) |>
                     tibble::column_to_rownames(".rowname")
             }
         }
 
         # colData
-        cd <- colData(se_obj) %>% as.data.frame()
+        cd <- colData(se_obj) |> as.data.frame()
         cd$Group <- i # unnecessary
         cd$Sample <- paste0(i, "_", cd$Sample)
         coldata_list[[i]] <- cd

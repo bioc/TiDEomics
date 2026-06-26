@@ -37,7 +37,7 @@ test_that("normalise to start works", {
 
     expect_s4_class(data_obj_norm, "SummarizedExperiment")
     # Confirm that means at Time 0 is 0
-    t0_means <- assays(data_obj_norm[, data_obj_norm$Time == 0])[[2]] %>%
+    t0_means <- assays(data_obj_norm[, data_obj_norm$Time == 0])[[2]] |>
         rowMeans()
     expect_all_true(t0_means == 0)
 })
@@ -106,7 +106,7 @@ test_that("calc_mean_sd returns list of data.frames", {
     data("example")
     res <- calc_mean_sd(example_obj)
     expect_type(res, "list")
-    expect_true("norm0" %in% names(res) || length(res) > 0)
+    expect_true("norm" %in% names(res) || length(res) > 0)
     for (i in seq_along(res)) {
         expect_s3_class(res[[i]], "data.frame")
     }

@@ -13,7 +13,6 @@
 #' @param ... Additional arguments to be passed to `ggsignif::geom_signif()` 
 #' function when `signif` is TRUE, for customizing the significance annotations.
 #' @import SummarizedExperiment
-#' @import magrittr
 #' @import ggplot2
 #' @returns A plot showing the ID number for each sample, with a dashed line 
 #' indicating the average number across all samples.
@@ -33,32 +32,35 @@
 #' plot_ID(na_obj)
 #' plot_missing(na_obj)
 plot_ID <- function(se_obj, fontsize = 8, signif = FALSE, ...) {
+    .check_se(se_obj)
+    .check_logical(signif, "signif")
+    .check_positive(fontsize, "fontsize")
     global_id <- sum(!is.na(assays(se_obj)[[1]])) /
         dim(assays(se_obj)[[1]])[2]
 
-    id_tb <- assays(se_obj)[[1]] %>%
+    id_tb <- assays(se_obj)[[1]] |>
         dplyr::summarise(dplyr::across(dplyr::everything(), 
-            ~ sum(!is.na(.)))) %>%
-        tidyr::pivot_longer(cols = dplyr::everything(), values_to = "ID") %>%
-        merge(., colData(se_obj), by.x = "name", by.y = "Sample") %>%
-        as.data.frame() %>%
+            ~ sum(!is.na(.)))) |>
+        tidyr::pivot_longer(cols = dplyr::everything(), values_to = "ID") |>
+        merge(colData(se_obj), by.x = "name", by.y = "Sample") |>
+        as.data.frame() |>
         dplyr::mutate(Time = as.factor(Time))
 
-    (id_tb %>%
+    overview <- id_tb |>
         ggplot(aes(x = Time, y = ID, fill = Replicate)) +
         geom_bar(stat = "identity", position = "dodge", color = "black") +
         geom_hline(yintercept = global_id, linetype = "dashed") +
         facet_grid(Group ~ Time, scales = "free_x") +
         ggtitle(paste0(
-            "# ID (total: ", dim(assays(se_obj)[[1]])[1], 
+            "# ID (total: ", dim(assays(se_obj)[[1]])[1],
             " features) (average: ",
-            global_id %>% round(digits = 2), ")"
+            global_id |> round(digits = 2), ")"
         )) +
         theme_custom(base_size = fontsize) +
         theme(panel.grid.major.y = element_line(color = "grey")) +
-        ylab("# ID")) %>% print()
+        ylab("# ID")
 
-    p <- id_tb %>%
+    p <- id_tb |>
         ggplot(aes(x = Group, y = ID)) +
         geom_boxplot(size = 0.2, outlier.shape = NA) +
         geom_point(aes(color = Time), size = 0.7, 
@@ -68,9 +70,11 @@ plot_ID <- function(se_obj, fontsize = 8, signif = FALSE, ...) {
     if (signif) {
         p <- p +
             ggsignif::geom_signif(
-                comparisons = utils::combn(unique(se_obj$Group) %>% 
-                as.vector(), m = 2) %>%
-                as.data.frame() %>% as.list(), ...)
+                comparisons = utils::combn(unique(se_obj$Group) |> 
+                as.vector(), m = 2) |>
+                as.data.frame() |> as.list(), ...)
     }
-    p %>% print()
+    res <- list(overview = overview, comparison = p)
+    print(res)
+    return(invisible(res))
 }

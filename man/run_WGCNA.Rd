@@ -39,8 +39,6 @@ example_net <- run_WGCNA(wgcna_input,
     power = picked_power,
     minModuleSize = 10, # only 100 genes in the example data
     numericLabels = TRUE)
-# plot_WGCNA(example_net, fontsize = 8)
-# use_data(example_net)
 }
 \references{
 https://github.com/edo98811/WGCNA_official_documentation/blob/main/FemaleLiver-03-relateModsToExt.R

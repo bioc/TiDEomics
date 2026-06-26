@@ -21,7 +21,6 @@
 #'
 #' @import ggplot2
 #' @import SummarizedExperiment
-#' @import magrittr
 #'
 #' @returns A series of PCA plots showing the distribution of samples in
 #' each group, coloured by Time.
@@ -36,6 +35,14 @@
 plot_pca_by_group <- function(se_obj, circle = TRUE, arrow = TRUE,
     pc1 = 1, pc2 = 2, nrow = 1, fontsize = 8, assay = 1,
     legend_pos = "right") {
+    .check_se(se_obj)
+    .check_logical(circle, "circle")
+    .check_logical(arrow, "arrow")
+    .check_positive_int(pc1, "pc1")
+    .check_positive_int(pc2, "pc2")
+    .check_positive_int(nrow, "nrow")
+    .check_positive(fontsize, "fontsize")
+    assay <- .match_assay(assay, se_obj)
 
     if (is.list(se_obj) && !methods::is(se_obj, "SummarizedExperiment")) {
         se_list <- se_obj
@@ -53,20 +60,22 @@ plot_pca_by_group <- function(se_obj, circle = TRUE, arrow = TRUE,
 
     ncol <- ceiling(length(pca_list) / nrow)
 
-    print(ggpubr::ggarrange(
+    p <- ggpubr::ggarrange(
         plotlist = pca_list, labels = names(pca_list),
         font.label = list(size = fontsize + 2),
         hjust = 0, vjust = 0.5,
         nrow = nrow, ncol = ncol,
         common.legend = TRUE,
         legend = legend_pos
-    ) %>%
+    ) |>
         ggpubr::annotate_figure(top =
-        ggpubr::text_grob("PCA by group (features without missing values)\n",
-        face = "bold", size = fontsize + 4)))
+        ggpubr::text_grob(
+            "PCA by group (features without missing values)\n",
+            face = "bold", size = fontsize + 4))
+
+    print(p)
+    return(invisible(p))
 }
-
-
 #' Plot PCA with arrows
 #'
 #' @description Plot PCA with arrows indicating trajectory over time, for
@@ -85,7 +94,6 @@ plot_pca_by_group <- function(se_obj, circle = TRUE, arrow = TRUE,
 #'
 #' @import ggplot2
 #' @import SummarizedExperiment
-#' @import magrittr
 #'
 #' @returns A PCA plot coloured by Time, with optional ellipses and
 #' trajectory arrows.
@@ -95,6 +103,13 @@ plot_pca_by_group <- function(se_obj, circle = TRUE, arrow = TRUE,
 #' plot_pca_arrows(example_obj[, example_obj$Group == "IFNbeta"])
 plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
     pc1 = 1, pc2 = 2, fontsize = 8, assay = 1) {
+    .check_se(se_obj)
+    .check_logical(circle, "circle")
+    .check_logical(arrow, "arrow")
+    .check_positive_int(pc1, "pc1")
+    .check_positive_int(pc2, "pc2")
+    .check_positive(fontsize, "fontsize")
+    assay <- .match_assay(assay, se_obj)
 
     if (length(unique(se_obj$Group)) > 1) {
         warning("Input object contains multiple groups, circles / arrows ",
@@ -116,11 +131,11 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
     pc1_col <- paste0("PC", pc1); pc2_col <- paste0("PC", pc2)
     colnames(pc)[colnames(pc) == pc1_col] <- "PC1"
     colnames(pc)[colnames(pc) == pc2_col] <- "PC2"
-    arrows_in <- pc[, c("PC1", "PC2", "Sample", "Time")] %>%
+    arrows_in <- pc[, c("PC1", "PC2", "Sample", "Time")] |>
         dplyr::arrange(Time)
     x_arrows <- stats::aggregate(PC1 ~ Time, data = arrows_in, FUN = mean)
     y_arrows <- stats::aggregate(PC2 ~ Time, data = arrows_in, FUN = mean)
-    arrows <- merge(x_arrows, y_arrows, by = "Time") %>%
+    arrows <- merge(x_arrows, y_arrows, by = "Time") |>
         dplyr::rename(x_start = PC1, y_start = PC2)
 
     time_series <- sort(unique(x_arrows$Time))
@@ -135,9 +150,9 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
 
     arrows <- arrows[!is.na(arrows$x_end), ]
     if (circle && arrow) {
-        p1 <- pc %>%
+        p1 <- pc |>
             dplyr::mutate(Time = factor(Time, 
-                levels = unique(pc$Time) %>% sort())) %>%
+                levels = unique(pc$Time) |> sort())) |>
             ggplot(aes(x = PC1, y = PC2, color = Time)) +
             geom_segment(
                 data = arrows, aes(
@@ -159,9 +174,9 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
             xlab(xlab) +
             ylab(ylab)
     } else if (arrow) {
-        p1 <- pc %>%
+        p1 <- pc |>
             dplyr::mutate(Time = factor(Time, 
-                levels = unique(pc$Time) %>% sort())) %>%
+                levels = unique(pc$Time) |> sort())) |>
             ggplot(aes(x = PC1, y = PC2, color = Time)) +
             geom_segment(
                 data = arrows, aes(
@@ -178,9 +193,9 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
             xlab(xlab) +
             ylab(ylab)
     } else if (circle) {
-        p1 <- pc %>%
+        p1 <- pc |>
             dplyr::mutate(Time = factor(Time, 
-                levels = unique(pc$Time) %>% sort())) %>%
+                levels = unique(pc$Time) |> sort())) |>
             ggplot(aes(x = PC1, y = PC2, color = Time)) +
             geom_point(size = 3) +
             ggforce::geom_mark_ellipse(aes(fill = Time),
@@ -194,9 +209,9 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
             xlab(xlab) +
             ylab(ylab)
     } else {
-        p1 <- pc %>%
+        p1 <- pc |>
             dplyr::mutate(Time = factor(Time, 
-                levels = unique(pc$Time) %>% sort())) %>%
+                levels = unique(pc$Time) |> sort())) |>
             ggplot(aes(x = PC1, y = PC2, color = Time)) +
             geom_point(size = 3) +
             scale_color_viridis_d(option = "D") +
