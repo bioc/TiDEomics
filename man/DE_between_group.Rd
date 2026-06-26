@@ -8,12 +8,10 @@ DE_between_group(
   se_obj,
   group = NULL,
   filter = NULL,
-  assay = c(1, 2),
+  assay,
   adjP_thres = 0.05,
   logFC_thres = 1,
-  trend = FALSE,
-  plot = TRUE,
-  fontsize = 8
+  trend = FALSE
 )
 }
 \arguments{
@@ -27,8 +25,12 @@ compared to. If NULL, all groups in the 'Group' column will be compared to.
 conditions for a feature to be tested. If NULL, the minimum number of
 replicates across all groups and time points will be used. (default is NULL)}
 
-\item{assay}{Assay index to use, where 1 is the original data and 2 is
-normalised to time 0 (if available) (default is 1)}
+\item{assay}{Assay to use: \code{"orig"} for original data, \code{"norm"} for
+normalised-to-start data. Numeric indices (1, 2) are also accepted.
+No default, must be specified explicitly. The selected assay should
+contain log-transformed, normalised values (e.g. log2-CPM for RNA-seq,
+log2-intensity for proteomics). A warning is issued if the data appears
+to be un-logged raw counts.}
 
 \item{adjP_thres}{(Optional) Threshold for adjusted p-value to consider a
 feature as differentially expressed (default is 0.05)}
@@ -41,17 +43,14 @@ Set to \code{TRUE} for RNA-seq count-derived data to model the mean-variance
 trend. Leave as \code{FALSE} (default) for microarray, proteomics,
 metabolomics, or other log-intensity data where the mean-variance
 relationship is typically flat.}
-
-\item{plot}{(Optional) Whether to plot the number of DE features between
-groups over time (default is TRUE)}
-
-\item{fontsize}{(Optional) Font size for the plot (default is 8)}
 }
 \value{
-A list containing two elements: 'all_list' is a nested list of DE
-results for each pair of groups and each time point including all features;
-'de_list' is a list of filtered DE results for each pair of groups based on
-the specified thresholds including only significant features.
+A list with: \code{all_list} (nested list of DE results per group
+pair and time point, all features); \code{de_list} (significant features
+only); \code{fit_list} (nested list of limma \code{MArrayLM} fit objects,
+for use with \code{limma::plotSA()}); \code{ref_groups} (group to be compared to);
+\code{all_groups} (all groups). The output can be passed to
+\code{plot_DE_between_group()} for visualisation.
 }
 \description{
 Differential expression analysis between groups at each time
@@ -59,8 +58,9 @@ point by limma. The function compares each pair of groups at each time
 point, and returns a nested list of DE analysis results for each pair of
 groups and each time point including all features, as well as a list of
 filtered DE results for each pair of groups based on the specified
-thresholds including only significant features. The function can also plot
-the number of DE features between groups over time.
+thresholds including only significant features. Use
+\code{plot_DE_between_group()} to visualise the number of DE features between
+groups over time.
 }
 \details{
 Only time points present in both groups are compared. No multiple-testing

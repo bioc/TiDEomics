@@ -1,26 +1,32 @@
 #' DE number between time points
-#' @description Plot the number of differentially expressed features between 
+#' @description Plot the number of differentially expressed features between
 #' time points within each group with heatmaps
 #'
-#' @param se_obj A SummarizedExperiment object containing the data and 
-#' metadata, with a "Time" column in the colData indicating the time points of 
-#' the samples
-#' @param de_list Output of `DE_between_time()`, a nested list of DE results 
-#' for each group and time point comparison
-#' @param value Whether to display the actual number of DE features in each 
+#' DE features were pre-filtered with `DE_between_time()`, but by specifying
+#' `adjP_thres` and `logFC_thres`, users can re-filter the DE features for
+#' plotting.
+#'
+#' @param DE_between_time_out Output of `DE_between_time()`, a list with
+#' `all_list`, `de_list`, `time_series` elements.
+#' @param value Whether to display the actual number of DE features in each
 #' heatmap cell (default is TRUE)
-#' @param fontsize Font size for the heatmap displaying the number of DE 
+#' @param fontsize Font size for the heatmap displaying the number of DE
 #' features between time points (default is 8)
 #' @param nrow Number of rows for arranging the heatmaps (default is 1)
 #' @param heatmap_width Width of each heatmap (default is 4)
 #' @param heatmap_unit Unit for the heatmap width (default is "cm")
+#' @param adjP_thres (Optional) Threshold for adjusted p-value to consider a
+#' feature as differentially expressed, for re-filtering
+#' the DE features. (default is NULL, no re-filtering)
+#' @param logFC_thres (Optional) Threshold for log2 fold change to consider a
+#' feature as differentially expressed, for re-filtering
+#' the DE features. (default is NULL, no re-filtering)
 #'
 #' @import SummarizedExperiment
-#' @import magrittr
 #'
-#' @returns One heatmap per group showing the number of DE features between 
-#' time points for each group, with the same scale across groups for easy 
-#' comparison. The heatmap cells are annotated with the actual number of DE 
+#' @returns One heatmap per group showing the number of DE features between
+#' time points for each group, with the same scale across groups for easy
+#' comparison. The heatmap cells are optionally annotated with the number of DE
 #' features.
 #' @export
 #' @examples
@@ -32,24 +38,64 @@
 #'     de_list = DE_between_time_out$de_list,
 #'     fontsize = 8, value = TRUE, nrow = 1, heatmap_width = 3)
 plot_DE_between_time <- function(
-    se_obj, de_list,
+    DE_between_time_out,
     value = TRUE,
     fontsize = 8,
     nrow = 1,
     heatmap_width = 4,
-    heatmap_unit = "cm"
+    heatmap_unit = "cm",
+    adjP_thres = NULL, logFC_thres = NULL
 ) {
+    .check_character(heatmap_unit, "heatmap_unit")
+    .check_positive(fontsize, "fontsize")
+    .check_positive_int(nrow, "nrow")
+    .check_positive(heatmap_width, "heatmap_width")
+    .check_logical(value, "value")
+
+    if (!is.list(DE_between_time_out) ||
+        !all(c("all_list", "de_list") %in% names(DE_between_time_out))) {
+        stop("'DE_between_time_out' must be the output of DE_between_time().")
+    }
+
+    all_list <- DE_between_time_out$all_list
+
+    if (!is.null(adjP_thres) && !is.null(logFC_thres)) {
+        .check_pval(adjP_thres, "adjP_thres")
+        .check_nonneg(logFC_thres, "logFC_thres")
+        message("Re-filtering DE features with adjP_thres = ", adjP_thres,
+            " and logFC_thres = ", logFC_thres, ".")
+
+        # Extract DE features with new thresholds
+        de_list <- list()
+
+        for (i in names(all_list)) {
+            de_list[[i]] <- list()
+
+            for (tb_name in names(all_list[[i]])) {
+                tb <- all_list[[i]][[tb_name]]
+                tb_de <- tb |>
+                    dplyr::select(Feature, Comparison, Group, Cond1, Cond2, 
+                        logFC, adj.P.Val) |>
+                    dplyr::filter(adj.P.Val < adjP_thres) |>
+                    dplyr::filter(logFC > logFC_thres | logFC < -logFC_thres)
+                de_list[[i]][[tb_name]] <- tb_de
+            }
+        }
+    } else {
+        de_list <- DE_between_time_out$de_list
+    }
+
     # heatmap of DE numbers
     de_num_list <- list()
     de_num_max <- 0
-    time_series <- sort(unique(colData(se_obj)$Time)) %>% as.character()
+    time_series <- DE_between_time_out$time_series
     if (length(time_series) < 2) {
         stop("Need at least 2 time points for DE-between-time plot, ",
             "found ", length(time_series), ".")
     }
     # groups may have different time points
 
-    # Last time point has no later points to compare to — exclude it
+    # Last time point has no later points to compare to - exclude it
     time_rows <- time_series[-length(time_series)]
 
     for (i in names(de_list)) {
@@ -66,9 +112,7 @@ plot_DE_between_time <- function(
                     if (!(label %in% names(de_list[[i]]))) {
                         next
                     }
-                    de_num[d1, d2] <- de_list[[i]][[label]] %>%
-                        dim() %>%
-                        magrittr::extract2(1)
+                    de_num[d1, d2] <- nrow(de_list[[i]][[label]])
                 }
             }
         }
@@ -100,7 +144,7 @@ plot_DE_between_time <- function(
                 cell_fun = function(j, i, x, y, width, height, fill) {
                     if (!is.na(de_num[i, j])) {
                         grid::grid.text(sprintf("%.0f", de_num[i, j]), x, y,
-                            gp = grid::gpar(fontsize = fontsize, 
+                            gp = grid::gpar(fontsize = fontsize,
                                 color = "black")
                         )
                     }
@@ -123,7 +167,7 @@ plot_DE_between_time <- function(
             )
         }
 
-        p_list[[i]] <- grid::grid.grabExpr(ComplexHeatmap::draw(p)) %>% 
+        p_list[[i]] <- grid::grid.grabExpr(ComplexHeatmap::draw(p)) |>
             ggplotify::as.ggplot()
     }
 
@@ -135,7 +179,7 @@ plot_DE_between_time <- function(
 
     legend_grob <- grid::grid.grabExpr(
         grid::grid.draw(ComplexHeatmap::packLegend(lgd))
-    ) %>%
+    ) |>
         ggplotify::as.ggplot()
 
     # arrange heatmaps
@@ -158,9 +202,10 @@ plot_DE_between_time <- function(
         widths = c(length(p_list), 0.8)
     )
 
-    print(final_plot %>%
+    final_plot <- final_plot |>
         ggpubr::annotate_figure(top = ggpubr::text_grob(paste0(
-            "Number of DE features between time points\n" 
+            "Number of DE features between time points\n"
         ), face = "bold", size = fontsize + 4))
-    )
+    print(final_plot)
+    return(invisible(final_plot))
 }

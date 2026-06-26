@@ -8,11 +8,10 @@ DE_between_time(
   se_obj,
   group = NULL,
   filter = NULL,
-  assay = c(1, 2),
+  assay,
   adjP_thres = 0.05,
   logFC_thres = 1,
-  trend = FALSE,
-  fontsize = 8
+  trend = FALSE
 )
 }
 \arguments{
@@ -26,8 +25,12 @@ is NULL)}
 conditions for a feature to be tested. If NULL, the minimum number of
 replicates across all groups and time points will be used. (default is NULL)}
 
-\item{assay}{Assay index to use, where 1 is the original data and 2 is
-normalised to time 0 (if available) (default is 1)}
+\item{assay}{Assay to use: \code{"orig"} for original data, \code{"norm"} for
+normalised-to-start data. Numeric indices (1, 2) are also accepted.
+No default, must be specified explicitly. The selected assay should
+contain log-transformed, normalised values (e.g. log2-CPM for RNA-seq,
+log2-intensity for proteomics). A warning is issued if the data appears
+to be un-logged raw counts.}
 
 \item{adjP_thres}{(Optional) Threshold for adjusted p-value to consider a
 feature as differentially expressed (default is 0.05)}
@@ -40,15 +43,14 @@ Set to \code{TRUE} for RNA-seq count-derived data to model the mean-variance
 trend. Leave as \code{FALSE} (default) for microarray, proteomics,
 metabolomics, or other log-intensity data where the mean-variance
 relationship is typically flat.}
-
-\item{fontsize}{(Optional) Font size for the heatmap of DE numbers (default
-is 8)}
 }
 \value{
-A list containing two elements: 'all_list' is a nested list of
-DE results for each group and time point comparison including all features;
-'de_list' is a nested list of filtered DE results based on the specified
-thresholds including only significant features.
+A list with: \code{all_list} (nested list of DE results per group
+and time comparison, all features); \code{de_list} (nested list of
+significant features only); \code{fit_list} (nested list of limma
+\code{MArrayLM} fit objects, for use with \code{limma::plotSA()});
+\code{time_series} (vector of all available time points). The output
+can be passed to \code{plot_DE_between_time()} for visualisation.
 }
 \description{
 Differential expression analysis between time points within
@@ -59,7 +61,4 @@ data("example")
 example_obj <- normalise_to_start(example_obj)
 
 DE_between_time_out <- DE_between_time(example_obj, assay = 1)
-plot_DE_between_time(example_obj,
-    de_list = DE_between_time_out$de_list,
-    fontsize = 8, value = TRUE, nrow = 1, heatmap_width = 3)
 }
