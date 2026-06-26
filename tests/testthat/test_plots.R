@@ -85,18 +85,20 @@ test_that("plot_cv returns ggplot", {
     expect_s3_class(p, "ggplot")
 })
 
-test_that("plot_ID returns ggplot", {
+test_that("plot_ID returns list with ggplot comparison", {
     data("example")
     se <- normalise_to_start(example_obj)
     p <- plot_ID(se)
-    expect_s3_class(p, "ggplot")
+    expect_type(p, "list")
+    expect_s3_class(p$comparison, "ggplot")
 })
 
-test_that("plot_missing returns ggplot", {
+test_that("plot_missing returns list with ggplot comparison", {
     data("example")
     se <- normalise_to_start(example_obj)
     p <- plot_missing(se)
-    expect_s3_class(p, "ggplot")
+    expect_type(p, "list")
+    expect_s3_class(p$comparison, "ggplot")
 })
 
 test_that("plot_pca with plot=FALSE returns data", {
@@ -193,6 +195,30 @@ test_that("plot_DE_between_time runs", {
     de_out <- suppressMessages(DE_between_time(se, assay = 1, filter = 1))
     expect_no_error(
         plot_DE_between_time(se, de_list = de_out$de_list, fontsize = 8)
+    )
+})
+
+test_that("plot_DE_between_group runs", {
+    data("example")
+    se <- normalise_to_start(example_obj)
+    de_out <- suppressMessages(DE_between_group(se, assay = 1, filter = 1))
+    expect_no_error(
+        plot_DE_between_group(de_out, fontsize = 8)
+    )
+})
+
+test_that("plot_DE_between_group error on invalid input", {
+    expect_error(
+        plot_DE_between_group(list()),
+        "must be the output of DE_between_group"
+    )
+
+    data("example")
+    se <- normalise_to_start(example_obj)
+    de_out <- suppressMessages(DE_between_group(se, assay = 1, filter = 1))
+    expect_error(
+        plot_DE_between_group(de_out, group = "nonexistent"),
+        "not found"
     )
 })
 

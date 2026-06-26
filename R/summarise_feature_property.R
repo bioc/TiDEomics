@@ -13,7 +13,6 @@
 #' @param se_obj_merged_list A list of merged `SummarizedExperiment` objects, 
 #' output of `calc_feature_property()` function
 #' @import SummarizedExperiment
-#' @import magrittr
 #'
 #' @returns A data frame summarizing the feature properties across all groups, 
 #' with each row representing a feature and columns containing the properties 
@@ -31,23 +30,12 @@
 #'     calc_feature_property(example_obj_merged_list, threshold = 0)
 #' property_random_fc <- summarise_feature_property(example_obj_merged_list)
 summarise_feature_property <- function(se_obj_merged_list) {
-    if (length(se_obj_merged_list) == 0) {
-        stop("'se_obj_merged_list' is empty.")
-    }
-    required_cols <- c("Exp_ratio", "P_trend", "Max_FC")
-    if (!all(required_cols %in% colnames(rowData(se_obj_merged_list[[1]])))) {
-        stop("The input object does not contain the expected properties (",
-            paste(setdiff(required_cols, 
-                colnames(rowData(se_obj_merged_list[[1]]))),
-                collapse = ", "),
-            " missing). ",
-            "Please make sure to input the output of `calc_feature_property` ",
-            "function.")
-    }
+    .check_se_list(se_obj_merged_list, "se_obj_merged_list")
+    .check_se_list_has_properties(se_obj_merged_list, "se_obj_merged_list")
 
     property_list <- list()
     for (i in names(se_obj_merged_list)) {
-        property_list[[i]] <- rowData(se_obj_merged_list[[i]]) %>% 
+        property_list[[i]] <- rowData(se_obj_merged_list[[i]]) |> 
             as.data.frame()
     }
     property_random_fc <- do.call(rbind, property_list)

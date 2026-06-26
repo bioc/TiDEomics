@@ -63,7 +63,7 @@ Requires an internet connection.
 \examples{
 data(example_net)
 library(dplyr)
-example_module <- WGCNA_module(example_net) \%>\%
+example_module <- WGCNA_module(example_net) |>
     dplyr::filter(Module \%in\% c("1", "2"))
 # Use high pvalueCutoff for demonstration
 # enrichr_out <- enrichR_list(example_module, 

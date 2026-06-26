@@ -17,10 +17,17 @@
 #' `"PatientID"`). If provided, the column is renamed to 'Subject' and used
 #' for repeated-measures analyses downstream. If NULL (default), all samples
 #' are treated as independent, e.g. for cell culture experiments.
-#' experiments.
+#' @param replicate_col Optional: name of a column in `sample_ann` identifying
+#' replicate IDs. If provided, the column is renamed to 'Replicate'. If NULL
+#' (default), the function looks for a column named 'Replicate'; if absent,
+#' replicate IDs are auto-generated within each Group and Time (and Subject,
+#' if provided).
+#' @param batch_col Optional: name of a column in `sample_ann` identifying
+#' batch information. If provided, the column is renamed to 'Batch'. If NULL
+#' (default), the function looks for a column named 'Batch'; if absent, all
+#' samples are assigned to batch 1.
 #'
 #' @import SummarizedExperiment
-#' @import magrittr
 #'
 #' @returns A SummarizedExperiment object containing the input data and sample
 #' annotations.
@@ -32,15 +39,19 @@
 #'     Sample = c("Sample1", "Sample2"),
 #'     Group = c("A", "A"),
 #'     Time = c(0, 1),
-#'     Replicate = c(1, 1),
-#'     Batch = c(1, 1)
+#'     Rep = c(1, 1),
+#'     BatchID = c(1, 1)
 #' )
-#' se_obj <- create_input(data, sample_ann)
-create_input <- function(data, sample_ann, subject_col = NULL) {
+#' se_obj <- create_input(data, sample_ann,
+#'     replicate_col = "Rep", batch_col = "BatchID")
+create_input <- function(data, sample_ann, subject_col = NULL,
+                         replicate_col = NULL, batch_col = NULL) {
+    .check_df(data, "data")
+    .check_df(sample_ann, "sample_ann")
+    if (!is.null(subject_col)) .check_character(subject_col, "subject_col")
+    if (!is.null(replicate_col)) .check_character(replicate_col, "replicate_col")
+    if (!is.null(batch_col)) .check_character(batch_col, "batch_col")
     # check data format
-    if (!is.data.frame(data)) {
-        stop("Input data must be a data frame.")
-    }
     if (colnames(data)[1] != "Feature") {
         stop("The first column of data must be named 'Feature' ",
         "and contain feature identifiers.")
@@ -55,23 +66,55 @@ create_input <- function(data, sample_ann, subject_col = NULL) {
         )
     }
 
+    # ---- Replicate column handling ----
+    if (!is.null(replicate_col)) {
+        if (!replicate_col %in% colnames(sample_ann)) {
+            stop("replicate_col = '", replicate_col,
+                "' not found in sample_ann. Available columns: ",
+                paste(colnames(sample_ann), collapse = ", "))
+        }
+        if ("Replicate" %in% colnames(sample_ann) &&
+            replicate_col != "Replicate") {
+            warning("Both '", replicate_col, "' and 'Replicate' columns found. ",
+                "Using '", replicate_col, "'; the existing 'Replicate' ",
+                "column will be overwritten.")
+        }
+        colnames(sample_ann)[colnames(sample_ann) == replicate_col] <- "Replicate"
+    }
+
+    # ---- Batch column handling ----
+    if (!is.null(batch_col)) {
+        if (!batch_col %in% colnames(sample_ann)) {
+            stop("batch_col = '", batch_col,
+                "' not found in sample_ann. Available columns: ",
+                paste(colnames(sample_ann), collapse = ", "))
+        }
+        if ("Batch" %in% colnames(sample_ann) &&
+            batch_col != "Batch") {
+            warning("Both '", batch_col, "' and 'Batch' columns found. ",
+                "Using '", batch_col, "'; the existing 'Batch' ",
+                "column will be overwritten.")
+        }
+        colnames(sample_ann)[colnames(sample_ann) == batch_col] <- "Batch"
+    }
+
     # ---- Subject column handling ----
     if (!is.null(subject_col)) {
         if (!subject_col %in% colnames(sample_ann)) {
-            stop("subject_col = '", subject_col, 
-                "' not found in sample_ann. Available columns: ", 
+            stop("subject_col = '", subject_col,
+                "' not found in sample_ann. Available columns: ",
                 paste(colnames(sample_ann), collapse = ", "))
         }
         colnames(sample_ann)[colnames(sample_ann) == subject_col] <- "Subject"
 
         # Report Subject statistics
         n_subjects <- dplyr::n_distinct(sample_ann$Subject)
-        subj_times <- sample_ann %>%
-            dplyr::group_by(Subject, Group) %>%
+        subj_times <- sample_ann |>
+            dplyr::group_by(Subject, Group) |>
             dplyr::summarise(n_tp = dplyr::n_distinct(Time), .groups = "drop")
-        n_groups_per_subj <- sample_ann %>%
-            dplyr::group_by(Subject) %>%
-            dplyr::summarise(n_grp = dplyr::n_distinct(Group), 
+        n_groups_per_subj <- sample_ann |>
+            dplyr::group_by(Subject) |>
+            dplyr::summarise(n_grp = dplyr::n_distinct(Group),
                 .groups = "drop")
 
         message(sprintf(
@@ -122,24 +165,24 @@ create_input <- function(data, sample_ann, subject_col = NULL) {
         message("No 'Replicate' column provided. ",
             "Auto-generating replicate IDs.")
         if ("Subject" %in% names(sample_ann)) {
-            sample_ann <- sample_ann %>%
-                dplyr::group_by(Subject, Group, Time) %>%
-                dplyr::arrange(Sample, .by_group = TRUE) %>%
-                dplyr::mutate(Replicate = dplyr::row_number()) %>%
-                dplyr::ungroup() %>%
+            sample_ann <- sample_ann |>
+                dplyr::group_by(Subject, Group, Time) |>
+                dplyr::arrange(Sample, .by_group = TRUE) |>
+                dplyr::mutate(Replicate = dplyr::row_number()) |>
+                dplyr::ungroup() |>
                 as.data.frame()
-            comb_n <- table(paste(sample_ann$Subject, 
+            comb_n <- table(paste(sample_ann$Subject,
                 sample_ann$Group, sample_ann$Time))
             message("  Replicate IDs assigned within each Group, Subject, ",
-                "and Time. ", sum(comb_n > 1), 
+                "and Time. ", sum(comb_n > 1),
                 " combinations with >1 replicate."
             )
         } else {
-            sample_ann <- sample_ann %>%
-                dplyr::group_by(Group, Time) %>%
-                dplyr::arrange(Sample, .by_group = TRUE) %>%
-                dplyr::mutate(Replicate = dplyr::row_number()) %>%
-                dplyr::ungroup() %>%
+            sample_ann <- sample_ann |>
+                dplyr::group_by(Group, Time) |>
+                dplyr::arrange(Sample, .by_group = TRUE) |>
+                dplyr::mutate(Replicate = dplyr::row_number()) |>
+                dplyr::ungroup() |>
                 as.data.frame()
             comb_n <- table(paste(sample_ann$Group, sample_ann$Time))
             message(
@@ -164,8 +207,8 @@ create_input <- function(data, sample_ann, subject_col = NULL) {
 
     # Validate replicate uniqueness
     if ("Subject" %in% names(sample_ann)) {
-        rep_check <- sample_ann %>%
-            dplyr::group_by(Subject, Group, Time) %>%
+        rep_check <- sample_ann |>
+            dplyr::group_by(Subject, Group, Time) |>
             dplyr::summarise(
                 rep_unique = (length(unique(Replicate)) == length(Replicate)),
                 .groups = "drop"
@@ -175,8 +218,8 @@ create_input <- function(data, sample_ann, subject_col = NULL) {
             "Group, Subject, and Time combination.")
         }
     } else {
-        rep_check <- sample_ann %>%
-            dplyr::group_by(Group, Time) %>%
+        rep_check <- sample_ann |>
+            dplyr::group_by(Group, Time) |>
             dplyr::summarise(
                 rep_unique = (length(unique(Replicate)) == length(Replicate)),
                 .groups = "drop"
@@ -219,12 +262,12 @@ create_input <- function(data, sample_ann, subject_col = NULL) {
 
     # Arrange in order: Group, Subject (if present), Time, Replicate, Batch
     if ("Subject" %in% names(sample_ann)) {
-        sample_ann <- sample_ann %>%
-            dplyr::arrange(Group, Subject, Time, Replicate, Batch) %>%
+        sample_ann <- sample_ann |>
+            dplyr::arrange(Group, Subject, Time, Replicate, Batch) |>
             droplevels()
     } else {
-        sample_ann <- sample_ann %>%
-            dplyr::arrange(Group, Time, Replicate, Batch) %>%
+        sample_ann <- sample_ann |>
+            dplyr::arrange(Group, Time, Replicate, Batch) |>
             droplevels()
     }
     sample_order <- sample_ann$Sample
@@ -234,8 +277,10 @@ create_input <- function(data, sample_ann, subject_col = NULL) {
 
     stopifnot(identical(colnames(data)[-1], sample_ann$Sample))
 
+    assays_list <- list(orig = data[, -1])
+
     se_obj <- SummarizedExperiment(
-        assays = data[, -1],
+        assays = assays_list,
         colData = sample_ann
     )
 

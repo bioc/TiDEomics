@@ -14,7 +14,7 @@ module \code{0} (grey / unassigned) are removed. Default: FALSE}
 }
 \value{
 A data.frame with columns \code{Feature} (character) and \code{Module}
-(factor with sorted levels). When \code{exclude_grey = TRUE},
+(factor ordered by decreasing module size). When \code{exclude_grey = TRUE},
 grey/unassigned features are excluded.
 }
 \description{

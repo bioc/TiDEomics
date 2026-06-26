@@ -10,21 +10,23 @@ plot_modules_h(
   scale = TRUE,
   assay = 2,
   ylabel = "Log2 abundance",
-  suffix = "",
-  device = "png",
-  save = NULL,
   profile_width = 3,
   profile_link_width = 1,
   enrich_list = NULL,
   enrich_category = "BP",
   enrich_rank_by = "p.adjust",
   enrich_top_n = 3,
+  enrich_p_threshold = 0.05,
   fontsize = 8,
   heatmap_width = 8,
   heatmap_height = 8,
+  mark_features = NULL,
   width = 16,
   height = 12,
-  res = 300
+  res = 300,
+  suffix = "",
+  device = "png",
+  save = NULL
 )
 }
 \arguments{
@@ -44,48 +46,77 @@ feature (default is TRUE)}
 
 \item{ylabel}{Y axis label prefix (default is "Abundance")}
 
-\item{suffix}{Suffix for the saved image file name (default is an empty
-string)}
+\item{profile_width}{Width of the mean expression profile panels in cm
+(default: 3)}
 
-\item{device}{Image file format(s) for saving. Can be a character
-vector with one or more of \code{"png"}, \code{"pdf"}, \code{"tiff"}, \code{"jpeg"}
-(default: \code{"png"})}
+\item{profile_link_width}{Width of the link between heatmap
+and mean expression profile panels in cm (default: 1)}
 
-\item{save}{Directory to save the plot, no saving if is NULL
-(default is NULL)}
-
-\item{profile_width}{Width of the mean expression profile plot
-(default is 3 (cm))}
-
-\item{profile_link_width}{Width of the link in cm between heatmap
-and mean expression profile plot (default is 1)}
-
-\item{enrich_list}{A named list of enrichment results for WGCNA modules,
-as produced by \code{enrichGO_list()$all}. Each named element should be a
-data.frame with columns \code{Cluster}, \code{Description}, and the rank column.
+\item{enrich_list}{A named enrichment list for modules,
+as produced by \code{enrichGO_list()$all}. Each named element
+should be a data.frame with columns \code{Cluster}, \code{Description},
+and the rank column. Accepts any enrichment result with compatible format.
+When \code{enrich_category} is a vector, each category
+is shown as a separate column in the annotation textbox.
 If NULL (default), no enrichment terms will be displayed.}
 
-\item{enrich_category}{Name of the enrichment category to display
-(default is \code{"BP"}).}
+\item{enrich_category}{Category name(s) of enrichment to display:
+a single string (e.g. \code{"BP"}), or a vector for multiple
+categories (e.g. \code{c("BP", "CC", "Hub features")}).
+When \code{"Hub features"} is included, a textbox is auto-built from
+\code{mark_features} with colors matching \code{anno_mark}.}
 
-\item{enrich_rank_by}{Column name to rank enrichment terms by
-(default is \code{"p.adjust"}).}
+\item{enrich_rank_by}{Column to rank enrichment terms. A single string
+(default: \code{"p.adjust"}) is recycled for all categories in
+\code{enrich_category}. Supply a character vector of matching length for
+per-category control. Also used for colour-coding: terms with values
+below \code{enrich_p_threshold} are shown in black, terms above in grey.}
 
-\item{enrich_top_n}{Number of top enrichment terms to display per module
-(default is 3)}
+\item{enrich_top_n}{Top N enrichment terms per module. A single integer
+(default: 3) is recycled for all categories in \code{enrich_category}.
+Supply an integer vector of matching length for per-category control.}
 
-\item{fontsize}{Font size (default is 8)}
+\item{enrich_p_threshold}{P-value / adjusted p-value threshold for
+colour-coding enrichment terms. A single value (default: 0.05) is
+recycled for all categories; supply a vector of matching length for
+per-category control. Terms below threshold are drawn in black,
+terms above in grey70. Set to \code{NULL} to skip colour-coding (all
+terms black). Set to \code{NA} for categories using a pre-assigned
+\code{col} column (e.g. \code{"Hub features"}).}
 
-\item{heatmap_width}{Width of the heatmap body in cm (default is 8)}
+\item{fontsize}{Base font size (default: 8)}
 
-\item{heatmap_height}{Height of the heatmap body in cm (default is 8)}
+\item{heatmap_width}{Width of the heatmap body in cm (default: 8)}
+
+\item{heatmap_height}{Height of the heatmap body in cm (default: 8)}
+
+\item{mark_features}{Features to highlight. Accepts two forms:
+\itemize{
+\item A \strong{character vector} --- all marked in black on the left.
+\item A \strong{named list} of character vectors, e.g.
+\code{list("Hub 1" = c("gene1"), "Hub 2" = c("gene2"))}.
+Names become categories with auto-assigned colours (via
+\code{ggsci::pal_jco()}). Auto-routed: shown as \code{anno_mark} (left
+side, connecting lines) unless \code{"Hub features"} is present in
+\code{enrich_category}, in which case an \code{anno_textbox} (right side)
+is built instead, using the same colours.
+}
+Set to \code{NULL} (default) to skip marking.}
 
 \item{width}{Width of the saved image (default is 16 (cm))}
 
 \item{height}{Height of the saved image (default is 12 (cm))}
 
 \item{res}{Resolution of the saved image (except pdf format)
-(default is 300 (ppi))}
+(default: 300 (ppi))}
+
+\item{suffix}{Suffix for the saved image file name (default: "")}
+
+\item{device}{Image file format(s) for saving. Can be a character
+vector with one or more of \code{"png"}, \code{"pdf"}, \code{"tiff"}, \code{"jpeg"}
+(default: \code{"png"})}
+
+\item{save}{Directory to save plot, NULL (default) for no saving.}
 }
 \value{
 A combined plot of heatmap, mean expression profile, and enrichment
@@ -102,7 +133,6 @@ feature (gene).
 If certain time points are missing in some groups, NA values are added.
 }
 \examples{
-library(magrittr)
 library(org.Mm.eg.db)
 
 data(example)
@@ -113,17 +143,15 @@ example_obj_merged <- merge_groups(example_obj_merged_list)
 
 data(example_net)
 # select two modules for demonstration
-example_module <- WGCNA_module(example_net) \%>\%
+example_module <- WGCNA_module(example_net) |>
     dplyr::filter(Module \%in\% c("1", "2"))
 # set cutoff to 1 to show all results for demonstration
 example_go_list = enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
     universe = example_module$Feature,
     pvalueCutoff = 1, qvalueCutoff = 1,
     category = "BP", simplify = FALSE)
-# plot_GO(example_go_list$all, plot_dotplot = TRUE,
-#     plot_emapplot = FALSE, plot_cnetplot = FALSE)
 
-plot_modules_h(example_module \%>\% dplyr::filter(Module != '0'),
+plot_modules_h(example_module |> dplyr::filter(Module != '0'),
     example_obj_merged, scale = TRUE,
     ylabel = "Z-score of log2 expression",
     enrich_list = example_go_list$all, enrich_category = "BP",
