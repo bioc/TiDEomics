@@ -1,7 +1,7 @@
 # Tests for feature property pipeline
 
 test_that("calc_feature_property works on merged data", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
     example_obj_merged_list <- merge_replicates(example_obj_list)
@@ -19,7 +19,7 @@ test_that("calc_feature_property works on merged data", {
 })
 
 test_that("calc_feature_property without threshold still works", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
     example_obj_merged_list <- merge_replicates(example_obj_list)
@@ -29,7 +29,7 @@ test_that("calc_feature_property without threshold still works", {
 })
 
 test_that("summarise_feature_property works", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
     example_obj_merged_list <- merge_replicates(example_obj_list)
@@ -45,7 +45,7 @@ test_that("summarise_feature_property works", {
 })
 
 test_that("group_specific_features filters correctly", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
     example_obj_merged_list <- merge_replicates(example_obj_list)
@@ -62,7 +62,7 @@ test_that("group_specific_features filters correctly", {
 })
 
 test_that("group_specific_features respects filter_ratio", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
     example_obj_merged_list <- merge_replicates(example_obj_list)
@@ -81,7 +81,7 @@ test_that("group_specific_features respects filter_ratio", {
 })
 
 test_that("group_specific_features with group_pct works", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
     example_obj_merged_list <- merge_replicates(example_obj_list)
@@ -97,7 +97,7 @@ test_that("group_specific_features with group_pct works", {
 })
 
 test_that("group_specific_features with NULL groups uses all", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
     example_obj_merged_list <- merge_replicates(example_obj_list)
@@ -110,7 +110,7 @@ test_that("group_specific_features with NULL groups uses all", {
 })
 
 test_that("summarise_feature_property has expected columns", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
     example_obj_merged_list <- merge_replicates(example_obj_list)

@@ -1,5 +1,5 @@
 test_that("WGCNA works", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
 
     wgcna_input <- prepare_WGCNA(example_obj, assay = 2, powers = seq(1, 30),
@@ -61,13 +61,25 @@ test_that("WGCNA_module Module is sorted", {
 # ---- prepare_WGCNA ----
 
 test_that("prepare_WGCNA validates assay index", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
     expect_error(
         prepare_WGCNA(example_obj, assay = 99,
             powers = seq(1, 10), RsquaredCut = 0.8),
         "assay"
     )
+})
+
+test_that("run_WGCNA validates arguments", {
+    expect_error(run_WGCNA(NULL, power = 6), "must be a list")
+    expect_error(run_WGCNA(list(), power = 6), "prepare_WGCNA")
+    data("example_obj")
+    example_obj <- normalise_to_start(example_obj)
+    wgcna_input <- prepare_WGCNA(example_obj, assay = 2, powers = seq(1, 10),
+        RsquaredCut = 0.8)
+    expect_error(run_WGCNA(wgcna_input, power = 0), "positive")
+    expect_error(run_WGCNA(wgcna_input, power = 6, numericLabels = "yes"),
+        "logical")
 })
 
 # ---- plot_WGCNA ----

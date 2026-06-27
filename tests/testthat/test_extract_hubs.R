@@ -1,0 +1,72 @@
+# Tests for extract_hubs
+
+test_that("extract_hubs returns top features per module", {
+    data("example_net")
+    hubs <- extract_hubs(example_net, top_n = 3)
+
+    expect_type(hubs, "character")
+    expect_true(length(hubs) > 0)
+    # Number of hubs = top_n * n_modules
+    modules <- setdiff(unique(example_net$colors), c("grey", "0", 0))
+    expect_equal(length(hubs), length(modules) * 3)
+})
+
+test_that("extract_hubs excludes grey module by default", {
+    data("example_net")
+    hubs <- extract_hubs(example_net, top_n = 2, exclude_grey = TRUE)
+
+    # Grey/0 features should not appear
+    grey_features <- names(example_net$colors)[
+        example_net$colors %in% c("grey", "0", 0)]
+    expect_false(any(grey_features %in% hubs))
+})
+
+test_that("extract_hubs includes grey when exclude_grey = FALSE", {
+    data("example_net")
+    hubs <- extract_hubs(example_net, top_n = 2, exclude_grey = FALSE)
+
+    grey_features <- names(example_net$colors)[
+        example_net$colors %in% c("grey", "0", 0)]
+    if (length(grey_features) > 0) {
+        expect_true(any(grey_features %in% hubs))
+    }
+})
+
+test_that("extract_hubs validates arguments", {
+    expect_error(extract_hubs(NULL), "must be a list")
+    expect_error(extract_hubs(1:3), "must be a list")
+    data("example_net")
+    expect_error(extract_hubs(example_net, top_n = 0), "positive")
+    expect_error(extract_hubs(example_net, top_n = -1), "positive")
+    expect_error(extract_hubs(example_net, exclude_grey = "yes"), "logical")
+})
+
+test_that("extract_hubs errors on missing required fields", {
+    expect_error(
+        extract_hubs(list(parameters = list(networkType = "signed"))),
+        "input_data"
+    )
+    expect_error(
+        extract_hubs(list(input_data = matrix(1:4, 2, 2))),
+        "parameters"
+    )
+})
+
+test_that("extract_hubs handles top_n larger than module size", {
+    data("example_net")
+    hubs <- extract_hubs(example_net, top_n = 1000)
+    expect_type(hubs, "character")
+    # Should return all available features (no error)
+    expect_true(length(hubs) <= length(example_net$colors))
+})
+
+test_that("extract_hubs handles unsigned networks", {
+    skip_if_not_installed("WGCNA")
+    data("example_net")
+    # example_net should have a networkType; test abs(kME) for unsigned
+    if (example_net$parameters$networkType == "unsigned") {
+        hubs <- extract_hubs(example_net, top_n = 2)
+        expect_type(hubs, "character")
+        expect_true(length(hubs) > 0)
+    }
+})

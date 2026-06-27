@@ -1,7 +1,7 @@
 # Tests for merge_groups
 
 test_that("merge_groups preserves features and combines groups", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
     example_obj_merged_list <- merge_replicates(example_obj_list)
@@ -21,7 +21,7 @@ test_that("merge_groups preserves features and combines groups", {
 })
 
 test_that("merge_groups handles single group", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
     # Take just one group

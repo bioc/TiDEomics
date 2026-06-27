@@ -4,7 +4,9 @@ library(pacman)
 pacman::p_load(GEOquery, tibble, stringr, dplyr, org.Mm.eg.db, clusterProfiler)
 
 # download sample information from GEO
-geo_data <- getGEO("GSE263759", GSEMatrix = TRUE)
+geo_data <- getGEO("GSE263759", GSEMatrix = TRUE, returnType = 'ExpressionSet')
+# getGEO() now returns SummarizedExperiment objects by default.
+# Pass returnType = 'ExpressionSet' for the previous behavior.
 
 geo_sample_info <- pData(geo_data[[1]]) |>
     dplyr::select(

@@ -1,7 +1,7 @@
 # Tests for enrichment functions (GO rank, plot_GO)
 
 test_that("enrichGO_rank works with variance decomposition output", {
-    data("example")
+    data("example_obj")
     se <- normalise_to_start(example_obj)
     vd <- decomp_variance(se, features = rownames(se)[1:20],
         fixed_effect_var = NULL, assay = "orig", core = 1)
@@ -21,7 +21,7 @@ test_that("enrichGO_rank works with variance decomposition output", {
 })
 
 test_that("enrichGO_rank validates gene_rank_by", {
-    data("example")
+    data("example_obj")
     se <- normalise_to_start(example_obj)
     vd <- decomp_variance(se, features = rownames(se)[1:10],
         fixed_effect_var = NULL, assay = "orig", core = 1)

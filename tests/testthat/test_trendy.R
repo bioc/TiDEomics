@@ -1,7 +1,7 @@
 # Tests for Trendy pipeline (segmented regression)
 
 test_that("run_Trendy works on imputed merged data", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
     example_obj_merged_list <- merge_replicates(example_obj_list)
@@ -21,7 +21,7 @@ test_that("run_Trendy works on imputed merged data", {
 })
 
 test_that("summarise_Trendy produces expected columns", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
     example_obj_merged_list <- merge_replicates(example_obj_list)
@@ -41,7 +41,7 @@ test_that("summarise_Trendy produces expected columns", {
 })
 
 test_that("extract_segment_trends works", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
     example_obj_merged_list <- merge_replicates(example_obj_list)
@@ -62,7 +62,7 @@ test_that("extract_segment_trends works", {
 })
 
 test_that("plot_breakpoints returns ggplot", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
     example_obj_merged_list <- merge_replicates(example_obj_list)

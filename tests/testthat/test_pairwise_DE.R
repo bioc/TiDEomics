@@ -1,19 +1,68 @@
 test_that("DE_between_group works", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
 
     DE_between_group_out <- DE_between_group(example_obj, assay = 2)
 
     expect_true(is.list(DE_between_group_out))
-    expect_true(all(c("all_list", "de_list") %in% names(DE_between_group_out)))
+    expect_true(all(c("all_list", "de_list", "fit_list",
+        "ref_groups", "all_groups") %in% names(DE_between_group_out)))
     expect_all_true(names(DE_between_group_out$all_list) ==
         names(DE_between_group_out$de_list))
     expect_true(paste0("IFNbeta-untreated") %in%
         names(DE_between_group_out$all_list))
 })
 
+test_that("DE_between_group with trend=TRUE and filter works", {
+    data("example_obj")
+    example_obj <- normalise_to_start(example_obj)
+
+    DE_res <- DE_between_group(example_obj, assay = 2,
+        filter = 1, trend = TRUE)
+
+    expect_true(is.list(DE_res))
+    expect_true("all_list" %in% names(DE_res))
+})
+
+test_that("DE_between_group validates group argument", {
+    data("example_obj")
+    example_obj <- normalise_to_start(example_obj)
+
+    expect_error(
+        DE_between_group(example_obj, assay = 2, group = "nonexistent"),
+        "not found"
+    )
+})
+
+test_that("DE_between_group de_list contains significant features", {
+    data("example_obj")
+    example_obj <- normalise_to_start(example_obj)
+
+    DE_res <- DE_between_group(example_obj, assay = 2,
+        adjP_thres = 0.05, logFC_thres = 1)
+
+    # de_list should have features passing thresholds
+    for (contrast in names(DE_res$de_list)) {
+        df <- DE_res$de_list[[contrast]]
+        if (is.data.frame(df) && nrow(df) > 0) {
+            expect_true(all(df$adj.P.Val < 0.05))
+            expect_true(all(abs(df$logFC) > 1))
+        }
+    }
+})
+
+test_that("DE_between_time validates parameters", {
+    data("example_obj")
+    example_obj <- normalise_to_start(example_obj)
+
+    expect_error(
+        DE_between_time(example_obj, assay = 1, group = "nonexistent"),
+        "not found"
+    )
+})
+
 test_that("DE_between_time works", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
 
     DE_between_time_out <- DE_between_time(example_obj, assay = 1)
@@ -32,7 +81,7 @@ test_that("DE_between_time works", {
 })
 
 test_that("plot_volcano works", {
-    data("example")
+    data("example_obj")
     example_obj <- normalise_to_start(example_obj)
 
     DE_between_group_out <- DE_between_group(example_obj, assay = 2)

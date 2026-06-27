@@ -1,7 +1,7 @@
 library(TiDEomics)
 
 # Load example data
-data("example")
+data(example_obj)
 example_obj <- normalise_to_start(example_obj)
 
 # Prepare WGCNA input
@@ -12,8 +12,10 @@ wgcna_input <- prepare_WGCNA(example_obj,
     RsquaredCut = 0.8
 )
 
+wgcna_input$plot
+
 # Pick power
-picked_power <- wgcna_input$powerEstimate
+picked_power <- 8
 
 # Run WGCNA
 example_net <- run_WGCNA(wgcna_input,

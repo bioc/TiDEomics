@@ -1,7 +1,7 @@
 test_that("plot_modules_v works", {
     library(dplyr)
 
-    data(example)
+    data(example_obj)
     example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
     example_obj_merged_list <- merge_replicates(example_obj_list)
@@ -18,5 +18,40 @@ test_that("plot_modules_v works", {
 
     expect_true("patchwork" %in% class(pq))
     expect_true("gg" %in% class(pq))
-}
-)
+})
+
+test_that("plot_modules_v validates module argument", {
+    expect_error(plot_modules_v(NULL, data.frame()), "data.frame")
+    expect_error(plot_modules_v(data.frame(), data.frame()), "SummarizedExperiment")
+})
+
+test_that("plot_modules_v runs without scale", {
+    library(dplyr)
+    data(example_obj)
+    example_obj <- normalise_to_start(example_obj)
+    example_obj_list <- split_groups(example_obj)
+    example_obj_merged_list <- merge_replicates(example_obj_list)
+    example_obj_merged <- merge_groups(example_obj_merged_list)
+    data(example_net)
+    example_module <- WGCNA_module(example_net)
+
+    pq <- plot_modules_v(example_module |> dplyr::filter(Module != '0'),
+        example_obj_merged, scale = FALSE, height_ratio = 2, fontsize = 6)
+    expect_true("patchwork" %in% class(pq))
+})
+
+test_that("plot_modules_v handles single module", {
+    library(dplyr)
+    data(example_obj)
+    example_obj <- normalise_to_start(example_obj)
+    example_obj_list <- split_groups(example_obj)
+    example_obj_merged_list <- merge_replicates(example_obj_list)
+    example_obj_merged <- merge_groups(example_obj_merged_list)
+    data(example_net)
+    example_module <- WGCNA_module(example_net) |>
+        dplyr::filter(Module == levels(Module)[1])
+
+    pq <- plot_modules_v(example_module, example_obj_merged,
+        scale = TRUE, height_ratio = 2, fontsize = 6)
+    expect_true("patchwork" %in% class(pq))
+})
