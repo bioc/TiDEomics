@@ -46,7 +46,7 @@ SummarizedExperiment object (computing mean/SD internally via
 \code{calc_mean_sd()}.
 }
 \examples{
-data("example")
+data(example_obj)
 plot_trend(example_obj,
     features = sample(rownames(example_obj), 4))
 }

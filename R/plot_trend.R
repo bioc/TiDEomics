@@ -22,7 +22,7 @@
 #' @returns Plot of feature abundances over time by mean and SD
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' plot_trend(example_obj,
 #'     features = sample(rownames(example_obj), 4))
 plot_trend <- function(se_obj, assay = 1, groups = NULL, features,
@@ -88,6 +88,5 @@ plot_trend <- function(se_obj, assay = 1, groups = NULL, features,
         )
     }
 
-    print(p)
-    return(invisible(p))
+    return(p)
 }

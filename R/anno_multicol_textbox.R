@@ -58,13 +58,6 @@
     add_new_line = FALSE, word_wrap = FALSE
 ) {
     n_text <- length(text)
-    # if (is.null(gp$col)) {
-    #     if (package_version(packageDescription("circlize", fields = "Version")) <
-    #         "0.4.14") {
-    #         stop_wrap("Random color generation needs circlize package >= 0.4.14. Please upgrade it.")
-    #     }
-    #     gp$col = circlize::rand_color(n_text, friendly = TRUE)
-    # }
     for (nm in c("fontsize", "fontfamily", "fontface")) {
         if (is.null(gp[[nm]])) {
             gp[[nm]] <- rep(grid::get.gpar(nm)[[1]], n_text)
@@ -184,8 +177,8 @@
                 w <- max(w, current_line_width)
                 h <- y[i] + text_height[i]
             } else {
-                x[i] <- current_line_width + text_space * text_lt$space_after[i -
-                    1]
+                x[i] <- current_line_width + 
+                    text_space * text_lt$space_after[i - 1]
                 y[i] <- y[i - 1]
                 current_line_width <- x[i] + text_width[i]
                 w <- max(w, current_line_width)
@@ -210,8 +203,8 @@
                 w <- max(w, current_line_width)
                 h <- y[i] - text_height[i]
             } else {
-                x[i] <- current_line_width + text_space * text_lt$space_after[i -
-                    1]
+                x[i] <- current_line_width + 
+                    text_space * text_lt$space_after[i - 1]
                 y[i] <- y[i - 1]
                 current_line_width <- x[i] + text_width[i]
                 w <- max(w, current_line_width)
@@ -425,9 +418,7 @@
 
     n <- length(cats)
     total_w_mm <- sum(slot_widths_mm) + gap_mm * max(n - 1L, 0L) + pad_l + pad_r
-    # total_w_mm <- sum(widths_mm) + gap_mm * max(n - 1L, 0L) + pad_l + pad_r
     total_h_mm <- max(heights_mm) + pad_t + pad_b
-    # print(heights_mm)
 
     vp <- grid::viewport(
         width  = unit(total_w_mm, "mm"),
@@ -445,15 +436,6 @@
                 just = c(0, 0.5)
             )
         )))
-        # gb <- col_grobs[[i]]
-
-        # gb$vp$x <- unit(x_mm, "mm")
-        # gb$vp$y <- unit(pad_b, "mm")
-
-        # gb$vp$justification <- c(0, 0)
-        # gb$vp$valid.just <- c(0, 0)
-
-        # children <- c(children, list(gb))
 
         x_mm <- x_mm + slot_widths_mm[i] + gap_mm
     }
@@ -598,9 +580,6 @@
     gbl_w <- do.call(grid::unit.c, gbl_w)
     gbl_w <- max(gbl_w) + margin
 
-    # print(grid::grobHeight(gbl[[1]]))
-    # print(gbl[[1]]$vp$height)
-
     side <- match.arg(side)
     first_nm <- names(gbl)[1]
     if (by %in% c("anno_link", "anno_zoom")) {
@@ -634,10 +613,6 @@
                 col_gap_mm <- attr(gb, "column_gap_mm")
                 padding_mm <- attr(gb, "padding_mm")
                 x_left_mm <- padding_mm["left"]
-                # x_pos_mm <- cumsum(c(
-                #     x_left_mm,
-                #     head(col_widths + col_gap_mm, -1)))
-                # x_pos_mm <- x_pos_mm + col_widths / 2
                 x_pos_mm <- numeric(length(col_widths))
 
                 cur_x <- x_left_mm

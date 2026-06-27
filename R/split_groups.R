@@ -9,7 +9,7 @@
 #' object. Each object in the list corresponds to one group of samples.
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' example_obj <- normalise_to_start(example_obj)
 #' example_obj_list <- split_groups(example_obj)
 split_groups <- function(se_obj) {

@@ -12,17 +12,9 @@
 #' module-trait correlation heatmap
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' example_obj <- normalise_to_start(example_obj)
 #'
-#' # wgcna_input <- prepare_WGCNA(example_obj, assay = 2, powers = seq(1, 30),
-#' #     networkType = "signed", RsquaredCut = 0.8)
-#' # wgcna_input$fitIndices
-#' # picked_power <- wgcna_input$powerEstimate
-#' # example_net <- run_WGCNA(wgcna_input,
-#' #    power = picked_power,
-#' #    minModuleSize = 10, # only 100 genes in the example data
-#' #    numericLabels = TRUE)
 #' data("example_net")
 #' plot_WGCNA(example_net, fontsize = 8)
 #' @references https://github.com/edo98811/WGCNA_official_documentation/blob/main/FemaleLiver-03-relateModsToExt.R
@@ -60,43 +52,6 @@ plot_WGCNA <- function(net, fontsize = 8) {
         dplyr::select(Time, Group) |>
         dplyr::mutate(Time = as.numeric(Time))
     stopifnot(identical(row.names(MEs), row.names(ann_row)))
-
-    col_time_func <- circlize::colorRamp2(
-        seq(min(ann_row$Time), max(ann_row$Time), length.out = 3),
-        c("#dadaeb", "#9e9ac8", "#54278f")
-    )
-
-    ann_colors <- list(
-        Group = get_custom_palette(levels(net$sample_info$Group)),
-        Time = col_time_func
-    )
-
-    ComplexHeatmap::Heatmap(as.matrix(MEs),
-        column_title = "WGCNA module eigengenes",
-        col = grDevices::colorRampPalette(c("#3C5488FF", "white",
-            "#E64B35FF"))(100),
-        show_row_names = FALSE,
-        show_column_names = TRUE,
-        column_title_gp = grid::gpar(fontsize = fontsize + 2,
-            fontface = "bold"),
-        column_names_gp = grid::gpar(fontsize = fontsize),
-        left_annotation = ComplexHeatmap::rowAnnotation(
-            df = ann_row,
-            col = ann_colors,
-            gp = grid::gpar(fontsize = fontsize),
-            annotation_name_gp = grid::gpar(fontsize = fontsize,
-                fontface = "bold"),
-            annotation_legend_param = list(
-                title_gp = grid::gpar(fontsize = fontsize, fontface = "bold"),
-                labels_gp = grid::gpar(fontsize = fontsize)
-            )
-        ),
-        heatmap_legend_param = list(
-            title = "r",
-            title_gp = grid::gpar(fontsize = fontsize, fontface = "bold"),
-            labels_gp = grid::gpar(fontsize = fontsize)
-        )
-    ) |> print()
 
     # Pairwise scatterplots of eigengenes
     WGCNA::plotMEpairs(MEs,
@@ -151,4 +106,43 @@ plot_WGCNA <- function(net, fontsize = 8) {
             "#E64B35FF"))(100),
         main = "Module-Group Correlation"
     )
+
+    # Heatmap of module eigengenes
+    col_time_func <- circlize::colorRamp2(
+        seq(min(ann_row$Time), max(ann_row$Time), length.out = 3),
+        c("#dadaeb", "#9e9ac8", "#54278f")
+    )
+
+    ann_colors <- list(
+        Group = get_custom_palette(levels(net$sample_info$Group)),
+        Time = col_time_func
+    )
+
+    p <- ComplexHeatmap::Heatmap(as.matrix(MEs),
+        column_title = "WGCNA module eigengenes",
+        col = grDevices::colorRampPalette(c("#3C5488FF", "white",
+            "#E64B35FF"))(100),
+        show_row_names = FALSE,
+        show_column_names = TRUE,
+        column_title_gp = grid::gpar(fontsize = fontsize + 2,
+            fontface = "bold"),
+        column_names_gp = grid::gpar(fontsize = fontsize),
+        left_annotation = ComplexHeatmap::rowAnnotation(
+            df = ann_row,
+            col = ann_colors,
+            gp = grid::gpar(fontsize = fontsize),
+            annotation_name_gp = grid::gpar(fontsize = fontsize,
+                fontface = "bold"),
+            annotation_legend_param = list(
+                title_gp = grid::gpar(fontsize = fontsize, fontface = "bold"),
+                labels_gp = grid::gpar(fontsize = fontsize)
+            )
+        ),
+        heatmap_legend_param = list(
+            title = "r",
+            title_gp = grid::gpar(fontsize = fontsize, fontface = "bold"),
+            labels_gp = grid::gpar(fontsize = fontsize)
+        )
+    ) 
+    return(p)
 }

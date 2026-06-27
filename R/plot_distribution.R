@@ -23,7 +23,7 @@
 #' optionally faceted by the specified variable.
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' plot_distribution(example_obj)
 #' plot_distribution(example_obj, facet_by = "Group")
 plot_distribution <- function(se_obj, facet_by = NULL, fontsize = 8) {
@@ -35,6 +35,7 @@ plot_distribution <- function(se_obj, facet_by = NULL, fontsize = 8) {
 
     if (is.null(facet_by) || facet_by == "Sample") {
         data_long <- assays(se_obj)[[1]] |>
+            as.data.frame() |>
             tidyr::pivot_longer(cols = dplyr::everything())
 
         p <- ggplot(data_long, aes(x = value)) +
@@ -52,6 +53,7 @@ plot_distribution <- function(se_obj, facet_by = NULL, fontsize = 8) {
         y_var <- if (facet_by == "Group") "Time" else "Group"
 
         data_long <- assays(se_obj)[[1]] |>
+            as.data.frame() |>
             tidyr::pivot_longer(cols = dplyr::everything()) |>
             merge(colData(se_obj), by.x = "name", by.y = "Sample") |>
             as.data.frame() |>
@@ -66,6 +68,5 @@ plot_distribution <- function(se_obj, facet_by = NULL, fontsize = 8) {
             theme_custom(base_size = fontsize)
     }
 
-    print(p)
-    return(invisible(p))
+    return(p)
 }

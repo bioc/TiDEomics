@@ -50,7 +50,7 @@ either a SummarizedExperiment object or a list of them (from
 \code{split_groups()}).
 }
 \examples{
-data("example")
+data(example_obj)
 plot_pca_by_group(example_obj, circle = TRUE, arrow = TRUE)
 
 # Also accepts a list from split_groups()

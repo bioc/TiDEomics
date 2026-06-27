@@ -31,7 +31,7 @@ variable is specified, a single density plot will be generated for all
 samples combined.
 }
 \examples{
-data("example")
+data(example_obj)
 plot_distribution(example_obj)
 plot_distribution(example_obj, facet_by = "Group")
 }

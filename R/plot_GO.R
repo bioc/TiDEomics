@@ -20,7 +20,7 @@
 #'
 #' @import ggplot2
 #'
-#' @returns A series of plots visualizing the GO enrichment results.
+#' @returns A list of plots visualizing the GO enrichment results.
 #' @export
 #' @examples
 #' library(org.Mm.eg.db)
@@ -73,11 +73,14 @@ plot_GO <- function(
         "the GO enrichment results.")
     }
 
+    p_list <- list()
+
     # dotplot
     if (plot_dotplot) {
         for (cate in intersect(names(go_list), c("BP", "MF", "CC"))) {
             if (dim(go_list[[cate]])[1] > 0) {
-                print(clusterProfiler::dotplot(go_list[[cate]],
+                p_list[[paste0("dotplot_", cate)]] <-
+                    clusterProfiler::dotplot(go_list[[cate]],
                         showCategory = showCategory_dotplot,
                         title = paste0("GO ", cate, " in ", label),
                         ...
@@ -86,7 +89,7 @@ plot_GO <- function(
                     theme(
                         axis.text.x = element_text(angle = 45, hjust = 1),
                         panel.grid = element_blank()
-                    ))
+                    )
             } else {
                 message(sprintf("No significant GO %s terms found.", cate))
             }
@@ -102,7 +105,8 @@ plot_GO <- function(
                     dplyr::pull(Cluster) |>
                     unique()
 
-                print(clusterProfiler::cnetplot(go_list[[cate]],
+                p_list[[paste0("cnetplot_", cate)]] <-
+                    clusterProfiler::cnetplot(go_list[[cate]],
                         showCategory = showCategory_cnetplot,
                         ...
                     ) +
@@ -114,7 +118,7 @@ plot_GO <- function(
                         axis.text = element_blank(),
                         axis.ticks = element_blank()
                     ) +
-                    ggtitle(paste0("GO ", cate, " in ", label)))
+                    ggtitle(paste0("GO ", cate, " in ", label))
             } else {
                 message(sprintf("No significant GO %s terms found.", cate))
             }
@@ -130,8 +134,9 @@ plot_GO <- function(
                     dplyr::pull(Cluster) |>
                     unique()
 
-                print(clusterProfiler::emapplot(
-                    enrichplot::pairwise_termsim(go_list[[cate]]),
+                p_list[[paste0("emapplot_", cate)]] <-
+                    clusterProfiler::emapplot(
+                        enrichplot::pairwise_termsim(go_list[[cate]]),
                         showCategory = showCategory_emapplot,
                         node_label_size = fontsize - 5, # default: 5
                         size_category = 1.5, # default: 1
@@ -145,10 +150,12 @@ plot_GO <- function(
                         axis.text = element_blank(),
                         axis.ticks = element_blank()
                     ) +
-                    ggtitle(paste0("GO ", cate, " in ", label)))
+                    ggtitle(paste0("GO ", cate, " in ", label))
             } else {
                 message(sprintf("No significant GO %s terms found.", cate))
             }
         }
     }
+
+    return(p_list)
 }

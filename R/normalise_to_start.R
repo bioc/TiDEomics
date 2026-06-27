@@ -21,7 +21,7 @@
 #' assay slot.
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' example_obj <- normalise_to_start(example_obj)
 normalise_to_start <- function(se_obj, by_subject = FALSE) {
     .check_se(se_obj)
@@ -117,7 +117,7 @@ normalise_to_start <- function(se_obj, by_subject = FALSE) {
     }
 
     d_0norm <- do.call(cbind, unname(d_list_0norm))
-    assay(se_obj, "norm") <- d_0norm
+    assay(se_obj, "norm") <- as.matrix(d_0norm)
 
     return(se_obj)
 }

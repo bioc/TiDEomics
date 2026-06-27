@@ -19,7 +19,7 @@
 #' top n features are plotted if `features` is not specified.
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' example_obj <- normalise_to_start(example_obj)
 #'
 #' var_decomp <- decomp_variance(example_obj, assay = 1)
@@ -96,6 +96,5 @@ plot_variance <- function(var_decomp, rank = "Group",
         p <- p + theme(axis.text.y = element_blank())
     }
 
-    print(p)
-    return(invisible(p))
+    return(p)
 }

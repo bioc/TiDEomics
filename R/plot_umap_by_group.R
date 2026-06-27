@@ -22,7 +22,7 @@
 #' each group, coloured by Time.
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' plot_umap_by_group(example_obj)
 #'
 #' # Also accepts a list from split_groups()
@@ -46,12 +46,11 @@ plot_umap_by_group <- function(se_obj, seed = 1234, nrow = 1,
     umap_list <- list()
     for (group in names(se_list)) {
         umap_layout <- plot_umap(se_list[[group]],
-            plot = FALSE,
             seed = seed,
             assay = assay,
             umap_neighbors = umap_neighbors
         )
-        umap_list[[group]] <- ggplot(umap_layout,
+        umap_list[[group]] <- ggplot(umap_layout$umap_layout,
             aes(x = V1, y = V2, color = Time)) +
             geom_point(size = 2) +
             scale_color_viridis_c() +
@@ -71,6 +70,5 @@ plot_umap_by_group <- function(se_obj, seed = 1234, nrow = 1,
         ggpubr::annotate_figure(top =
         ggpubr::text_grob("UMAP - by group (features without missing values)\n",
             face = "bold", size = fontsize + 4))
-    print(p)
-    return(invisible(p))
+    return(p)
 }

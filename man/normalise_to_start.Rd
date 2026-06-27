@@ -32,6 +32,6 @@ their own initial condition. Requires a Subject column in colData.
 }
 }
 \examples{
-data("example")
+data(example_obj)
 example_obj <- normalise_to_start(example_obj)
 }

@@ -53,7 +53,7 @@ with clusterProfiler. Genes can be ranked by variance decomposition results.
 }
 \examples{
 library(org.Mm.eg.db)
-data("example")
+data(example_obj)
 example_obj <- normalise_to_start(example_obj)
 
 var_decomp <- decomp_variance(example_obj, assay = 1)

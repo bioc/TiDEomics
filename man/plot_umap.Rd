@@ -7,7 +7,6 @@
 plot_umap(
   se_obj,
   seed = 1234,
-  plot = TRUE,
   plot_ID = FALSE,
   circle = FALSE,
   xlim_min = NULL,
@@ -23,8 +22,6 @@ plot_umap(
 \item{se_obj}{A SummarizedExperiment object created by \code{create_input()}}
 
 \item{seed}{Random seed for UMAP (default is 1234)}
-
-\item{plot}{Whether to plot the figures (default is TRUE)}
 
 \item{plot_ID}{Whether to include a UMAP plot coloured by number of
 identified features (default is FALSE)}
@@ -53,7 +50,7 @@ UMAP y)}
 normalised to time 0 (if available) (default is 1)}
 }
 \value{
-A UMAP plot showing the distribution of samples. And a data
+A list of UMAP plots showing the distribution of samples. And a data
 frame containing UMAP coordinates and sample annotations for custom plotting.
 }
 \description{
@@ -64,6 +61,6 @@ Batch (if more than 1), and number of identified features (non-missing
 values).
 }
 \examples{
-data("example")
+data(example_obj)
 umap_layout <- plot_umap(example_obj)
 }

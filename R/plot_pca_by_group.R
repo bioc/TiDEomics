@@ -26,7 +26,7 @@
 #' each group, coloured by Time.
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' plot_pca_by_group(example_obj, circle = TRUE, arrow = TRUE)
 #'
 #' # Also accepts a list from split_groups()
@@ -73,8 +73,7 @@ plot_pca_by_group <- function(se_obj, circle = TRUE, arrow = TRUE,
             "PCA by group (features without missing values)\n",
             face = "bold", size = fontsize + 4))
 
-    print(p)
-    return(invisible(p))
+    return(p)
 }
 #' Plot PCA with arrows
 #'
@@ -99,7 +98,7 @@ plot_pca_by_group <- function(se_obj, circle = TRUE, arrow = TRUE,
 #' trajectory arrows.
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' plot_pca_arrows(example_obj[, example_obj$Group == "IFNbeta"])
 plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
     pc1 = 1, pc2 = 2, fontsize = 8, assay = 1) {
@@ -118,7 +117,7 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
         "before plotting.")
     }
 
-    pca2 <- plot_pca(se_obj, plot = FALSE, assay = assay)
+    pca2 <- plot_pca(se_obj, assay = assay)$pca
     pc <- as.data.frame(pca2$rotated)
     pc$Sample <- rownames(pc)
     pc <- merge(pc, as.data.frame(colData(se_obj)), by = "Sample")

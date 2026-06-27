@@ -135,7 +135,7 @@ If certain time points are missing in some groups, NA values are added.
 \examples{
 library(org.Mm.eg.db)
 
-data(example)
+data(example_obj)
 example_obj <- normalise_to_start(example_obj)
 example_obj_list <- split_groups(example_obj)
 example_obj_merged_list <- merge_replicates(example_obj_list)

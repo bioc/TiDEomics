@@ -24,7 +24,7 @@
 #' @returns A heatmap showing the correlation between samples.
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' plot_cor_matrix(example_obj)
 plot_cor_matrix <- function(
     se_obj,
@@ -123,6 +123,5 @@ plot_cor_matrix <- function(
         ),
         ...
     )
-    print(ht)
-    return(invisible(ht))
+    return(ht)
 }

@@ -7,7 +7,8 @@
 plot_pca_3D(pca, pcs = seq(1, 3))
 }
 \arguments{
-\item{pca}{A PCA object returned by the \code{plot_pca()} function.}
+\item{pca}{A PCA object returned by the \code{plot_pca()} function (\verb{$pca})
+or PCAtools::pca().}
 
 \item{pcs}{A numeric vector specifying which three principal components
 to plot (default is 1:3)}
@@ -26,7 +27,7 @@ components.
 The samples are coloured by Group and sized by Time.
 }
 \examples{
-data("example")
+data(example_obj)
 PC = plot_pca(example_obj, morepc = seq(1, 3))
-plot_pca_3D(PC, pcs = seq(1, 3))
+plot_pca_3D(PC$pca, pcs = seq(1, 3))
 }

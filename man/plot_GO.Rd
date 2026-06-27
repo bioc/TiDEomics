@@ -44,7 +44,7 @@ plot_GO(
 \code{clusterProfiler::emapplot()}}
 }
 \value{
-A series of plots visualizing the GO enrichment results.
+A list of plots visualizing the GO enrichment results.
 }
 \description{
 Visualization of GO enrichment analysis with dotplot,

@@ -26,6 +26,6 @@ deviation divided by the mean of the abundance values.
 Note: CV is only meaningful for positive-valued data.
 }
 \examples{
-data("example")
+data(example_obj)
 plot_cv(example_obj)
 }

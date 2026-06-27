@@ -29,7 +29,7 @@
 #' input data used for reuse in `run_WGCNA()`
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' example_obj <- normalise_to_start(example_obj)
 #'
 #' wgcna_input <- prepare_WGCNA(example_obj, assay = 2, powers = seq(1, 30),
@@ -103,6 +103,6 @@ prepare_WGCNA <- function(
             title = "Mean connectivity") +
         theme_custom(base_size = fontsize)
 
-    print(p1 / p2)
+    sft$plot <- p1 / p2
     return(sft)
 }

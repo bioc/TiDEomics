@@ -67,8 +67,8 @@ etc.).}
 A character vector of features that are identified as unique to
 the specified groups based on the filtering criteria. If \code{genename} is
 TRUE, a table of gene names corresponding to the unique features will be
-printed. If \code{GO} is TRUE, a dot plot of GO enrichment results for the unique
-features will be printed.
+included. If \code{GO} is TRUE, a dot plot of GO enrichment results for the unique
+features will be included.
 }
 \description{
 Identify features that are unique to selected groups (present
@@ -79,7 +79,7 @@ unique features using the \code{enrichGO_list()} function and visualize the
 results with a dot plot.
 }
 \examples{
-data("example")
+data(example_obj)
 example_obj <- normalise_to_start(example_obj)
 example_obj_list <- split_groups(example_obj)
 example_obj_merged_list <- merge_replicates(example_obj_list)

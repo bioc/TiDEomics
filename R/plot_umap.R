@@ -8,7 +8,6 @@
 #'
 #' @param se_obj A SummarizedExperiment object created by `create_input()`
 #' @param seed Random seed for UMAP (default is 1234)
-#' @param plot Whether to plot the figures (default is TRUE)
 #' @param plot_ID Whether to include a UMAP plot coloured by number of
 #' identified features (default is FALSE)
 #' @param circle Logical, whether to draw circles (ellipses) around samples of
@@ -30,14 +29,14 @@
 #' @import SummarizedExperiment
 #' @import ggplot2
 #'
-#' @returns A UMAP plot showing the distribution of samples. And a data
+#' @returns A list of UMAP plots showing the distribution of samples. And a data
 #' frame containing UMAP coordinates and sample annotations for custom plotting.
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' umap_layout <- plot_umap(example_obj)
 plot_umap <- function(
-    se_obj, seed = 1234, plot = TRUE, plot_ID = FALSE,
+    se_obj, seed = 1234, plot_ID = FALSE,
     circle = FALSE,
     xlim_min = NULL, xlim_max = NULL,
     ylim_min = NULL, ylim_max = NULL,
@@ -46,7 +45,6 @@ plot_umap <- function(
     assay = 1
 ) {
     .check_se(se_obj)
-    .check_logical(plot, "plot")
     .check_logical(plot_ID, "plot_ID")
     .check_logical(circle, "circle")
     .check_positive_int(seed, "seed")
@@ -78,10 +76,6 @@ plot_umap <- function(
     colnames(id_count) <- "ID"
     id_count$Sample <- rownames(id_count)
     umap_layout <- merge(umap_layout, id_count, by = "Sample")
-
-    if (!plot) {
-        return(umap_layout)
-    }
 
     umap_list <- list()
     umap_list[["Group"]] <- ggplot(umap_layout,
@@ -122,16 +116,18 @@ plot_umap <- function(
             theme_custom(base_size = fontsize)
     }
 
-    print(ggpubr::ggarrange(
+    p_list <- list()
+
+    p_list$p3 <- ggpubr::ggarrange(
         plotlist = umap_list,
         nrow = 2, ncol = ceiling(length(umap_list) / 2),
         common.legend = FALSE
     ) |>
         ggpubr::annotate_figure(top = ggpubr::text_grob(
             paste0(umap_title, "\n"),
-            face = "bold", size = fontsize + 2)))
+            face = "bold", size = fontsize + 2))
 
-    p1 <- umap_layout |>
+    p_list$p1 <- umap_layout |>
         dplyr::mutate(Time = Time |> factor()) |>
         ggplot(aes(x = V1, y = V2, fill = Group)) +
         geom_point(aes(size = Time), alpha = 0.8, shape = 21) +
@@ -141,7 +137,6 @@ plot_umap <- function(
         guides(fill = guide_legend(override.aes = list(size = 4))) +
         theme_custom(base_size = fontsize) +
         ggtitle(umap_title)
-    print(p1)
 
     if (is.null(xlim_min)) {
         xlim_min <- 1.5 * min(umap_layout$V1)
@@ -162,12 +157,11 @@ plot_umap <- function(
             con.cap = 0, alpha = 0.1, label.fontsize = fontsize,
             label.buffer = unit(0, "mm")
         )))
-        p2 <- p1 +
+        p_list$p2 <- p1 +
             xlim(xlim_min, xlim_max) + ylim(ylim_min, ylim_max)
-        print(p2)
     }
 
-    return(umap_layout)
+    return(list(p_list = p_list, umap_layout = umap_layout))
 }
 
 #' UMAP neighbors number

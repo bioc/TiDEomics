@@ -1,14 +1,15 @@
 #' Plot PCA in 3D
 #'
 #' @description Plot principal component analysis (PCA) results in 3D. This 
-#' function takes the output PCA object of the `plot_pca` function and 
+#' function takes the output PCA object of the `plot_pca` function and
 #' visualizes the samples in a 3D space defined by the specified principal 
 #' components.
 #'
 #' The samples are coloured by Group and sized by Time.
 #'
-#' @param pca A PCA object returned by the `plot_pca()` function.
-#' @param pcs A numeric vector specifying which three principal components 
+#' @param pca A PCA object returned by the `plot_pca()` function (`$pca`) 
+#' or PCAtools::pca().
+#' @param pcs A numeric vector specifying which three principal components
 #' to plot (default is 1:3)
 #'
 #'
@@ -17,12 +18,12 @@
 #' are coloured by Group and sized by Time.
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' PC = plot_pca(example_obj, morepc = seq(1, 3))
-#' plot_pca_3D(PC, pcs = seq(1, 3))
+#' plot_pca_3D(PC$pca, pcs = seq(1, 3))
 plot_pca_3D <- function(pca, pcs = seq(1, 3)) {
     if (is.null(pca$rotated) || is.null(pca$variance)) {
-        stop("'pca' must be a PCA result from plot_pca() or PCAtools::pca().")
+        stop("'pca' must be a PCA result from plot_pca()$pca or PCAtools::pca().")
     }
     if (!requireNamespace("plotly", quietly = TRUE))
         stop("Package 'plotly' is required for 3D PCA. ", 

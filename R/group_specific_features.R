@@ -48,11 +48,11 @@
 #' @returns A character vector of features that are identified as unique to
 #' the specified groups based on the filtering criteria. If `genename` is
 #' TRUE, a table of gene names corresponding to the unique features will be
-#' printed. If `GO` is TRUE, a dot plot of GO enrichment results for the unique
-#' features will be printed.
+#' included. If `GO` is TRUE, a dot plot of GO enrichment results for the unique
+#' features will be included.
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' example_obj <- normalise_to_start(example_obj)
 #' example_obj_list <- split_groups(example_obj)
 #' example_obj_merged_list <- merge_replicates(example_obj_list)
@@ -148,8 +148,10 @@ group_specific_features <- function(
         return(NULL)
     }
 
+    return_list <- list(features = unique_genes)
+
     if (genename && length(unique_genes) > 0) {
-        unique_genes |>
+        return_list$genename <- unique_genes |>
             clusterProfiler::bitr(
                 fromType = keytype, toType = c(keytype, "GENENAME"),
                 OrgDb = OrgDb
@@ -164,8 +166,7 @@ group_specific_features <- function(
                     group_num, " of groups: ",
                     paste(groups, collapse = ", ")
                 )
-            ) |>
-            print()
+            )
     }
 
     if (GO == TRUE && length(unique_genes) > 0) {
@@ -179,7 +180,7 @@ group_specific_features <- function(
                 c("BP", "MF", "CC"))) == 0) {
             message("No GO terms enriched for these features. Skipping plot.")
         } else {
-            plot_GO(unique_genes_go$all,
+            return_list$GO <- plot_GO(unique_genes_go$all,
                 plot_dotplot = TRUE,
                 showCategory_dotplot = 10,
                 label = paste0(
@@ -189,9 +190,9 @@ group_specific_features <- function(
                     group_num, " of groups: ",
                     paste(groups, collapse = ", ")
                 )
-            ) |> print()
+            )
         }
     }
 
-    return(unique_genes)
+    return(return_list)
 }

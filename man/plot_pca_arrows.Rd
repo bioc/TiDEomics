@@ -41,6 +41,6 @@ Plot PCA with arrows indicating trajectory over time, for
 a single group.
 }
 \examples{
-data("example")
+data(example_obj)
 plot_pca_arrows(example_obj[, example_obj$Group == "IFNbeta"])
 }

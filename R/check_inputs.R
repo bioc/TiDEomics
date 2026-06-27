@@ -103,8 +103,8 @@
 #' @param arg Name of the argument (for error message).
 #' @keywords internal
 .check_positive <- function(x, arg = deparse(substitute(x))) {
-    if (length(x) != 1 || !is.numeric(x) || is.na(x) || x <= 0) {
-        stop("'", arg, "' must be a positive number.")
+    if (!is.numeric(x) || length(x) == 0 || anyNA(x) || any(x <= 0)) {
+        stop("'", arg, "' must be positive.")
     }
 }
 

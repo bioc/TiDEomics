@@ -6,7 +6,6 @@
 \usage{
 plot_pca(
   se_obj,
-  plot = TRUE,
   plot_screeplot = TRUE,
   plot_loadings = TRUE,
   plot_morepc = TRUE,
@@ -24,8 +23,6 @@ plot_pca(
 }
 \arguments{
 \item{se_obj}{A SummarizedExperiment object created by \code{create_input()}}
-
-\item{plot}{Logical, whether to plot PCA and other plots (default is TRUE)}
 
 \item{plot_screeplot}{Logical, whether to plot screeplot with
 \code{PCAtools::screeplot()} (default is TRUE)}
@@ -75,6 +72,6 @@ The samples are coloured by Group and sized by Time. Ellipses are drawn
 for each Group.
 }
 \examples{
-data("example")
+data(example_obj)
 PC = plot_pca(example_obj, morepc = seq(1, 3))
 }

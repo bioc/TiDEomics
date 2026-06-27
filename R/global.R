@@ -29,7 +29,7 @@ utils::globalVariables(c(
     }
     # Resolve numeric indices to names when names are available
     assay_names <- names(SummarizedExperiment::assays(se_obj))
-    if (!is.null(assay_names) && is.numeric(assay)) {
+    if (!is.null(assay_names) && length(assay_names) > 0 && is.numeric(assay)) {
         if (!assay %in% seq_along(assay_names)) {
             stop("Assay index ", assay, " out of range. Available: ",
                  paste(seq_along(assay_names), assay_names,

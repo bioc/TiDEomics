@@ -38,7 +38,7 @@ top n features are plotted if \code{features} is not specified.
 Based on \code{PALMO::variancefeaturePlot()} function
 }
 \examples{
-data("example")
+data(example_obj)
 example_obj <- normalise_to_start(example_obj)
 
 var_decomp <- decomp_variance(example_obj, assay = 1)

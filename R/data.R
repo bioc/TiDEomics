@@ -59,7 +59,7 @@
 #'   \item{assays}{tutorial_data first 100 rows, "Feature" column as rownames}
 #' }
 #' @source GSE263759
-#' @usage data(example)
+#' @usage data(example_obj)
 "example_obj"
 
 #' `run_WGCNA()` output object for runnable examples

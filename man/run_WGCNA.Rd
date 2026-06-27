@@ -28,7 +28,7 @@ Run WGCNA based on output of \code{prepare_WGCNA()}, to
 identify co-expression modules of features with \code{WGCNA::blockwiseModules()}
 }
 \examples{
-data("example")
+data(example_obj)
 example_obj <- normalise_to_start(example_obj)
 
 wgcna_input <- prepare_WGCNA(example_obj, assay = 2, powers = seq(1, 30),

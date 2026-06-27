@@ -21,7 +21,7 @@ Calculate mean and standard deviation for each group
 and time point
 }
 \examples{
-data("example")
+data(example_obj)
 table_mean_sd_list <- calc_mean_sd(example_obj)
 table_mean_sd <- table_mean_sd_list$norm
 }

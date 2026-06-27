@@ -30,7 +30,7 @@
 #' features.
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' example_obj <- normalise_to_start(example_obj)
 #'
 #' DE_between_time_out <- DE_between_time(example_obj, assay = 1)
@@ -206,6 +206,5 @@ plot_DE_between_time <- function(
         ggpubr::annotate_figure(top = ggpubr::text_grob(paste0(
             "Number of DE features between time points\n"
         ), face = "bold", size = fontsize + 4))
-    print(final_plot)
-    return(invisible(final_plot))
+    return(final_plot)
 }

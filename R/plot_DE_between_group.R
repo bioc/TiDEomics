@@ -25,7 +25,7 @@
 #' for each group comparison.
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' example_obj <- normalise_to_start(example_obj)
 #'
 #' DE_between_group_out <- DE_between_group(example_obj, assay = 2)
@@ -139,8 +139,7 @@ plot_DE_between_group <- function(
             ) +
             scale_color_manual(values = get_custom_palette(all_groups)) +
             theme_custom(base_size = fontsize)
-        print(p_list[[i]])
     }
 
-    return(invisible(p_list))
+    return(p_list)
 }

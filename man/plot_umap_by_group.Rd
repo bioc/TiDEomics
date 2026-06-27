@@ -42,7 +42,7 @@ SummarizedExperiment object or a named list of them (from
 \code{split_groups()}).
 }
 \examples{
-data("example")
+data(example_obj)
 plot_umap_by_group(example_obj)
 
 # Also accepts a list from split_groups()

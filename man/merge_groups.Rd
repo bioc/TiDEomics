@@ -20,7 +20,7 @@ sample. New sample names will be prefixed with the group name.
 Merge SummarizedExperiment object of different groups into one
 }
 \examples{
-data("example")
+data(example_obj)
 example_obj <- normalise_to_start(example_obj)
 example_obj_list <- split_groups(example_obj)
 example_obj_merged_list <- merge_replicates(example_obj_list)

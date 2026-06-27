@@ -12,7 +12,7 @@
 #' sample. New sample names will be prefixed with the group name.
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' example_obj <- normalise_to_start(example_obj)
 #' example_obj_list <- split_groups(example_obj)
 #' example_obj_merged_list <- merge_replicates(example_obj_list)
@@ -35,11 +35,16 @@ merge_groups <- function(se_obj_list) {
                 assay_list[[j]] <- df
             } else {
                 assay_list[[j]] <- dplyr::full_join(
-                    assay_list[[j]] |> tibble::rownames_to_column(".rowname"),
-                    df |> tibble::rownames_to_column(".rowname"),
+                    assay_list[[j]] |> 
+                    as.data.frame() |>
+                    tibble::rownames_to_column(".rowname"),
+                    df |> 
+                    as.data.frame() |>
+                    tibble::rownames_to_column(".rowname"),
                     by = ".rowname"
                 ) |>
-                    tibble::column_to_rownames(".rowname")
+                    tibble::column_to_rownames(".rowname") |>
+                    as.matrix()
             }
         }
 

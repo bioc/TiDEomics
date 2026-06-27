@@ -7,7 +7,6 @@
 #' for each Group.
 #'
 #' @param se_obj A SummarizedExperiment object created by `create_input()`
-#' @param plot Logical, whether to plot PCA and other plots (default is TRUE)
 #' @param plot_screeplot Logical, whether to plot screeplot with
 #' `PCAtools::screeplot()` (default is TRUE)
 #' @param plot_loadings Logical, whether to plot loadings with
@@ -39,11 +38,10 @@
 #' provided by PCAtools package, and PCAtools output object for custom plotting.
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' PC = plot_pca(example_obj, morepc = seq(1, 3))
 plot_pca <- function(
     se_obj,
-    plot = TRUE,
     plot_screeplot = TRUE,
     plot_loadings = TRUE,
     plot_morepc = TRUE,
@@ -56,7 +54,6 @@ plot_pca <- function(
     assay = 1
 ) {
     .check_se(se_obj)
-    .check_logical(plot, "plot")
     .check_logical(circle, "circle")
     .check_logical(plot_screeplot, "plot_screeplot")
     .check_logical(plot_loadings, "plot_loadings")
@@ -74,24 +71,25 @@ plot_pca <- function(
     sp_info <- as.data.frame(colData(se_obj))
 
     pca2 <- PCAtools::pca(M, metadata = sp_info, center = TRUE)
-    if (!plot) {
-        return(pca2)
-    }
+
+    p_list <- list()
 
     if (plot_screeplot) {
-        print(PCAtools::screeplot(pca2,
+        p3 <- PCAtools::screeplot(pca2,
             components = PCAtools::getComponents(pca2)[seq(1, 10)],
             titleLabSize = fontsize,
             axisLabSize = fontsize
-        ))
+        )
+        p_list$p3 <- p3
     }
     if (plot_loadings) {
-        print(PCAtools::plotloadings(pca2,
+        p4 <- PCAtools::plotloadings(pca2,
             titleLabSize = fontsize,
             legendLabSize = fontsize,
             # labSize = fontsize - 4,
             axisLabSize = fontsize
-        ))
+        )
+        p_list$p4 <- p4
     }
 
     pc <- as.data.frame(pca2$rotated)
@@ -118,7 +116,7 @@ plot_pca <- function(
         xlab(xlab) +
         ylab(ylab) +
         ggtitle(title)
-    print(p1)
+    p_list$p1 <- p1
 
     if (is.null(xlim_min)) {
         xlim_min <- 1.5 * min(pc[[pc1_name]])
@@ -141,7 +139,7 @@ plot_pca <- function(
         )))
         p2 <- p1 +
             xlim(xlim_min, xlim_max) + ylim(ylim_min, ylim_max)
-        print(p2)
+        p_list$p2 <- p2
     }
 
     # plot more PCs
@@ -155,15 +153,16 @@ plot_pca <- function(
             warning("At least two valid PCs are required for the pairs ",
             "plot. Please specify more PCs.")
         } else {
-            print(PCAtools::pairsplot(pca2,
+            p5 <- PCAtools::pairsplot(pca2,
                 colby = "Group", components = paste0("PC", morepc),
                 hline = 0, vline = 0, gridlines.major = FALSE,
                 gridlines.minor = FALSE,
                 plotaxes = FALSE,
                 trianglelabSize = fontsize,
                 colkey = get_custom_palette(colData(se_obj)$Group |> unique())
-            ))
+            )
+            p_list$p5 <- p5
         }
     }
-    return(pca2)
+    return(list(p_list = p_list, pca = pca2))
 }

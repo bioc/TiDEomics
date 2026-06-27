@@ -69,7 +69,7 @@ comparison is independent. Apply your own correction (e.g.,
 \code{stats::p.adjust()}) across combined results if needed.
 }
 \examples{
-data("example")
+data(example_obj)
 example_obj <- normalise_to_start(example_obj)
 
 DE_between_group_out <- DE_between_group(example_obj, assay = 2)

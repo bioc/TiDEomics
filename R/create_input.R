@@ -277,7 +277,7 @@ create_input <- function(data, sample_ann, subject_col = NULL,
 
     stopifnot(identical(colnames(data)[-1], sample_ann$Sample))
 
-    assays_list <- list(orig = data[, -1])
+    assays_list <- list(orig = as.matrix(data[, -1]))
 
     se_obj <- SummarizedExperiment(
         assays = assays_list,

@@ -1,7 +1,6 @@
 #' Plot missing rate
 #'
-#' @description Plot the ratio of missing values for each sample, with a 
-#' dashed line indicating the global missing value rate across all samples.
+#' @description Plot the ratio of missing values for each sample
 #' @param se_obj A SummarizedExperiment object, produced by `create_input()` 
 #' function, containing the abundance data and associated sample information.
 #' @param fontsize (Optional) An integer specifying the font size for the plot 
@@ -13,8 +12,10 @@
 #' function when `signif` is TRUE, for customizing the significance annotations.
 #' @import SummarizedExperiment
 #' @import ggplot2
-#' @returns A plot showing the missing value rate for each sample, with a 
-#' dashed line indicating the global missing value rate across all samples.
+#' @returns A plot showing the missing value ratio for each sample, with a 
+#' dashed line indicating the global missing value ratio across all samples. 
+#' And a boxplot comparing the ID number between groups, with optional 
+#' significance annotations.
 #' @export
 #' @examples
 #' # simulate data with random missing values
@@ -28,7 +29,6 @@
 #'     Time = rep(rep(1:10, each = 5), 2),
 #'     Group = rep(c("A", "B"), each = 50),
 #'     Replicate = rep(1:5, 20)))
-#' plot_ID(na_obj)
 #' plot_missing(na_obj)
 plot_missing <- function(se_obj, fontsize = 8, signif = FALSE, ...) {
     .check_se(se_obj)
@@ -38,9 +38,10 @@ plot_missing <- function(se_obj, fontsize = 8, signif = FALSE, ...) {
         dim(assays(se_obj)[[1]])[1] / dim(assays(se_obj)[[1]])[2]
 
     missing_tb <- assays(se_obj)[[1]] |>
-        dplyr::summarise(dplyr::across(dplyr::everything(), 
+        as.data.frame() |>
+        dplyr::summarise(dplyr::across(dplyr::everything(),
             ~ sum(is.na(.)) / length(.))) |>
-        tidyr::pivot_longer(cols = dplyr::everything(), 
+        tidyr::pivot_longer(cols = dplyr::everything(),
             values_to = "Missing") |>
         merge(colData(se_obj), by.x = "name", by.y = "Sample") |>
         as.data.frame() |>
@@ -75,6 +76,5 @@ plot_missing <- function(se_obj, fontsize = 8, signif = FALSE, ...) {
                 as.data.frame() |> as.list(), ...)
     }
     res <- list(overview = overview, comparison = p)
-    print(res)
-    return(invisible(res))
+    return(res)
 }

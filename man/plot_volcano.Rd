@@ -69,7 +69,7 @@ If no thresholds are provided, the function will use the thresholds that
 were applied when running \code{DE_between_group()} or \code{DE_between_time()}.
 }
 \examples{
-data("example")
+data(example_obj)
 example_obj <- normalise_to_start(example_obj)
 
 DE_between_group_out <- DE_between_group(example_obj, assay = 2)

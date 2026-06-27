@@ -36,7 +36,7 @@
 #' @references https://github.com/aifimmunology/PALMO/blob/main/R/lmeVariance.R
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' example_obj <- normalise_to_start(example_obj)
 #'
 #' var_decomp <- decomp_variance(example_obj, assay = 1)

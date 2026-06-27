@@ -16,7 +16,7 @@
 #' message will be printed indicating that CV cannot be calculated.
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' plot_cv(example_obj)
 plot_cv <- function(se_obj, fontsize = 8) {
     .check_se(se_obj)
@@ -37,7 +37,8 @@ plot_cv <- function(se_obj, fontsize = 8) {
         mean(x, na.rm = na.rm)
 
     cv_tb <- assays(se_obj)[[1]] |>
-        dplyr::mutate(Feature = row.names(.)) |>
+        as.data.frame() |>
+        tibble::rownames_to_column("Feature") |>
         tidyr::pivot_longer(cols = -Feature) |>
         merge(colData(se_obj), by.x = "name", by.y = "Sample") |>
         as.data.frame() |>
@@ -56,6 +57,5 @@ plot_cv <- function(se_obj, fontsize = 8) {
         facet_grid(Group ~ Time, scales = "free_x") +
         ylab("Coefficient of variation") +
         theme_custom(base_size = fontsize)
-    print(p)
-    return(invisible(p))
+    return(p)
 }

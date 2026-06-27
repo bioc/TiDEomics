@@ -68,6 +68,5 @@ plot_breakpoints <- function(res_list, group = NULL, fontsize = 8, ...) {
         theme_custom(base_size = fontsize) +
         scale_color_manual(values = get_custom_palette(group))
 
-    print(p)
-    return(invisible(p))
+    return(p)
 }

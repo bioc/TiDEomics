@@ -12,7 +12,7 @@
 #' columns for Mean, SD, Group, Time, and Feature.
 #' @export
 #' @examples
-#' data("example")
+#' data(example_obj)
 #' table_mean_sd_list <- calc_mean_sd(example_obj)
 #' table_mean_sd <- table_mean_sd_list$norm
 calc_mean_sd <- function(se_obj) {

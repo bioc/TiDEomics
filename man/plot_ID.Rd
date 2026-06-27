@@ -22,12 +22,13 @@ function when \code{signif} is TRUE, for customizing the significance annotation
 }
 \value{
 A plot showing the ID number for each sample, with a dashed line
-indicating the average number across all samples.
+indicating the average number across all samples. And a boxplot
+comparing the ID number between groups, with optional
+significance annotations.
 }
 \description{
 Plot the number of identified features (i.e., features
-with non-missing values) for each sample, with a dashed line indicating
-the average number across all samples.
+with non-missing values) for each sample
 }
 \examples{
 # simulate data with random missing values
@@ -42,5 +43,4 @@ na_obj <- create_input(na_data,
     Group = rep(c("A", "B"), each = 50),
     Replicate = rep(1:5, 20)))
 plot_ID(na_obj)
-plot_missing(na_obj)
 }

@@ -57,7 +57,7 @@ present. All values are percentages of total variance.
 Allow using original data or data normalised to time point 0.
 }
 \examples{
-data("example")
+data(example_obj)
 example_obj <- normalise_to_start(example_obj)
 
 var_decomp <- decomp_variance(example_obj, assay = 1)

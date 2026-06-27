@@ -16,7 +16,7 @@ A SummarizedExperiment object with assays of 100 rows and
 GSE263759
 }
 \usage{
-data(example)
+data(example_obj)
 }
 \description{
 A subset of \code{data_obj <- create_input(data = tutorial_data,  sample_ann = tutorial_sample_info)} for use in runnable examples

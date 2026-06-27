@@ -57,7 +57,7 @@ Differential expression analysis between time points within
 each group by limma
 }
 \examples{
-data("example")
+data(example_obj)
 example_obj <- normalise_to_start(example_obj)
 
 DE_between_time_out <- DE_between_time(example_obj, assay = 1)

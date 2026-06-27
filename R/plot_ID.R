@@ -1,8 +1,8 @@
 #' Plot number of identified features
 #'
 #' @description Plot the number of identified features (i.e., features 
-#' with non-missing values) for each sample, with a dashed line indicating 
-#' the average number across all samples.
+#' with non-missing values) for each sample
+#' 
 #' @param se_obj A SummarizedExperiment object, produced by `create_input()` 
 #' function, containing the abundance data and associated sample information.
 #' @param fontsize (Optional) An integer specifying the font size for the plot 
@@ -14,8 +14,10 @@
 #' function when `signif` is TRUE, for customizing the significance annotations.
 #' @import SummarizedExperiment
 #' @import ggplot2
-#' @returns A plot showing the ID number for each sample, with a dashed line 
-#' indicating the average number across all samples.
+#' @returns A plot showing the ID number for each sample, with a dashed line
+#' indicating the average number across all samples. And a boxplot 
+#' comparing the ID number between groups, with optional 
+#' significance annotations.
 #' @export
 #' @examples
 #' # simulate data with random missing values
@@ -30,7 +32,6 @@
 #'     Group = rep(c("A", "B"), each = 50),
 #'     Replicate = rep(1:5, 20)))
 #' plot_ID(na_obj)
-#' plot_missing(na_obj)
 plot_ID <- function(se_obj, fontsize = 8, signif = FALSE, ...) {
     .check_se(se_obj)
     .check_logical(signif, "signif")
@@ -39,7 +40,8 @@ plot_ID <- function(se_obj, fontsize = 8, signif = FALSE, ...) {
         dim(assays(se_obj)[[1]])[2]
 
     id_tb <- assays(se_obj)[[1]] |>
-        dplyr::summarise(dplyr::across(dplyr::everything(), 
+        as.data.frame() |>
+        dplyr::summarise(dplyr::across(dplyr::everything(),
             ~ sum(!is.na(.)))) |>
         tidyr::pivot_longer(cols = dplyr::everything(), values_to = "ID") |>
         merge(colData(se_obj), by.x = "name", by.y = "Sample") |>
@@ -75,6 +77,5 @@ plot_ID <- function(se_obj, fontsize = 8, signif = FALSE, ...) {
                 as.data.frame() |> as.list(), ...)
     }
     res <- list(overview = overview, comparison = p)
-    print(res)
-    return(invisible(res))
+    return(res)
 }

@@ -59,6 +59,6 @@ A heatmap showing the correlation between samples.
 Plot correlation matrix between samples as a heatmap
 }
 \examples{
-data("example")
+data(example_obj)
 plot_cor_matrix(example_obj)
 }
