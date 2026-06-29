@@ -17,8 +17,9 @@ function, containing the abundance data and associated sample information.}
 significance testing between groups and add significance annotations to
 the plot (default is FALSE).}
 
-\item{...}{Additional arguments to be passed to \code{ggsignif::geom_signif()}
-function when \code{signif} is TRUE, for customizing the significance annotations.}
+\item{...}{Additional arguments to be passed to
+\code{ggpubr::stat_compare_means()} when \code{signif} is TRUE,
+for customizing the significance annotations.}
 }
 \value{
 A plot showing the ID number for each sample, with a dashed line
@@ -32,15 +33,15 @@ with non-missing values) for each sample
 }
 \examples{
 # simulate data with random missing values
-na_data <- matrix(rnorm(1000), nrow = 100, ncol = 100)
-na_data[sample(length(na_data), size = 1000)] <- NA
+na_data <- matrix(rnorm(1500), nrow = 100, ncol = 150)
+na_data[sample(length(na_data), size = 2000)] <- NA
 na_data <- data.frame(Feature = paste0("Feature", 1:100), na_data)
-colnames(na_data)[-1] <- paste0("Sample", 1:100)
+colnames(na_data)[-1] <- paste0("Sample", 1:150)
 
 na_obj <- create_input(na_data,
-    data.frame(Sample = paste0("Sample", 1:100),
-    Time = rep(rep(1:10, each = 5), 2),
-    Group = rep(c("A", "B"), each = 50),
-    Replicate = rep(1:5, 20)))
-plot_ID(na_obj)
+    data.frame(Sample = paste0("Sample", 1:150),
+    Time = rep(rep(1:10, each = 5), 3),
+    Group = rep(c("A", "B", "C"), each = 50),
+    Replicate = rep(1:5, 30)))
+plot_ID(na_obj, signif = TRUE)
 }

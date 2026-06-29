@@ -20,7 +20,8 @@
 #' @references https://github.com/edo98811/WGCNA_official_documentation/blob/main/FemaleLiver-03-relateModsToExt.R
 plot_WGCNA <- function(net, fontsize = 8) {
     .check_list(net, "net", "run_WGCNA")
-    if (!"colors" %in% names(net)) stop("'net' must contain a 'colors' element.")
+    if (!"colors" %in% names(net))
+        stop("'net' must contain a 'colors' element.")
     .check_positive(fontsize, "fontsize")
     if ("numericLabels" %in% names(net$parameters)) {
         if (net$parameters$numericLabels == TRUE) {

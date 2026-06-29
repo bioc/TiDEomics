@@ -48,7 +48,7 @@
     text, x = unit(0.5, "npc"),
     y = unit(0.5, "npc"), just = "centre",
     gp = grid::gpar(),
-    background_gp = grid::gpar(col = "transparent", fill = "transparent"), # original col = "black"
+    background_gp = grid::gpar(col = "transparent", fill = "transparent"),
     round_corners = FALSE, r = unit(0.1, "snpc"),
     line_space = unit(4, "pt"),
     text_space = unit(4, "pt"),
@@ -63,7 +63,7 @@
             gp[[nm]] <- rep(grid::get.gpar(nm)[[1]], n_text)
         }
     }
-    # ComplexHeatmap:::recycle_gp
+    # From ComplexHeatmap:::recycle_gp
     .recycle_gp <- function(gp, n = 1) {
         for (i in seq_along(gp)) {
             x <- gp[[i]]
@@ -79,7 +79,7 @@
         return(gp)
     }
 
-    # ComplexHeatmap:::subset_gp
+    # From ComplexHeatmap:::subset_gp
     .subset_gp <- function(gp, i) {
         gp <- lapply(gp, function(x) {
             if (length(x) == 1) {
@@ -177,7 +177,7 @@
                 w <- max(w, current_line_width)
                 h <- y[i] + text_height[i]
             } else {
-                x[i] <- current_line_width + 
+                x[i] <- current_line_width +
                     text_space * text_lt$space_after[i - 1]
                 y[i] <- y[i - 1]
                 current_line_width <- x[i] + text_width[i]
@@ -203,7 +203,7 @@
                 w <- max(w, current_line_width)
                 h <- y[i] - text_height[i]
             } else {
-                x[i] <- current_line_width + 
+                x[i] <- current_line_width +
                     text_space * text_lt$space_after[i - 1]
                 y[i] <- y[i - 1]
                 current_line_width <- x[i] + text_width[i]
@@ -254,8 +254,8 @@
 
 #' Reformat enrichment category terms into per-module text lists
 #'
-#' Transposes `cat_terms` from category-first (`cat_terms[[cat]][[mod]]`)
-#' to module-first (`text[[mod]][[cat]]`) layout expected by
+#' Transposes `cat_terms` from category-first (`cat_terms[[cate]][[mod]]`)
+#' to module-first (`text[[mod]][[cate]]`) layout expected by
 #' `.multicol_textbox_grob`. Missing categories get empty data.frames.
 #'
 #' @param cat_terms A named list of categories, each containing a named
@@ -269,11 +269,11 @@
     names(out) <- mods
     for (mod in mods) {
         out[[mod]] <- list()
-        for (cat in names(cat_terms)) {
-            if (mod %in% names(cat_terms[[cat]])) {
-                out[[mod]][[cat]] <- cat_terms[[cat]][[mod]]
+        for (cate in names(cat_terms)) {
+            if (mod %in% names(cat_terms[[cate]])) {
+                out[[mod]][[cate]] <- cat_terms[[cate]][[mod]]
             } else {
-                out[[mod]][[cat]] <- data.frame(
+                out[[mod]][[cate]] <- data.frame(
                     text = character(0), col = character(0),
                     fontsize = numeric(0), stringsAsFactors = FALSE
                 )
@@ -329,7 +329,7 @@
 .measure_multicol_widths <- function(text, textbox_args = list()) {
     cats <- unique(unlist(lapply(text, names), use.names = FALSE))
     if (length(cats) == 0) {
-        return(setNames(numeric(0), character(0)))
+        return(stats::setNames(numeric(0), character(0)))
     }
 
     textbox_args <- textbox_args[
@@ -338,11 +338,11 @@
             c("col_gap", "background_gp", "padding", "column_widths_mm")
         )
     ]
-    widths_mm <- setNames(numeric(length(cats)), cats)
-    for (cat in cats) {
-        widths_mm[cat] <- max(vapply(text, function(x) {
-            df <- if (cat %in% names(x)) {
-                x[[cat]]
+    widths_mm <- stats::setNames(numeric(length(cats)), cats)
+    for (cate in cats) {
+        widths_mm[cate] <- max(vapply(text, function(x) {
+            df <- if (cate %in% names(x)) {
+                x[[cate]]
             } else {
                 data.frame(
                     text = character(0), col = character(0),
@@ -369,10 +369,10 @@
 #' for downstream header decoration.
 #'
 #' @param x A named list of category term data.frames (one per column).
-#' @param col_gap Gap between columns as a `grid::unit` (default: 3 mm).
+#' @param col_gap Gap between columns as a `grid::unit` (default: 2 mm).
 #' @param background_gp Background graphical parameters.
 #' @param padding Padding around content as a `grid::unit` vector
-#'   (top, left, bottom, right). Default: 2 mm all sides.
+#'   (top, left, bottom, right). Default: 0 mm all sides.
 #' @param column_widths_mm Optional numeric vector of pre-computed column
 #'   widths in mm. If NULL, auto-computed from grob widths.
 #' @param ... Passed to `.multicol_textbox_col_grob`.
@@ -389,8 +389,8 @@
         return(grid::nullGrob())
     }
 
-    col_grobs <- lapply(cats, function(cat) {
-        .multicol_textbox_col_grob(x[[cat]], ...)
+    col_grobs <- lapply(cats, function(cate) {
+        .multicol_textbox_col_grob(x[[cate]], ...)
     })
     names(col_grobs) <- cats
 

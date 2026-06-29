@@ -6,6 +6,7 @@
 \usage{
 plot_cor_matrix(
   se_obj,
+  assay = 1,
   use = "pairwise.complete.obs",
   method = c("spearman", "pearson", "kendall"),
   label_group = TRUE,
@@ -23,6 +24,10 @@ plot_cor_matrix(
 }
 \arguments{
 \item{se_obj}{A SummarizedExperiment object created by \code{create_input()}}
+
+\item{assay}{Assay to use: \code{"orig"} for original data, \code{"norm"} for
+normalised-to-start data. Numeric indices (1, 2) are also accepted.
+(default is 1, the original data).}
 
 \item{use}{Parameter of \code{stats::cor()} (default is "pairwise.complete.obs")}
 

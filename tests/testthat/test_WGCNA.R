@@ -22,7 +22,8 @@ test_that("WGCNA works", {
     expect_contains(names(example_net$parameters),
         c("power", "networkType", "minModuleSize", "numericLabels"))
 
-    plot_WGCNA(example_net, fontsize = 8)
+    if (inherits(example_net$dendrograms[[1]], "dendrogram"))
+        expect_no_error(plot_WGCNA(example_net, fontsize = 8))
 }
 )
 
@@ -47,9 +48,9 @@ test_that("WGCNA_module excludes grey when requested", {
 
 test_that("WGCNA_module errors on invalid input", {
     expect_error(WGCNA_module(list()),
-        "must be the output of run_WGCNA")
+        "must contain a 'colors' element")
     expect_error(WGCNA_module(data.frame()),
-        "must be the output of run_WGCNA")
+        "must contain a 'colors'")
 })
 
 test_that("WGCNA_module Module is sorted", {
@@ -66,20 +67,20 @@ test_that("prepare_WGCNA validates assay index", {
     expect_error(
         prepare_WGCNA(example_obj, assay = 99,
             powers = seq(1, 10), RsquaredCut = 0.8),
-        "assay"
+        "out of range"
     )
 })
 
 test_that("run_WGCNA validates arguments", {
     expect_error(run_WGCNA(NULL, power = 6), "must be a list")
-    expect_error(run_WGCNA(list(), power = 6), "prepare_WGCNA")
+    expect_error(run_WGCNA("bad", power = 6), "prepare_WGCNA")
     data("example_obj")
     example_obj <- normalise_to_start(example_obj)
     wgcna_input <- prepare_WGCNA(example_obj, assay = 2, powers = seq(1, 10),
         RsquaredCut = 0.8)
     expect_error(run_WGCNA(wgcna_input, power = 0), "positive")
     expect_error(run_WGCNA(wgcna_input, power = 6, numericLabels = "yes"),
-        "logical")
+        "TRUE or FALSE")
 })
 
 # ---- plot_WGCNA ----

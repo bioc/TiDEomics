@@ -64,7 +64,7 @@
 
 #' `run_WGCNA()` output object for runnable examples
 #'
-#' Code for producing the data is available in `inst/script/generate_example_net.R`
+#' Code for producing the data is in `inst/script/generate_example_net.R`
 #'
 #' @format A list including WGCNA module assignments, module eigengenes,
 #' dendrogram, input data, sample information, and parameters used
@@ -74,7 +74,7 @@
 
 #' `run_Trendy` output object for runnable examples
 #'
-#' Code for preparing the data is available in `inst/script/generate_example_res_list.R`
+#' Code for preparing the data is in `inst/script/generate_example_res_list.R`
 #'
 #' @format A nested list, each element is a list with Trendy results 
 #' for one group

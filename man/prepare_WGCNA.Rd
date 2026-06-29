@@ -36,7 +36,7 @@ stored by \code{normalise_to_start()})}
 (default is 100)}
 
 \item{powers}{(Optional) Parameter of \code{WGCNA::pickSoftThreshold()}
-(default is \code{c(seq(1, 10, by = 1), seq(12, 20, by = 2))})}
+(default: NULL, auto-assigned as \code{seq(1, 20)})}
 
 \item{fontsize}{Base font size for diagnostic plots (default: 8).}
 

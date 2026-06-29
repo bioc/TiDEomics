@@ -15,6 +15,6 @@ GSE263759
 data(example_net)
 }
 \description{
-Code for producing the data is available in \code{inst/script/generate_example_net.R}
+Code for producing the data is in \code{inst/script/generate_example_net.R}
 }
 \keyword{datasets}

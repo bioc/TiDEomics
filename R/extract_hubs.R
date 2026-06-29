@@ -85,7 +85,7 @@ extract_hubs <- function(
 
             ranked <- features[order(scores, decreasing = TRUE)]
 
-            head(ranked, top_n)
+            utils::head(ranked, top_n)
         }),
         use.names = FALSE
     )

@@ -63,7 +63,7 @@
         feats <- as.character(mark_features)
     } else {
         # Named list: map each feature to its category
-        feats <- setNames(
+        feats <- stats::setNames(
             rep(names(mark_features), lengths(mark_features)),
             unlist(mark_features, use.names = FALSE)
         )
@@ -72,7 +72,8 @@
     marked_in_mod <- intersect(names(feats), module_df$Feature)
     if (length(marked_in_mod) == 0) return(NULL)
 
-    mod_map <- setNames(as.character(module_df$Module), module_df$Feature)
+    mod_map <- stats::setNames(as.character(module_df$Module),
+        module_df$Feature)
     cols <- mark_state$feat_col[marked_in_mod]
 
     termanno <- data.frame(
@@ -94,10 +95,10 @@
         tmp <- termanno[termanno$id == mod, ]
         if (nrow(tmp) == 0) {
             data.frame(text = character(0), col = character(0),
-                       fontsize = numeric(0), stringsAsFactors = FALSE)
+                fontsize = numeric(0), stringsAsFactors = FALSE)
         } else {
             data.frame(text = tmp$term, col = tmp$col,
-                       fontsize = tmp$fontsize, stringsAsFactors = FALSE)
+                fontsize = tmp$fontsize, stringsAsFactors = FALSE)
         }
     })
     names(term_list) <- mod_levels
@@ -126,7 +127,7 @@
 #' (default is 2, time 0 normalised data)
 #' @param scale Whether to scale the data (z-score) across samples for each
 #' feature (default is TRUE)
-#' @param ylabel Y axis label prefix (default is "Abundance")
+#' @param ylabel Y axis label prefix (default is "Log2 abundance")
 #' @param profile_width Width of the mean expression profile panels in cm
 #' (default: 3)
 #' @param profile_link_width Width of the link between heatmap
@@ -249,8 +250,28 @@ plot_modules_h <- function(
     .check_positive(width, "width")
     .check_positive(height, "height")
     .check_positive_int(res, "res")
+    .check_character(ylabel, "ylabel")
+    .check_character(enrich_rank_by, "enrich_rank_by")
+    .check_character(suffix, "suffix")
+    .check_character(device, "device")
     .check_se_merged(se_obj_merged, "se_obj_merged")
     assay <- .match_assay(assay, se_obj_merged)
+    if (!is.null(enrich_list))
+        .check_list(enrich_list, "enrich_list")
+    if (!is.null(enrich_p_threshold)) {
+        valid_vals <- enrich_p_threshold[!is.na(enrich_p_threshold)]
+        if (length(valid_vals) > 0)
+            .check_pval(valid_vals, "enrich_p_threshold")
+    }
+    if (!is.null(mark_features)) {
+        if (!is.character(mark_features) && !is.list(mark_features)) {
+            stop("'mark_features' must be a character vector or named list.")
+        }
+        if (is.list(mark_features) && is.null(names(mark_features))) {
+            stop("'mark_features' list must have names.")
+        }
+    }
+    if (!is.null(save)) .check_character(save, "save")
 
     module$Module <- .module_labels(module$Module)
     # Exclude grey module (M0)
@@ -299,7 +320,7 @@ plot_modules_h <- function(
         if (is.list(mark_features) && !is.null(names(mark_features))) {
             cats <- names(mark_features)
             n_cats <- length(cats)
-            cat_cols <- setNames(
+            cat_cols <- stats::setNames(
                 ggsci::pal_jco()(max(n_cats, 2))[seq_len(n_cats)], cats
             )
             all_feats <- unlist(mark_features, use.names = FALSE)
@@ -316,7 +337,7 @@ plot_modules_h <- function(
             )
         } else {
             all_feats <- as.character(mark_features)
-            mark_state$feat_col <- setNames(
+            mark_state$feat_col <- stats::setNames(
                 rep("black", length(all_feats)), all_feats
             )
         }
@@ -396,15 +417,15 @@ plot_modules_h <- function(
         n_enr <- length(enr_cats)
 
         # First pass: collect per-category per-module term data
-        cat_terms <- list() # cat -> list of module data.frames
+        cat_terms <- list() # cate -> list of module data.frames
         for (ci in seq_len(n_enr)) {
-            cat <- enr_cats[ci]
-            if (is.null(enrich_list[[cat]])) next
+            cate <- enr_cats[ci]
+            if (is.null(enrich_list[[cate]])) next
             top_n <- enrich_top_n[ci]
             rank_by <- enrich_rank_by[ci]
             p_thresh <- enrich_p_threshold[ci]
 
-            termanno <- enrich_list[[cat]] |>
+            termanno <- enrich_list[[cate]] |>
                 as.data.frame() |>
                 dplyr::mutate(
                     id = as.character(.module_labels(Cluster))
@@ -422,7 +443,7 @@ plot_modules_h <- function(
             if ("col" %in% colnames(termanno)) {
                 termanno$col <- termanno[["col"]]
             } else if (!is.na(p_thresh) && !is.null(p_thresh) &&
-                       rank_by %in% colnames(termanno)) {
+                rank_by %in% colnames(termanno)) {
                 termanno$col <- ifelse(
                     termanno[[rank_by]] < p_thresh, "black", "grey70")
             } else {
@@ -451,7 +472,7 @@ plot_modules_h <- function(
                 }
             })
             names(term_list) <- mod_levels
-            cat_terms[[cat]] <- term_list
+            cat_terms[[cate]] <- term_list
         }
 
         # Hub features as a column in the multi-column textbox
@@ -473,7 +494,8 @@ plot_modules_h <- function(
             }, logical(1)))
         }, logical(1))
         if (any(has_terms)) {
-            cat_terms <- lapply(cat_terms, function(ct) ct[mod_levels[has_terms]])
+            cat_terms <- lapply(cat_terms, function(ct)
+                ct[mod_levels[has_terms]])
         }
 
         # Build a single multi-column textbox from all categories
@@ -546,15 +568,9 @@ plot_modules_h <- function(
             ))
         }, # draw frames around the modules
         column_split = sp_info$Group,
-        # column_title = nm_i,
-        # column_title_gp =
-        #     grid::gpar(fontsize = fontsize + 2, fontface = "bold"),
         column_title_gp = grid::gpar(fontsize = fontsize),
-        # column_title_side = "top",
-        # column_names_gp = grid::gpar(fontsize = fontsize - 2),
         right_annotation = right_ann,
         use_raster = FALSE,
-        # show_heatmap_legend = FALSE,
         heatmap_legend_param = list(
             title = ylabel,
             title_gp = grid::gpar(fontsize = fontsize, fontface = "bold"),
@@ -584,17 +600,20 @@ plot_modules_h <- function(
             p_thresh <- rep(enrich_p_threshold, length.out = n_cats)
         }
         for (ci in seq_len(n_cats)) {
-            cat <- enrich_category[ci]
+            cate <- enrich_category[ci]
             pt <- p_thresh[ci]
-            if (cat == "Hub features") {
+            if (cate == "Hub features") {
                 if (!is.null(mark_features) && length(mark_features) > 0) {
                     if (is.list(mark_features)) {
                         n_hub <- length(mark_features)
-                        hub_cols <- ggsci::pal_jco()(max(n_hub, 2))[seq_len(n_hub)]
+                        hub_cols <-
+                            ggsci::pal_jco()(max(n_hub, 2))[seq_len(n_hub)]
                         hub_lgd <- ComplexHeatmap::Legend(
-                            title = "Hub features", labels = names(mark_features),
+                            title = "Hub features",
+                            labels = names(mark_features),
                             type = "lines",
-                            legend_gp = grid::gpar(col = unname(hub_cols), lwd = 2),
+                            legend_gp = grid::gpar(col = unname(hub_cols),
+                                lwd = 2),
                             labels_gp = grid::gpar(fontsize = fontsize),
                             title_gp = grid::gpar(fontsize = fontsize)
                         )
@@ -603,6 +622,7 @@ plot_modules_h <- function(
                         # Character vector: black
                         hub_lgd <- ComplexHeatmap::Legend(
                             title = "Hub features",
+                            labels = "Hub features",
                             type = "lines",
                             legend_gp = grid::gpar(col = "black", lwd = 2),
                             labels_gp = grid::gpar(fontsize = fontsize),
@@ -613,7 +633,7 @@ plot_modules_h <- function(
                 }
             } else if (!is.na(pt) && !is.null(pt)) {
                 go_lgd <- ComplexHeatmap::Legend(
-                    title = cat,
+                    title = cate,
                     labels = c(
                         sprintf("p.adj < %.2f", pt),
                         sprintf("p.adj >= %.2f", pt)

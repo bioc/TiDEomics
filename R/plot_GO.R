@@ -37,14 +37,14 @@
 #'     plot_emapplot = FALSE, plot_cnetplot = FALSE)
 plot_GO <- function(
     go_list,
-    plot_dotplot = FALSE,
+    plot_dotplot = TRUE,
     plot_cnetplot = FALSE,
     plot_emapplot = FALSE,
     showCategory_dotplot = 5,
     showCategory_cnetplot = 5,
     showCategory_emapplot = 5,
     fontsize = 8,
-    label = "features",
+    label = "genes",
     ...
 ) {
     .check_character(label, "label")

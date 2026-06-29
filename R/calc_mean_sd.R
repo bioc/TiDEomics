@@ -64,12 +64,12 @@ calc_mean_sd <- function(se_obj) {
     norm_list <- list()
     for (i in unique(colData(se_obj)$Group)) {
         for (j in sort(unique(colData(se_obj)$Time))) {
-            table_orig <- mean_sd(se_obj, i, j, assay = 1) # not normalised
+            table_orig <- mean_sd(se_obj, i, j, assay = 1)
             if (!is.null(table_orig))
                 orig_list[[length(orig_list) + 1]] <- table_orig
 
             if (length(assays(se_obj)) == 2) {
-                table_norm <- mean_sd(se_obj, i, j, assay = 2) # t0 normalised
+                table_norm <- mean_sd(se_obj, i, j, assay = 2)
                 if (!is.null(table_norm))
                     norm_list[[length(norm_list) + 1]] <- table_norm
             }

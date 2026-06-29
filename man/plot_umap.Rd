@@ -29,17 +29,17 @@ identified features (default is FALSE)}
 \item{circle}{Logical, whether to draw circles (ellipses) around samples of
 each group (default is FALSE)}
 
-\item{xlim_min}{Minimum x-axis limit when drawing ellipses (default 1.5*min
-UMAP x)}
+\item{xlim_min}{Minimum x-axis limit when drawing ellipses
+(default: NULL, auto-computed as 1.5×min UMAP x)}
 
-\item{xlim_max}{Maximum x-axis limit when drawing ellipses (default 1.5*max
-UMAP x)}
+\item{xlim_max}{Maximum x-axis limit when drawing ellipses
+(default: NULL, auto-computed as 1.5×max UMAP x)}
 
-\item{ylim_min}{Minimum y-axis limit when drawing ellipses (default 1.5*min
-UMAP y)}
+\item{ylim_min}{Minimum y-axis limit when drawing ellipses
+(default: NULL, auto-computed as 1.5×min UMAP y)}
 
-\item{ylim_max}{Maximum y-axis limit when drawing ellipses (default 1.5*max
-UMAP y)}
+\item{ylim_max}{Maximum y-axis limit when drawing ellipses
+(default: NULL, auto-computed as 1.5×max UMAP y)}
 
 \item{umap_neighbors}{UMAP n_neighbors parameter (default is selected by
 \code{.umap_n_neighbors()} function based on the number of samples)}

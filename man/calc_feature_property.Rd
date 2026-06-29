@@ -24,20 +24,23 @@ Exp_threshold), T_total
 randomness against a trend), Max_FC (maximum fold change across time
 points), Max_FC_time (difference between the time points at which maximum
 and minimum expression occur; positive if max occurs after min, negative
-otherwise), Exp_ratio (T_exp / T_total).
+otherwise), Exp_ratio (T_exp / T_total), Rho_time (Spearman correlation
+with time; positive = up trend), Peak_ratio (number of local maxima
+/ T_total; 0 = no peaks detected),
+Log2_CV (log2(1 + CV) of expression across time points),
+AUC (area under the time-0-normalised curve from assay 2; NA if assay 2
+is not available).
 }
 \description{
-Calculate randomness p-value, maximum fold change along time
-course, and ratio of expressed time points for each feature in each group,
-based on the mean of replicates at each time point.
+Calculate per-feature temporal properties for each group
+from the mean of replicates at each time point.
 }
 \examples{
-data("example")
+data(example_obj)
 example_obj <- normalise_to_start(example_obj)
 example_obj_list <- split_groups(example_obj)
 example_obj_merged_list <- merge_replicates(example_obj_list)
 
 example_obj_merged_list <-
     calc_feature_property(example_obj_merged_list, threshold = 0)
-property_random_fc <- summarise_feature_property(example_obj_merged_list)
 }

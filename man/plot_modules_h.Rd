@@ -44,7 +44,7 @@ feature (default is TRUE)}
 \item{assay}{The assay index in the SummarizedExperiment object to use
 (default is 2, time 0 normalised data)}
 
-\item{ylabel}{Y axis label prefix (default is "Abundance")}
+\item{ylabel}{Y axis label prefix (default is "Log2 abundance")}
 
 \item{profile_width}{Width of the mean expression profile panels in cm
 (default: 3)}

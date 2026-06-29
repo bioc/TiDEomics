@@ -34,7 +34,7 @@
 #'
 #' data("example_res_list")
 #' plot_segments(example_obj_merged_imp_list, example_res_list,
-#'     feature = c("Mctp1"))
+#'     feature = c("Kif3a"))
 plot_segments <- function(se_obj_imp_list, res_list, feature,
     group = NULL, nrow = NULL, ...) {
     .check_character(feature, "feature")
@@ -78,6 +78,7 @@ plot_segments <- function(se_obj_imp_list, res_list, feature,
 #' @keywords internal
 .plot_segments_one_group <- function(se_obj_imp, res, feature,
     group, nrow = NULL, ...) {
+    if (!is.null(nrow)) .check_positive_int(nrow, "nrow")
     if (length(feature) > 1) {
         if (is.null(nrow)) {
             nrow <- ceiling(length(feature) / 2)

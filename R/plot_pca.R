@@ -20,13 +20,13 @@
 #' @param circle Logical, whether to draw circles (ellipses) around samples
 #' of each group (default is FALSE)
 #' @param xlim_min Minimum x-axis limit when drawing ellipses
-#' (default 1.5*min PC1)
+#' (default: NULL, auto-computed as 1.5×min PC1)
 #' @param xlim_max Maximum x-axis limit when drawing ellipses
-#' (default 1.5*max PC1)
+#' (default: NULL, auto-computed as 1.5×max PC1)
 #' @param ylim_min Minimum y-axis limit when drawing ellipses
-#' (default 1.5*min PC2)
+#' (default: NULL, auto-computed as 1.5×min PC2)
 #' @param ylim_max Maximum y-axis limit when drawing ellipses
-#' (default 1.5*max PC2)
+#' (default: NULL, auto-computed as 1.5×max PC2)
 #' @param fontsize Font size for the PCA plot (default is 8)
 #' @param assay Assay index to use, where 1 is the original data and 2 is
 #' normalised to time 0 (if available) (default is 1)
@@ -61,6 +61,11 @@ plot_pca <- function(
     if (!missing(pc1)) .check_positive_int(pc1, "pc1")
     if (!missing(pc2)) .check_positive_int(pc2, "pc2")
     .check_positive(fontsize, "fontsize")
+    .check_numeric(morepc, "morepc")
+    if (!is.null(xlim_min)) .check_numeric(xlim_min, "xlim_min")
+    if (!is.null(xlim_max)) .check_numeric(xlim_max, "xlim_max")
+    if (!is.null(ylim_min)) .check_numeric(ylim_min, "ylim_min")
+    if (!is.null(ylim_max)) .check_numeric(ylim_max, "ylim_max")
     assay <- .match_assay(assay, se_obj)
     M_0 <- assay(se_obj, assay)
     if (sum(is.na(M_0)) > 0) {

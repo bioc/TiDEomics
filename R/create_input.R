@@ -45,11 +45,12 @@
 #' se_obj <- create_input(data, sample_ann,
 #'     replicate_col = "Rep", batch_col = "BatchID")
 create_input <- function(data, sample_ann, subject_col = NULL,
-                         replicate_col = NULL, batch_col = NULL) {
+    replicate_col = NULL, batch_col = NULL) {
     .check_df(data, "data")
     .check_df(sample_ann, "sample_ann")
     if (!is.null(subject_col)) .check_character(subject_col, "subject_col")
-    if (!is.null(replicate_col)) .check_character(replicate_col, "replicate_col")
+    if (!is.null(replicate_col))
+        .check_character(replicate_col, "replicate_col")
     if (!is.null(batch_col)) .check_character(batch_col, "batch_col")
     # check data format
     if (colnames(data)[1] != "Feature") {
@@ -75,11 +76,14 @@ create_input <- function(data, sample_ann, subject_col = NULL,
         }
         if ("Replicate" %in% colnames(sample_ann) &&
             replicate_col != "Replicate") {
-            warning("Both '", replicate_col, "' and 'Replicate' columns found. ",
-                "Using '", replicate_col, "'; the existing 'Replicate' ",
+            warning("Both '", replicate_col,
+                "' and 'Replicate' columns found. ",
+                "Using '", replicate_col,
+                "'; the existing 'Replicate' ",
                 "column will be overwritten.")
         }
-        colnames(sample_ann)[colnames(sample_ann) == replicate_col] <- "Replicate"
+        colnames(sample_ann)[
+            colnames(sample_ann) == replicate_col] <- "Replicate"
     }
 
     # ---- Batch column handling ----

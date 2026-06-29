@@ -64,11 +64,12 @@ function for GO enrichment analysis (e.g., \code{pvalueCutoff}, \code{qvalueCuto
 etc.).}
 }
 \value{
-A character vector of features that are identified as unique to
-the specified groups based on the filtering criteria. If \code{genename} is
-TRUE, a table of gene names corresponding to the unique features will be
-included. If \code{GO} is TRUE, a dot plot of GO enrichment results for the unique
-features will be included.
+A named list with element \code{features} (character vector of features
+identified as unique to the specified groups based on the filtering
+criteria). If \code{genename} is TRUE, element \code{genename} contains a data.frame
+of gene annotations. If \code{GO} is TRUE and enrichment succeeds, element \code{GO}
+contains a dot plot of GO enrichment results. Returns \code{NULL} if no unique
+features pass the filter.
 }
 \description{
 Identify features that are unique to selected groups (present

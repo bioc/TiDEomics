@@ -53,5 +53,5 @@ example_obj_merged_imp_list <- impute_groups(example_obj_merged_list)
 
 data("example_res_list")
 plot_segments(example_obj_merged_imp_list, example_res_list,
-    feature = c("Mctp1"))
+    feature = c("Kif3a"))
 }

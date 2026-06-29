@@ -32,8 +32,8 @@ utils::globalVariables(c(
     if (!is.null(assay_names) && length(assay_names) > 0 && is.numeric(assay)) {
         if (!assay %in% seq_along(assay_names)) {
             stop("Assay index ", assay, " out of range. Available: ",
-                 paste(seq_along(assay_names), assay_names,
-                       sep = " = ", collapse = ", "))
+                paste(seq_along(assay_names), assay_names,
+                    sep = " = ", collapse = ", "))
         }
         assay <- assay_names[assay]
     }
@@ -44,7 +44,7 @@ utils::globalVariables(c(
         }
         if (!assay %in% assay_names) {
             stop("Assay '", assay, "' not found. Available: ",
-                 paste(assay_names, collapse = ", "))
+                paste(assay_names, collapse = ", "))
         }
     }
     assay
@@ -76,6 +76,8 @@ theme_custom <- function(
     legend_position = "right"
 ) {
     .check_character(legend_position, "legend_position")
+    legend_position <- match.arg(legend_position,
+        c("right", "left", "bottom", "top", "none"))
     .check_logical(panel_border, "panel_border")
     .check_positive(base_size, "base_size")
     half_line <- base_size / 2

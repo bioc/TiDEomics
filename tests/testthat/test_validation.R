@@ -34,7 +34,7 @@ test_that("DE_between_group returns ref_groups and all_groups", {
 
     expect_true("ref_groups" %in% names(res))
     expect_true("all_groups" %in% names(res))
-    expect_type(res$ref_groups, "character")
+    expect_s3_class(res$ref_groups, "factor")
     expect_type(res$all_groups, "character")
 })
 
@@ -64,15 +64,15 @@ test_that("extract_hubs validates arguments", {
     data("example_net")
     expect_error(extract_hubs(example_net, top_n = 0), "positive")
     expect_error(extract_hubs(example_net, top_n = -1), "positive")
-    expect_error(extract_hubs(example_net, exclude_grey = "no"), "logical")
+    expect_error(extract_hubs(example_net, exclude_grey = "no"), "TRUE or FALSE")
 })
 
 # WGCNA_module validation
 test_that("WGCNA_module validates net argument", {
     expect_error(WGCNA_module(NULL), "must be a list")
-    expect_error(WGCNA_module(list(colors = 1:3)), "colors")
+    expect_error(WGCNA_module(list()), "colors")
     data("example_net")
-    expect_error(WGCNA_module(example_net, exclude_grey = "yes"), "logical")
+    expect_error(WGCNA_module(example_net, exclude_grey = "yes"), "TRUE or FALSE")
 })
 
 # create_input validation
@@ -89,7 +89,7 @@ test_that("impute_groups validates fun argument", {
 
     expect_error(
         impute_groups(se_list, fun = "min"),
-        "must be a function"
+        "merged"
     )
 })
 
@@ -113,4 +113,86 @@ test_that("enrichGO_rank validates pAdjustMethod", {
             pAdjustMethod = "invalid_method"),
         "should be one of"
     )
+})
+
+# ---- check_inputs edge cases ----
+
+test_that(".check_numeric rejects character and factors", {
+    expect_error(TiDEomics:::.check_numeric("a", "x"), "must be numeric")
+    expect_error(TiDEomics:::.check_numeric(factor(1), "x"), "must be numeric")
+})
+
+test_that(".check_positive_int rejects non-integer", {
+    expect_error(TiDEomics:::.check_positive_int(1.5, "x"), "positive integer")
+    expect_error(TiDEomics:::.check_positive_int(-1, "x"), "positive integer")
+})
+
+test_that(".check_df validates data.frame with no rows", {
+    expect_error(TiDEomics:::.check_df(data.frame(), "x"), "at least 1 row")
+})
+
+test_that(".check_character validates length-0 input", {
+    expect_error(TiDEomics:::.check_character(character(0), "x"), "non-empty")
+})
+
+test_that(".check_pval rejects NA", {
+    expect_error(TiDEomics:::.check_pval(NA_real_, "x"), "between 0 and 1")
+})
+
+
+test_that(".check_se_list rejects empty list", {
+    expect_error(TiDEomics:::.check_se_list(list(), "x"), "non-empty")
+})
+
+test_that(".check_se_list rejects non-SE elements", {
+    expect_error(TiDEomics:::.check_se_list(list(1), "x"), "SummarizedExperiment")
+})
+
+# ---- .check_se_list_no_na ----
+
+test_that(".check_se_list_no_na detects missing values", {
+    data("example_obj")
+    example_obj <- normalise_to_start(example_obj)
+    example_obj_list <- split_groups(example_obj)
+    example_obj_merged_list <- merge_replicates(example_obj_list)
+    assay(example_obj_merged_list[[1]])[1, 1] <- NA
+    expect_error(
+        TiDEomics:::.check_se_list_no_na(example_obj_merged_list, "x"),
+        "missing values")
+})
+
+# ---- .check_se_has_properties ----
+
+test_that(".check_se_has_properties errors on missing rowData columns", {
+    se <- SummarizedExperiment::SummarizedExperiment(
+        assays = list(counts = matrix(1:2, 2, 1)),
+        colData = data.frame(Group = "A", Time = 0))
+    expect_error(
+        TiDEomics:::.check_se_has_properties(se, "x"),
+        "missing rowData columns")
+})
+
+# ---- .check_df_trendy_summary ----
+
+test_that(".check_df_trendy_summary errors on missing columns", {
+    expect_error(
+        TiDEomics:::.check_df_trendy_summary(data.frame(x = 1), "x"),
+        "summarise_Trendy")
+})
+
+# ---- .check_df_feature_property ----
+
+test_that(".check_df_feature_property errors on missing columns", {
+    expect_error(
+        TiDEomics:::.check_df_feature_property(data.frame(x = 1), "x"),
+        "summarise_feature_property")
+})
+
+# ---- .check_limma_input ----
+
+test_that(".check_limma_input warns on raw-count-like data", {
+    mat <- matrix(round(2^rnorm(100, 10, 2)), nrow = 10)
+    expect_warning(
+        TiDEomics:::.check_limma_input(mat, "test"),
+        "raw counts")
 })

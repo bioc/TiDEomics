@@ -23,7 +23,8 @@
     is_se <- vapply(x, methods::is, logical(1), "SummarizedExperiment")
     if (!all(is_se)) {
         bad <- which(!is_se)
-        stop("'", arg, "[[", bad[1], "]]' is not a SummarizedExperiment object.")
+        stop("'", arg, "[[", bad[1],
+            "]]' is not a SummarizedExperiment object.")
     }
 }
 
@@ -32,8 +33,11 @@
 #' @param arg Name of the argument (for error message).
 #' @keywords internal
 .check_df <- function(x, arg = "data") {
-    if (!is.data.frame(x)) {
-        stop("'", arg, "' must be a data.frame.")
+    if (!is.data.frame(x) && !is.matrix(x)) {
+        stop("'", arg, "' must be a data.frame or matrix.")
+    }
+    if (nrow(x) == 0L) {
+        stop("'", arg, "' must have at least 1 row.")
     }
 }
 
@@ -44,6 +48,9 @@
 .check_character <- function(x, arg = deparse(substitute(x))) {
     if (!is.character(x)) {
         stop("'", arg, "' must be a character vector.")
+    }
+    if (length(x) == 0L) {
+        stop("'", arg, "' must be non-empty.")
     }
 }
 
@@ -136,7 +143,7 @@
 #' @param arg Name of the argument (for error message).
 #' @keywords internal
 .check_se_list_merged <- function(se_obj_list,
-                                  arg = "se_obj_list") {
+    arg = "se_obj_list") {
     for (nm in names(se_obj_list)) {
         .check_se_merged(se_obj_list[[nm]], paste0(arg, "[[", nm, "]]"))
     }
@@ -155,8 +162,8 @@
     n_combos <- length(unique(paste(cd$Group, cd$Time)))
     if (ncol(se_obj) != n_combos) {
         stop("'", arg, "' must contain merged data (one value per ",
-             "Group x Time combination). Run merge_replicates() on the ",
-             "output of split_groups() first.")
+            "Group x Time combination). Run merge_replicates() on the ",
+            "output of split_groups() first.")
     }
 }
 
@@ -168,11 +175,11 @@
 #' @param arg Name of the argument (for error message).
 #' @keywords internal
 .check_se_list_no_na <- function(se_obj_list,
-                                 arg = "se_obj_list") {
+    arg = "se_obj_list") {
     for (nm in names(se_obj_list)) {
         if (anyNA(SummarizedExperiment::assay(se_obj_list[[nm]]))) {
             stop("'", arg, "' contains missing values. ",
-                 "Run impute_groups() first.")
+                "Run impute_groups() first.")
         }
     }
 }
@@ -183,14 +190,14 @@
 #' @param arg Name of the argument (for error message).
 #' @keywords internal
 .check_se_has_properties <- function(se_obj,
-                                     arg = "se_obj") {
+    arg = "se_obj") {
     required <- c("Exp_ratio", "P_trend", "Max_FC")
     missing_cols <- setdiff(required,
                             colnames(SummarizedExperiment::rowData(se_obj)))
     if (length(missing_cols) > 0) {
         stop("'", arg, "' missing rowData columns: ",
-             paste(missing_cols, collapse = ", "),
-             ". Run calc_feature_property() first.")
+            paste(missing_cols, collapse = ", "),
+            ". Run calc_feature_property() first.")
     }
 }
 
@@ -200,7 +207,7 @@
 #' @param arg Name of the argument (for error message).
 #' @keywords internal
 .check_se_list_has_properties <- function(se_obj_list,
-                                          arg = "se_obj_list") {
+    arg = "se_obj_list") {
     for (nm in names(se_obj_list)) {
         .check_se_has_properties(se_obj_list[[nm]], arg)
     }
@@ -216,7 +223,7 @@
     missing_cols <- setdiff(required, colnames(x))
     if (length(missing_cols) > 0) {
         stop("'", arg, "' must be the output of summarise_Trendy(). ",
-             "Missing columns: ", paste(missing_cols, collapse = ", "))
+            "Missing columns: ", paste(missing_cols, collapse = ", "))
     }
 }
 
@@ -226,13 +233,13 @@
 #' @param arg Name of the argument (for error message).
 #' @keywords internal
 .check_df_feature_property <- function(x,
-                                       arg = deparse(substitute(x))) {
+    arg = deparse(substitute(x))) {
     required <- c("Feature", "Group", "Exp_ratio", "P_trend", "Max_FC")
     missing_cols <- setdiff(required, colnames(x))
     if (length(missing_cols) > 0) {
         stop("'", arg, "' must be the output of ",
-             "summarise_feature_property(). ",
-             "Missing columns: ", paste(missing_cols, collapse = ", "))
+            "summarise_feature_property(). ",
+            "Missing columns: ", paste(missing_cols, collapse = ", "))
     }
 }
 

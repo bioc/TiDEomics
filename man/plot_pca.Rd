@@ -44,16 +44,16 @@ plot_pca(
 of each group (default is FALSE)}
 
 \item{xlim_min}{Minimum x-axis limit when drawing ellipses
-(default 1.5*min PC1)}
+(default: NULL, auto-computed as 1.5×min PC1)}
 
 \item{xlim_max}{Maximum x-axis limit when drawing ellipses
-(default 1.5*max PC1)}
+(default: NULL, auto-computed as 1.5×max PC1)}
 
 \item{ylim_min}{Minimum y-axis limit when drawing ellipses
-(default 1.5*min PC2)}
+(default: NULL, auto-computed as 1.5×min PC2)}
 
 \item{ylim_max}{Maximum y-axis limit when drawing ellipses
-(default 1.5*max PC2)}
+(default: NULL, auto-computed as 1.5×max PC2)}
 
 \item{fontsize}{Font size for the PCA plot (default is 8)}
 

@@ -24,8 +24,8 @@ test_that("summarise_module_pattern validates input", {
         "data.frame")
     data("example_res_list")
     trendy_summary <- summarise_Trendy(example_res_list)
-    expect_error(summarise_module_pattern(data.frame(), trendy_summary),
-        "Feature")
+    expect_error(summarise_module_pattern(data.frame(x = 1), trendy_summary),
+        "Module")
 })
 
 test_that("summarise_module_pattern excludes grey module", {

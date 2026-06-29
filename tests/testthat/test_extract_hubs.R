@@ -38,7 +38,7 @@ test_that("extract_hubs validates arguments", {
     data("example_net")
     expect_error(extract_hubs(example_net, top_n = 0), "positive")
     expect_error(extract_hubs(example_net, top_n = -1), "positive")
-    expect_error(extract_hubs(example_net, exclude_grey = "yes"), "logical")
+    expect_error(extract_hubs(example_net, exclude_grey = "yes"), "must be TRUE or FALSE")
 })
 
 test_that("extract_hubs errors on missing required fields", {
@@ -61,12 +61,26 @@ test_that("extract_hubs handles top_n larger than module size", {
 })
 
 test_that("extract_hubs handles unsigned networks", {
-    skip_if_not_installed("WGCNA")
-    data("example_net")
-    # example_net should have a networkType; test abs(kME) for unsigned
-    if (example_net$parameters$networkType == "unsigned") {
-        hubs <- extract_hubs(example_net, top_n = 2)
-        expect_type(hubs, "character")
-        expect_true(length(hubs) > 0)
-    }
+    # Build a minimal unsigned network mock to test the abs(kME) path.
+    # WGCNA convention: samples in rows, features in columns.
+    set.seed(42)
+    n_genes <- 20
+    n_samples <- 5
+    expr <- as.data.frame(
+        matrix(rnorm(n_samples * n_genes), nrow = n_samples,
+               dimnames = list(NULL, paste0("Gene", seq_len(n_genes)))))
+    colors <- stats::setNames(
+        c(rep("1", 10), rep("2", 10)),
+        colnames(expr))
+    MEs <- WGCNA::moduleEigengenes(expr, colors,
+        excludeGrey = TRUE)$eigengenes
+    unsigned_net <- list(
+        input_data = expr,
+        colors = colors,
+        MEs = MEs,
+        parameters = list(networkType = "unsigned")
+    )
+    hubs <- extract_hubs(unsigned_net, top_n = 2)
+    expect_type(hubs, "character")
+    expect_equal(length(hubs), 4)  # 2 modules x top_n=2
 })

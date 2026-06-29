@@ -34,8 +34,7 @@
 #' example_obj <- normalise_to_start(example_obj)
 #'
 #' DE_between_time_out <- DE_between_time(example_obj, assay = 1)
-#' plot_DE_between_time(example_obj,
-#'     de_list = DE_between_time_out$de_list,
+#' plot_DE_between_time(DE_between_time_out,
 #'     fontsize = 8, value = TRUE, nrow = 1, heatmap_width = 3)
 plot_DE_between_time <- function(
     DE_between_time_out,

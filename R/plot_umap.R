@@ -12,14 +12,14 @@
 #' identified features (default is FALSE)
 #' @param circle Logical, whether to draw circles (ellipses) around samples of
 #' each group (default is FALSE)
-#' @param xlim_min Minimum x-axis limit when drawing ellipses (default 1.5*min
-#' UMAP x)
-#' @param xlim_max Maximum x-axis limit when drawing ellipses (default 1.5*max
-#' UMAP x)
-#' @param ylim_min Minimum y-axis limit when drawing ellipses (default 1.5*min
-#' UMAP y)
-#' @param ylim_max Maximum y-axis limit when drawing ellipses (default 1.5*max
-#' UMAP y)
+#' @param xlim_min Minimum x-axis limit when drawing ellipses
+#' (default: NULL, auto-computed as 1.5×min UMAP x)
+#' @param xlim_max Maximum x-axis limit when drawing ellipses
+#' (default: NULL, auto-computed as 1.5×max UMAP x)
+#' @param ylim_min Minimum y-axis limit when drawing ellipses
+#' (default: NULL, auto-computed as 1.5×min UMAP y)
+#' @param ylim_max Maximum y-axis limit when drawing ellipses
+#' (default: NULL, auto-computed as 1.5×max UMAP y)
 #' @param umap_neighbors UMAP n_neighbors parameter (default is selected by
 #' `.umap_n_neighbors()` function based on the number of samples)
 #' @param fontsize Font size for the plot (default is 8)
@@ -49,6 +49,12 @@ plot_umap <- function(
     .check_logical(circle, "circle")
     .check_positive_int(seed, "seed")
     .check_positive(fontsize, "fontsize")
+    if (!is.null(xlim_min)) .check_numeric(xlim_min, "xlim_min")
+    if (!is.null(xlim_max)) .check_numeric(xlim_max, "xlim_max")
+    if (!is.null(ylim_min)) .check_numeric(ylim_min, "ylim_min")
+    if (!is.null(ylim_max)) .check_numeric(ylim_max, "ylim_max")
+    if (!is.null(umap_neighbors))
+        .check_positive_int(umap_neighbors, "umap_neighbors")
     assay <- .match_assay(assay, se_obj)
     M_0 <- assay(se_obj, assay)
     if (sum(is.na(M_0)) > 0) {
@@ -152,12 +158,12 @@ plot_umap <- function(
     }
 
     if (circle) {
-        p1$layers <- c(p1$layers, list(ggforce::geom_mark_ellipse(
+        p_list$p1$layers <- c(p_list$p1$layers, list(ggforce::geom_mark_ellipse(
             aes(fill = Group, label = Group),
             con.cap = 0, alpha = 0.1, label.fontsize = fontsize,
             label.buffer = unit(0, "mm")
         )))
-        p_list$p2 <- p1 +
+        p_list$p2 <- p_list$p1 +
             xlim(xlim_min, xlim_max) + ylim(ylim_min, ylim_max)
     }
 

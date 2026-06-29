@@ -236,5 +236,6 @@ DE_between_group <- function(
     }
 
     return(list(all_list = outlist_limma, de_list = de_list_limma,
-                fit_list = fitlist_limma, ref_groups = group, all_groups = groups))
+                fit_list = fitlist_limma,
+                ref_groups = group, all_groups = groups))
 }

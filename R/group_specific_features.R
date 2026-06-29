@@ -45,11 +45,12 @@
 #' function for GO enrichment analysis (e.g., `pvalueCutoff`, `qvalueCutoff`,
 #' etc.).
 #'
-#' @returns A character vector of features that are identified as unique to
-#' the specified groups based on the filtering criteria. If `genename` is
-#' TRUE, a table of gene names corresponding to the unique features will be
-#' included. If `GO` is TRUE, a dot plot of GO enrichment results for the unique
-#' features will be included.
+#' @returns A named list with element `features` (character vector of features
+#' identified as unique to the specified groups based on the filtering
+#' criteria). If `genename` is TRUE, element `genename` contains a data.frame
+#' of gene annotations. If `GO` is TRUE and enrichment succeeds, element `GO`
+#' contains a dot plot of GO enrichment results. Returns `NULL` if no unique
+#' features pass the filter.
 #' @export
 #' @examples
 #' data(example_obj)
@@ -156,17 +157,7 @@ group_specific_features <- function(
                 fromType = keytype, toType = c(keytype, "GENENAME"),
                 OrgDb = OrgDb
             ) |>
-            dplyr::arrange(.data[[keytype]]) |>
-            DT::datatable(
-                options = list(pageLength = 10),
-                caption = paste0(
-                    "Features with >=", 100 * filter_ratio,
-                    "% ", if (is.na(threshold)) "non-NA time points"
-                    else paste0("values >", threshold), " in >=",
-                    group_num, " of groups: ",
-                    paste(groups, collapse = ", ")
-                )
-            )
+            dplyr::arrange(.data[[keytype]])
     }
 
     if (GO == TRUE && length(unique_genes) > 0) {

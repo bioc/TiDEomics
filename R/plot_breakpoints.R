@@ -20,6 +20,9 @@
 plot_breakpoints <- function(res_list, group = NULL, fontsize = 8, ...) {
     .check_positive(fontsize, "fontsize")
     .check_list(res_list, "res_list", "run_Trendy")
+    if (length(res_list) == 0) {
+        stop("'res_list', the output of run_Trendy(), contains no groups.")
+    }
     if (!is.null(group)) .check_character(group, "group")
     if (is.null(group)) {
         group <- names(res_list)

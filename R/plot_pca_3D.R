@@ -23,7 +23,8 @@
 #' plot_pca_3D(PC$pca, pcs = seq(1, 3))
 plot_pca_3D <- function(pca, pcs = seq(1, 3)) {
     if (is.null(pca$rotated) || is.null(pca$variance)) {
-        stop("'pca' must be a PCA result from plot_pca()$pca or PCAtools::pca().")
+        stop("'pca' must be a PCA result from ",
+            "plot_pca()$pca or PCAtools::pca().")
     }
     if (!requireNamespace("plotly", quietly = TRUE))
         stop("Package 'plotly' is required for 3D PCA. ", 

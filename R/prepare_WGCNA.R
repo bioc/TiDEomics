@@ -20,7 +20,7 @@
 #' @param MeanConnectivity (Optional) Line of mean connectivity
 #' (default is 100)
 #' @param powers (Optional) Parameter of `WGCNA::pickSoftThreshold()`
-#' (default is `c(seq(1, 10, by = 1), seq(12, 20, by = 2))`)
+#' (default: NULL, auto-assigned as `seq(1, 20)`)
 #' @param fontsize Base font size for diagnostic plots (default: 8).
 #' @param ... Additional parameters to be passed to `WGCNA::pickSoftThreshold()`
 #'
@@ -47,6 +47,8 @@ prepare_WGCNA <- function(
 ) {
     .check_se(se_obj)
     .check_character(networkType, "networkType")
+    networkType <- match.arg(networkType,
+        c("unsigned", "signed", "signed hybrid"))
     .check_pval(RsquaredCut, "RsquaredCut")
     .check_nonneg(MeanConnectivity, "MeanConnectivity")
     .check_positive(fontsize, "fontsize")
@@ -57,7 +59,7 @@ prepare_WGCNA <- function(
     data_wgcna <- .WGCNA_input(se_obj, assay = assay)
 
     if (is.null(powers)) {
-        powers <- c(seq(1, 10, by = 1), seq(12, 20, by = 2))
+        powers <- seq(1, 20)
     } else if (length(powers) == 0 || !all(powers %% 1 == 0) ||
             !all(powers > 0)) {
         stop("Powers must be a non-empty vector of positive integers.")

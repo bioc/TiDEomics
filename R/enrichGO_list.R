@@ -38,9 +38,11 @@
 #' @param ... additional arguments passed to `clusterProfiler::enrichGO()`
 #'
 #' @returns A nested list of GO enrichment results with sublists:
-#' 'all' including all terms and 'simplified' including simplified terms
-#' (if `simplify = TRUE`), both containing further sublists
-#' for each GO category (BP, MF, CC).
+#' 'all' and 'simplified' (if `simplify = TRUE`)
+#' containing merged results of all or simplified terms across gene sets
+#' for each GO category;
+#' 'unmerged_all' and 'unmerged_simplified' (if `simplify = TRUE`) including
+#' all or simplified terms for each gene set and GO category.
 #' @export
 #' @examples
 #' library(org.Mm.eg.db)
@@ -77,6 +79,13 @@ enrichGO_list <- function(gene_list, keyType = "SYMBOL",
     .check_pval(pvalueCutoff, "pvalueCutoff")
     .check_pval(qvalueCutoff, "qvalueCutoff")
     .check_logical(simplify, "simplify")
+    if (!inherits(OrgDb, "OrgDb")) {
+        stop("'OrgDb' must be an OrgDb object, e.g. org.Hs.eg.db.")
+    }
+    if (!is.null(universe)) .check_character(universe, "universe")
+    if (!is.function(simplify_select_fun)) {
+        stop("'simplify_select_fun' must be a function.")
+    }
 
     if (is.null(category)) {
         category <- c("BP", "MF", "CC")
@@ -161,7 +170,7 @@ enrichGO_list <- function(gene_list, keyType = "SYMBOL",
             n_after <- length(go_list_simplify[[cate]])
             if (n_after < n_before) {
                 message(n_before - n_after,
-                    " input gene set(s) dropped after simplification ", 
+                    " input gene set(s) dropped after simplification ",
                     "(no terms retained).")
             }
         }
@@ -191,8 +200,11 @@ enrichGO_list <- function(gene_list, keyType = "SYMBOL",
             }
         }
         return(list("all" = go_list_merged,
-            "simplified" = go_list_merged_simplify))
+            "simplified" = go_list_merged_simplify,
+            "unmerged_all" = go_list,
+            "unmerged_simplified" = go_list_simplify))
     } else {
-        return(list("all" = go_list_merged))
+        return(list("all" = go_list_merged,
+            "unmerged_all" = go_list))
     }
 }

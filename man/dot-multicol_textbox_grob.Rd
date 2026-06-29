@@ -16,12 +16,12 @@
 \arguments{
 \item{x}{A named list of category term data.frames (one per column).}
 
-\item{col_gap}{Gap between columns as a \code{grid::unit} (default: 3 mm).}
+\item{col_gap}{Gap between columns as a \code{grid::unit} (default: 2 mm).}
 
 \item{background_gp}{Background graphical parameters.}
 
 \item{padding}{Padding around content as a \code{grid::unit} vector
-(top, left, bottom, right). Default: 2 mm all sides.}
+(top, left, bottom, right). Default: 0 mm all sides.}
 
 \item{column_widths_mm}{Optional numeric vector of pre-computed column
 widths in mm. If NULL, auto-computed from grob widths.}

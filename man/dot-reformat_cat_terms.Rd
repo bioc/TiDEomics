@@ -15,8 +15,8 @@ A named list of modules, each containing a named list of
 categories with term data.frames.
 }
 \description{
-Transposes \code{cat_terms} from category-first (\code{cat_terms[[cat]][[mod]]})
-to module-first (\code{text[[mod]][[cat]]}) layout expected by
+Transposes \code{cat_terms} from category-first (\code{cat_terms[[cate]][[mod]]})
+to module-first (\code{text[[mod]][[cate]]}) layout expected by
 \code{.multicol_textbox_grob}. Missing categories get empty data.frames.
 }
 \keyword{internal}

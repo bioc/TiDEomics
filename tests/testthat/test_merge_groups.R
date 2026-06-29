@@ -24,9 +24,10 @@ test_that("merge_groups handles single group", {
     data("example_obj")
     example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
-    # Take just one group
+    # Take just one group and merge replicates first
     single_list <- example_obj_list[1]
-    merged <- merge_groups(single_list)
+    single_merged <- merge_replicates(single_list)
+    merged <- merge_groups(single_merged)
 
     expect_s4_class(merged, "SummarizedExperiment")
     expect_equal(length(unique(colData(merged)$Group)), 1)

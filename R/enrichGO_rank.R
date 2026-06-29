@@ -47,9 +47,14 @@ enrichGO_rank <- function(
     .check_df(rank_table, "rank_table")
     .check_character(gene_rank_by, "gene_rank_by")
     .check_character(keyType, "keyType")
+    .check_character(go_rank_by, "go_rank_by")
     pAdjustMethod <- match.arg(pAdjustMethod,
-        c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none"))
+        c("holm", "hochberg", "hommel", "bonferroni",
+            "BH", "BY", "fdr", "none"))
     .check_pval(pvalueCutoff, "pvalueCutoff")
+    if (!inherits(OrgDb, "OrgDb")) {
+        stop("'OrgDb' must be an OrgDb object, e.g. org.Hs.eg.db.")
+    }
 
     if (is.null(category)) {
         category <- c("BP", "MF", "CC")

@@ -82,6 +82,7 @@ plot_modules_v <- function(
     .check_positive(fontsize, "fontsize")
     .check_positive_int(res, "res")
     .check_se_merged(se_obj_merged, "se_obj_merged")
+    if (!is.null(save)) .check_character(save, "save")
     assay <- .match_assay(assay, se_obj_merged)
     data_module_long <- .plot_modules_input(module = module,
         se_obj_merged = se_obj_merged, scale = scale, assay = assay)

@@ -3,6 +3,9 @@
 #' @description Plot correlation matrix between samples as a heatmap
 #'
 #' @param se_obj A SummarizedExperiment object created by `create_input()`
+#' @param assay Assay to use: `"orig"` for original data, `"norm"` for
+#' normalised-to-start data. Numeric indices (1, 2) are also accepted.
+#' (default is 1, the original data).
 #' @param use Parameter of `stats::cor()` (default is "pairwise.complete.obs")
 #' @param method Parameter of `stats::cor()` (default is "spearman")
 #' @param label_group Whether to label Group (default is TRUE)
@@ -28,6 +31,7 @@
 #' plot_cor_matrix(example_obj)
 plot_cor_matrix <- function(
     se_obj,
+    assay = 1,
     use = "pairwise.complete.obs",
     method = c("spearman", "pearson", "kendall"),
     label_group = TRUE, label_time = TRUE,
@@ -38,6 +42,7 @@ plot_cor_matrix <- function(
     ...
 ) {
     .check_se(se_obj)
+    assay <- .match_assay(assay, se_obj)
     .check_logical(label_group, "label_group")
     .check_logical(label_time, "label_time")
     .check_logical(label_rep, "label_rep")
@@ -47,11 +52,13 @@ plot_cor_matrix <- function(
     .check_positive(fontsize, "fontsize")
     .check_positive(cellwidth, "cellwidth")
     .check_positive(cellheight, "cellheight")
+    .check_character(use, "use")
+    .check_character(title, "title")
     if (is.null(method) || length(method) != 1) {
         method <- "spearman"
     }
     method <- match.arg(method, c("spearman", "pearson", "kendall"))
-    cor_table <- stats::cor(assay(se_obj, 1),
+    cor_table <- stats::cor(assay(se_obj, assay),
         use = use,
         method = method
     )
@@ -62,7 +69,8 @@ plot_cor_matrix <- function(
             stats::setNames(nm = colData(se_obj)$Time |> unique() |> sort()),
         Replicate =
             ggsci::pal_iterm()(length(unique(colData(se_obj)$Replicate))) |>
-            stats::setNames(nm = colData(se_obj)$Replicate |> unique() |> sort()),
+            stats::setNames(nm =
+                colData(se_obj)$Replicate |> unique() |> sort()),
         Batch = ggsci::pal_simpsons()(length(unique(colData(se_obj)$Batch))) |>
             stats::setNames(nm = colData(se_obj)$Batch |> unique() |> sort())
     )

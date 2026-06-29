@@ -73,9 +73,11 @@ method to calculate similarity when simplifying GO terms
 }
 \value{
 A nested list of GO enrichment results with sublists:
-'all' including all terms and 'simplified' including simplified terms
-(if \code{simplify = TRUE}), both containing further sublists
-for each GO category (BP, MF, CC).
+'all' and 'simplified' (if \code{simplify = TRUE})
+containing merged results of all or simplified terms across gene sets
+for each GO category;
+'unmerged_all' and 'unmerged_simplified' (if \code{simplify = TRUE}) including
+all or simplified terms for each gene set and GO category.
 }
 \description{
 Gene ontology enrichment analysis of multiple gene sets

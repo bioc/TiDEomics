@@ -35,20 +35,21 @@
 plot_pca_by_group <- function(se_obj, circle = TRUE, arrow = TRUE,
     pc1 = 1, pc2 = 2, nrow = 1, fontsize = 8, assay = 1,
     legend_pos = "right") {
-    .check_se(se_obj)
+    if (is.list(se_obj) && !methods::is(se_obj, "SummarizedExperiment")) {
+        .check_se_list(se_obj)
+        se_list <- se_obj
+    } else {
+        .check_se(se_obj)
+        se_list <- split_groups(se_obj)
+    }
     .check_logical(circle, "circle")
     .check_logical(arrow, "arrow")
     .check_positive_int(pc1, "pc1")
     .check_positive_int(pc2, "pc2")
     .check_positive_int(nrow, "nrow")
+    .check_character(legend_pos, "legend_pos")
     .check_positive(fontsize, "fontsize")
-    assay <- .match_assay(assay, se_obj)
-
-    if (is.list(se_obj) && !methods::is(se_obj, "SummarizedExperiment")) {
-        se_list <- se_obj
-    } else {
-        se_list <- split_groups(se_obj)
-    }
+    assay <- .match_assay(assay, se_list[[1]])
 
     pca_list <- list()
     for (group in names(se_list)) {

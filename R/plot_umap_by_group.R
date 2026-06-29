@@ -31,17 +31,20 @@
 plot_umap_by_group <- function(se_obj, seed = 1234, nrow = 1,
     umap_neighbors = NULL,
     fontsize = 8, assay = 1, legend_pos = "right") {
-    .check_se(se_obj)
-    .check_positive_int(seed, "seed")
-    .check_positive_int(nrow, "nrow")
-    .check_positive(fontsize, "fontsize")
-    assay <- .match_assay(assay, se_obj)
-
     if (is.list(se_obj) && !methods::is(se_obj, "SummarizedExperiment")) {
+        .check_se_list(se_obj)
         se_list <- se_obj
     } else {
+        .check_se(se_obj)
         se_list <- split_groups(se_obj)
     }
+    .check_positive_int(seed, "seed")
+    .check_positive_int(nrow, "nrow")
+    .check_character(legend_pos, "legend_pos")
+    .check_positive(fontsize, "fontsize")
+    if (!is.null(umap_neighbors))
+        .check_positive_int(umap_neighbors, "umap_neighbors")
+    assay <- .match_assay(assay, se_list[[1]])
 
     umap_list <- list()
     for (group in names(se_list)) {

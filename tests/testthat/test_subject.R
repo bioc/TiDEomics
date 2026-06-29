@@ -105,7 +105,7 @@ test_that("decomp_variance auto-detects Subject", {
     se <- create_input(td$data, td$ann, subject_col = "Subject")
 
     vd <- decomp_variance(se, features = paste0("Gene", 1:10),
-        fixed_effect_var = NULL, core = 1)
+        fixed_effect_var = NULL, assay = "orig", core = 1)
     expect_true("Subject" %in% colnames(vd))
     expect_true("Group" %in% colnames(vd))
     expect_true("Time" %in% colnames(vd))
@@ -120,7 +120,7 @@ test_that("decomp_variance without Subject gives basic output", {
     td$ann$Subject <- NULL
     se <- create_input(td$data, td$ann)
     vd <- decomp_variance(se, features = paste0("Gene", 1:10),
-        fixed_effect_var = NULL, core = 1)
+        fixed_effect_var = NULL, assay = "orig", core = 1)
 
     expect_true("Group" %in% colnames(vd))
     expect_true("Time" %in% colnames(vd))
@@ -136,7 +136,7 @@ test_that("decomp_variance handles 1-group design", {
     se <- create_input(td$data, td$ann, subject_col = "Subject")
     expect_message(
         vd <- decomp_variance(se, features = paste0("Gene", 1:10),
-            fixed_effect_var = NULL, core = 1),
+            fixed_effect_var = NULL, assay = "orig", core = 1),
         "Group dropped"
     )
     expect_false("Group" %in% colnames(vd))
@@ -235,4 +235,129 @@ test_that("impute_groups falls back when no Subject column", {
     for (nm in names(imputed)) {
         expect_false(any(is.na(assay(imputed[[nm]]))))
     }
+})
+
+test_that("impute_groups by subject imputes per-subject", {
+    data("tutorial_data")
+    data("tutorial_sample_info")
+    # Add Subject column for subject-level imputation
+    # Each subject must be unique to one group
+    sample_ann_subj <- tutorial_sample_info
+    sample_ann_subj$Subject <- paste0("S", seq_len(nrow(sample_ann_subj)))
+    se <- create_input(tutorial_data, sample_ann_subj, subject_col = "Subject")
+    se_norm <- normalise_to_start(se)
+    se_split <- split_groups(se_norm)
+    se_merged <- merge_replicates(se_split)
+
+    # Add some NAs to trigger imputation
+    assays(se_merged[[1]])[[1]][1, 1] <- NA
+
+    # Subject is dropped by merge_replicates; falls back to group
+    expect_warning(
+        res <- impute_groups(se_merged, impute_by = "subject"),
+        "no Subject column"
+    )
+    expect_type(res, "list")
+    # Verify NA was filled
+    expect_false(is.na(assays(res[[1]])[[1]][1, 1]))
+})
+
+test_that("impute_groups with impute_by = 'subject' emits per-subject message when Subject present", {
+    # merge_replicates drops Subject from colData, so we add it back manually
+    # to test the per-subject imputation message path
+    td <- .make_test_se(n_subjects = 4, n_groups = 2)
+    se <- create_input(td$data, td$ann, subject_col = "Subject")
+    se_list <- split_groups(se)
+    merged <- merge_replicates(se_list)
+
+    # Add Subject back after merge
+    colData(merged[["G1"]])$Subject <- "S1"
+    colData(merged[["G2"]])$Subject <- "S3"
+
+    # Introduce NAs to trigger imputation
+    assay(merged[["G1"]])[1, 1] <- NA
+    assay(merged[["G2"]])[2, 2] <- NA
+
+    expect_message(
+        imputed <- impute_groups(merged, impute_by = "subject"),
+        "Imputing per-subject"
+    )
+    expect_type(imputed, "list")
+    expect_false(any(is.na(assay(imputed[["G1"]]))))
+    expect_false(any(is.na(assay(imputed[["G2"]]))))
+})
+
+test_that("decomp_variance handles interaction = TRUE", {
+    td <- .make_test_se(n_subjects = 4, n_groups = 2, with_reps = TRUE)
+    se <- create_input(td$data, td$ann, subject_col = "Subject")
+    se <- normalise_to_start(se)
+
+    expect_message(
+        vd <- decomp_variance(se, features = rownames(se)[1:20],
+            fixed_effect_var = c("Group", "Time"),
+            interaction = TRUE, assay = "orig", core = 1),
+        "interaction"
+    )
+    expect_type(vd, "list")
+})
+
+test_that("decomp_variance handles fixed_effect_var = Time", {
+    td <- .make_test_se(n_subjects = 4, n_groups = 2)
+    se <- create_input(td$data, td$ann, subject_col = "Subject")
+    se <- normalise_to_start(se)
+
+    vd <- decomp_variance(se, features = rownames(se)[1:20],
+        fixed_effect_var = "Time",
+        interaction = FALSE, assay = "orig", core = 1)
+    expect_type(vd, "list")
+})
+
+# ---- decomp_variance edge branches ----
+
+test_that("decomp_variance errors on non-existent features", {
+    td <- .make_test_se(n_subjects = 4, n_groups = 2, with_reps = TRUE)
+    se <- create_input(td$data, td$ann, subject_col = "Subject")
+    se <- normalise_to_start(se)
+
+    expect_error(
+        decomp_variance(se, features = c("NotAGene", "AlsoNotAGene"),
+            assay = "orig", core = 1),
+        "Features not found"
+    )
+})
+
+test_that("decomp_variance errors when required colData columns missing", {
+    td <- .make_test_se(n_subjects = 4, n_groups = 2, with_reps = TRUE)
+    se <- create_input(td$data, td$ann, subject_col = "Subject")
+    colData(se)$Group <- NULL
+
+    expect_error(
+        decomp_variance(se, features = rownames(se)[1:10],
+            assay = "orig", core = 1),
+        "Required columns not found"
+    )
+})
+
+test_that("decomp_variance messages when single Subject level detected", {
+    td <- .make_test_se(n_subjects = 1, n_groups = 2, with_reps = TRUE)
+    se <- create_input(td$data, td$ann, subject_col = "Subject")
+    se <- normalise_to_start(se)
+
+    expect_message(
+        decomp_variance(se, features = rownames(se)[1:10],
+            assay = "orig", core = 1),
+        "Only 1 Subject level detected"
+    )
+})
+
+test_that("decomp_variance errors when no variable has >=2 levels", {
+    td <- .make_test_se(n_subjects = 1, n_groups = 1, n_times = 1)
+    se <- create_input(td$data, td$ann, subject_col = "Subject")
+    se <- normalise_to_start(se)
+
+    expect_error(
+        decomp_variance(se, features = rownames(se)[1:10],
+            assay = "orig", core = 1),
+        "Cannot fit variance decomposition"
+    )
 })

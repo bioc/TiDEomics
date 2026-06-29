@@ -59,11 +59,12 @@ enrichR_list <- function(
     .check_character(databases, "databases")
     .check_pval(pvalueCutoff, "pvalueCutoff")
     .check_logical(include_overlap, "include_overlap")
+    if (!is.null(universe)) .check_character(universe, "universe")
     if (is.data.frame(gene_list)) {
         .check_df(gene_list, "gene_list")
     } else if (!is.list(gene_list)) {
         stop("'gene_list' must be a data.frame from WGCNA_module() ",
-             "or a named list of gene vectors.")
+            "or a named list of gene vectors.")
     }
 
     if (!requireNamespace("enrichR", quietly = TRUE)) {

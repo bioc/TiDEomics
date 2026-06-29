@@ -32,6 +32,8 @@ plot_trend <- function(se_obj, assay = 1, groups = NULL, features,
         stop("'se_obj' must be a SummarizedExperiment or a data.frame.")
     }
     .check_character(features, "features")
+    .check_character(title, "title")
+    .check_character(ylab, "ylab")
     .check_logical(errorbar, "errorbar")
     .check_positive(fontsize, "fontsize")
     if (!is.null(groups)) .check_character(groups, "groups")

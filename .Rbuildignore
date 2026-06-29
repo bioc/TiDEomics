@@ -1,0 +1,9 @@
+^TiDEomics\.Rproj$
+^LICENSE\.md$
+^README\.Rmd$
+^docs$
+^pkgdown$
+^dev$
+^\\..*
+^\..*
+^_.*
