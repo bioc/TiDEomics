@@ -64,7 +64,7 @@ plot_WGCNA <- function(net, fontsize = 8) {
     dissimME <- (1 - t(stats::cor(MEs, method = "p", use = "p"))) / 2
     hclustdatME <- stats::hclust(stats::as.dist(dissimME), method = "average")
     graphics::par(mfrow = c(1, 1))
-    graphics::plot(hclustdatME, 
+    graphics::plot(hclustdatME,
         main = "Clustering based on the module eigengenes")
 
     ## module-trait correlation
@@ -144,6 +144,6 @@ plot_WGCNA <- function(net, fontsize = 8) {
             title_gp = grid::gpar(fontsize = fontsize, fontface = "bold"),
             labels_gp = grid::gpar(fontsize = fontsize)
         )
-    ) 
+    )
     return(p)
 }

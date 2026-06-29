@@ -19,7 +19,7 @@ GSE263759
 data(example_obj)
 }
 \description{
-A subset of \code{data_obj <- create_input(data = tutorial_data,  sample_ann = tutorial_sample_info)} for use in runnable examples
+A subset of \code{data_obj <- create_input(data = tutorial_data, sample_ann = tutorial_sample_info)} for use in runnable examples
 in function documentation.
 }
 \details{

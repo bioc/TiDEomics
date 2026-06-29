@@ -1,7 +1,7 @@
 #' Impute missing values
 #' @description Impute missing values for each group of samples in a list of
 #' SummarizedExperiment objects. By default, replaces NA with the minimum
-#' non-NA value per group / subject. 
+#' non-NA value per group / subject.
 #' A custom function can be supplied for other strategies.
 #'
 #' The input samples can contain replicates, or merged replicates (mean of
@@ -46,7 +46,7 @@ impute_groups <- function(se_obj_list, fun = min,
     }
 
     if (impute_by == "subject") {
-        message("Imputing per-subject: each subject's missing values ", 
+        message("Imputing per-subject: each subject's missing values ",
             "replaced by subject-level statistic.")
     }
 

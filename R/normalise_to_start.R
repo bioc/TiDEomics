@@ -5,7 +5,7 @@
 #' Two modes are available:
 #' - `by_subject = FALSE` (default): computes the group-level mean at the
 #'   first non-NA time point per feature and subtracts it. All samples within
-#'   a group share the same baseline. 
+#'   a group share the same baseline.
 #' - `by_subject = TRUE`: computes each subject's value at the first non-NA
 #'   time point per feature and subtracts that subject-specific baseline.
 #'   Removes between-subject baseline differences. Use when each subject has
@@ -38,7 +38,7 @@ normalise_to_start <- function(se_obj, by_subject = FALSE) {
         # ---- Subject-level normalisation ----
         subjects <- unique(colData(se_obj)$Subject)
         message(
-            "Normalising to subject-level baseline at each feature's first ", 
+            "Normalising to subject-level baseline at each feature's first ",
             "non-NA time point for ", length(subjects), " subjects."
         )
 
@@ -105,7 +105,7 @@ normalise_to_start <- function(se_obj, by_subject = FALSE) {
             )
             if (n_later > 0) {
                 message(
-                    "Group ", i, ": ", n_later, 
+                    "Group ", i, ": ", n_later,
                     " feature(s) used first non-NA ",
                     "at a later time point to normalise (not time 0)."
                 )

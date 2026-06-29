@@ -1,9 +1,9 @@
 #' DE number between groups
 #' @description Plot the number of differentially expressed features between
 #' groups over time, using the output of `DE_between_group()`.
-#' 
-#' DE features were pre-filtered with `DE_between_group()`, but by specifying 
-#' `adjP_thres` and `logFC_thres`, users can re-filter the DE features for 
+#'
+#' DE features were pre-filtered with `DE_between_group()`, but by specifying
+#' `adjP_thres` and `logFC_thres`, users can re-filter the DE features for
 #' plotting.
 #'
 #' @param DE_between_group_out Output of `DE_between_group()`, a list with

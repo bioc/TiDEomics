@@ -30,7 +30,7 @@ merge_replicates <- function(se_obj_list) {
     has_subject <- "Subject" %in% colnames(colData(se_obj_list[[1]]))
 
     if (has_subject) {
-        message("Subject column detected. Merging within-subject first, ", 
+        message("Subject column detected. Merging within-subject first, ",
         "then across subjects. ")
     }
 

@@ -4,7 +4,7 @@
 #' each feature with replicates. The CV is calculated as the standard
 #' deviation divided by the mean of the abundance values.
 #'
-#' Note: CV is only meaningful for positive-valued data. 
+#' Note: CV is only meaningful for positive-valued data.
 #' @param se_obj A SummarizedExperiment object, produced by `create_input()`
 #' function, containing the abundance data and associated sample information.
 #' @param fontsize (Optional) An integer specifying the font size for the plot
@@ -33,7 +33,7 @@ plot_cv <- function(se_obj, fontsize = 8) {
         )
     }
 
-    calc_cv <- function(x, na.rm = TRUE) stats::sd(x, na.rm = na.rm) / 
+    calc_cv <- function(x, na.rm = TRUE) stats::sd(x, na.rm = na.rm) /
         mean(x, na.rm = na.rm)
 
     cv_tb <- assays(se_obj)[[1]] |>

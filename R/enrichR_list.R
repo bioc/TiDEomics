@@ -26,8 +26,8 @@
 #'   a list of gene vectors with the same names as `gene_list`.
 #' @param pvalueCutoff Adjusted p-value cutoff for filtering enriched
 #'   terms (default: 0.05)
-#' @param include_overlap Parameter passed to `enrichR::enrichr()`. 
-#' If `TRUE`, databases are downloaded during each query to 
+#' @param include_overlap Parameter passed to `enrichR::enrichr()`.
+#' If `TRUE`, databases are downloaded during each query to
 #' output 'Overlap' when analysing with a background. (default: `FALSE`)
 #'
 #' @returns A named list of data.frames, one per database. Each data.frame
@@ -44,7 +44,7 @@
 #' example_module <- WGCNA_module(example_net) |>
 #'     dplyr::filter(Module %in% c("1", "2"))
 #' # Use high pvalueCutoff for demonstration
-#' # enrichr_out <- enrichR_list(example_module, 
+#' # enrichr_out <- enrichR_list(example_module,
 #' #     databases = c("KEGG_2019_Mouse"),
 #' #     universe = example_module$Feature, pvalueCutoff = 0.5)
 enrichR_list <- function(
@@ -89,7 +89,7 @@ enrichR_list <- function(
         }
     )
     if (is.null(dbs_available)) {
-        stop("No enrichR databases available. Please check the enrichR" , 
+        stop("No enrichR databases available. Please check the enrichR" ,
         " site and your internet connection.")
     }
 

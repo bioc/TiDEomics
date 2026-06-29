@@ -26,7 +26,7 @@
     # sample annotation
     sp_info <- colData(se_obj_merged) |>
         as.data.frame() |>
-        dplyr::select(c(Sample, Group, Time)) 
+        dplyr::select(c(Sample, Group, Time))
 
     data_wgcna_merged <- assays(se_obj_merged)[[assay]] |>
         as.data.frame()
@@ -42,7 +42,7 @@
     data_wgcna_merged <- data_wgcna_merged |>
         tibble::rownames_to_column("Feature") |>
         dplyr::filter(Feature %in% module$Feature)
-    
+
     data_module_long <- data_wgcna_merged |>
         tidyr::pivot_longer(
             c(-Feature),

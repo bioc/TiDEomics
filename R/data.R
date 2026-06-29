@@ -1,10 +1,10 @@
 #' Dataset for TiDEomics tutorial, sample information
 #'
-#' A subset of GSE263759 data set published in 
+#' A subset of GSE263759 data set published in
 #' [Integrated time-series analysis and high-content CRISPR screening delineate the dynamics of macrophage immune regulation](https://doi.org/10.1016/j.cels.2025.101346)
 #'
 #' Code for preparing the data is available in `inst/script/tutorial_input.R`
-#' - Ensembl IDs were mapped to symbols, genes with all zero counts 
+#' - Ensembl IDs were mapped to symbols, genes with all zero counts
 #' were excluded.
 #' - Use time 0 untreated samples for other groups' time 0.
 #' - Include "untreated", "IFNbeta", "IFNgamma", "LPS" groups.
@@ -46,13 +46,13 @@
 
 #' SummarizedExperiment object for runnable examples
 #'
-#' A subset of `data_obj <- create_input(data = tutorial_data, 
-#' sample_ann = tutorial_sample_info)` for use in runnable examples 
+#' A subset of `data_obj <- create_input(data = tutorial_data,
+#' sample_ann = tutorial_sample_info)` for use in runnable examples
 #' in function documentation.
 #'
 #' Code for preparing the data is available in `inst/script/tutorial_input.R`
 #'
-#' @format A SummarizedExperiment object with assays of 100 rows and 
+#' @format A SummarizedExperiment object with assays of 100 rows and
 #' 40 columns, colData of 40 rows and 5 columns:
 #' \describe{
 #'   \item{colData}{tutorial_sample_info}
@@ -76,7 +76,7 @@
 #'
 #' Code for preparing the data is in `inst/script/generate_example_res_list.R`
 #'
-#' @format A nested list, each element is a list with Trendy results 
+#' @format A nested list, each element is a list with Trendy results
 #' for one group
 #' @source GSE263759
 #' @usage data(example_res_list)

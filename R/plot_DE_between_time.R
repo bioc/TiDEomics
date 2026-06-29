@@ -73,7 +73,7 @@ plot_DE_between_time <- function(
             for (tb_name in names(all_list[[i]])) {
                 tb <- all_list[[i]][[tb_name]]
                 tb_de <- tb |>
-                    dplyr::select(Feature, Comparison, Group, Cond1, Cond2, 
+                    dplyr::select(Feature, Comparison, Group, Cond1, Cond2,
                         logFC, adj.P.Val) |>
                     dplyr::filter(adj.P.Val < adjP_thres) |>
                     dplyr::filter(logFC > logFC_thres | logFC < -logFC_thres)

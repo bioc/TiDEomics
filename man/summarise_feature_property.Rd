@@ -34,7 +34,7 @@ example_obj <- normalise_to_start(example_obj)
 example_obj_list <- split_groups(example_obj)
 example_obj_merged_list <- merge_replicates(example_obj_list)
 
-example_obj_merged_list <- 
+example_obj_merged_list <-
     calc_feature_property(example_obj_merged_list, threshold = 0)
 property_random_fc <- summarise_feature_property(example_obj_merged_list)
 }

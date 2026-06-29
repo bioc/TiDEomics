@@ -66,7 +66,7 @@ library(dplyr)
 example_module <- WGCNA_module(example_net) |>
     dplyr::filter(Module \%in\% c("1", "2"))
 # Use high pvalueCutoff for demonstration
-# enrichr_out <- enrichR_list(example_module, 
+# enrichr_out <- enrichR_list(example_module,
 #     databases = c("KEGG_2019_Mouse"),
 #     universe = example_module$Feature, pvalueCutoff = 0.5)
 }

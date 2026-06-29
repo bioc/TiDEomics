@@ -8,7 +8,7 @@ set_custom_palette(palette)
 }
 \arguments{
 \item{palette}{A named vector where names correspond to group names
-and values are the corresponding colors (e.g., \code{c("Group1" = "#FF0000",  "Group2" = "#00FF00")}).}
+and values are the corresponding colors (e.g., \code{c("Group1" = "#FF0000", "Group2" = "#00FF00")}).}
 }
 \value{
 The function does not return a value but sets the custom palette as

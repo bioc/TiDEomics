@@ -34,7 +34,7 @@ plot_variance <- function(var_decomp, rank = "Group",
     .check_positive(fontsize, "fontsize")
 
     if (!rank %in% colnames(var_decomp)) {
-        avail <- setdiff(colnames(var_decomp), 
+        avail <- setdiff(colnames(var_decomp),
             c("Feature", "mean", "median", "sd", "max"))
         stop(sprintf("Rank column '%s' not in decomp output. Available: %s",
             rank, paste(avail, collapse = ", ")))

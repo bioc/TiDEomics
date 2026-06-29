@@ -1,13 +1,13 @@
 #' DE between time points
-#' @description Differential expression analysis between time points within 
+#' @description Differential expression analysis between time points within
 #' each group by limma
 #'
 #' @param se_obj A SummarizedExperiment object created by `create_input`
-#' @param group (Optional) A character vector specifying which groups to 
-#' analyse. If NULL, all groups in the 'Group' column will be used. (default 
+#' @param group (Optional) A character vector specifying which groups to
+#' analyse. If NULL, all groups in the 'Group' column will be used. (default
 #' is NULL)
-#' @param filter (Optional) Minimum number of replicates required in both 
-#' conditions for a feature to be tested. If NULL, the minimum number of 
+#' @param filter (Optional) Minimum number of replicates required in both
+#' conditions for a feature to be tested. If NULL, the minimum number of
 #' replicates across all groups and time points will be used. (default is NULL)
 #' @param assay Assay to use: `"orig"` for original data, `"norm"` for
 #' normalised-to-start data. Numeric indices (1, 2) are also accepted.
@@ -15,9 +15,9 @@
 #' contain log-transformed, normalised values (e.g. log2-CPM for RNA-seq,
 #' log2-intensity for proteomics). A warning is issued if the data appears
 #' to be un-logged raw counts.
-#' @param adjP_thres (Optional) Threshold for adjusted p-value to consider a 
+#' @param adjP_thres (Optional) Threshold for adjusted p-value to consider a
 #' feature as differentially expressed (default is 0.05)
-#' @param logFC_thres (Optional) Threshold for log2 fold change to consider a 
+#' @param logFC_thres (Optional) Threshold for log2 fold change to consider a
 #' feature as differentially expressed (default is 1)
 #' @param trend (Optional) Logical, passed to `limma::eBayes()`.
 #'   Set to `TRUE` for RNA-seq count-derived data to model the mean-variance
@@ -30,8 +30,8 @@
 #' @returns A list with: `all_list` (nested list of DE results per group
 #'   and time comparison, all features); `de_list` (nested list of
 #'   significant features only); `fit_list` (nested list of limma
-#'   `MArrayLM` fit objects, for use with `limma::plotSA()`); 
-#'   `time_series` (vector of all available time points). The output 
+#'   `MArrayLM` fit objects, for use with `limma::plotSA()`);
+#'   `time_series` (vector of all available time points). The output
 #'   can be passed to `plot_DE_between_time()` for visualisation.
 #' @export
 #' @examples
@@ -179,7 +179,7 @@ DE_between_time <- function(se_obj, group = NULL, filter = NULL,
                     gene_df$Cond2 <- factor(cond2, levels = time_series)
 
                     # combine with gene df and sort
-                    out_limma <- merge(gene_df, limma_result, 
+                    out_limma <- merge(gene_df, limma_result,
                         by = "row.names", all = TRUE) |>
                         dplyr::select(-Row.names)
 
@@ -198,7 +198,7 @@ DE_between_time <- function(se_obj, group = NULL, filter = NULL,
         for (tb_name in names(outlist_limma[[i]])) { # example: t1-t0
             tb <- outlist_limma[[i]][[tb_name]]
             tb_de <- tb |>
-                dplyr::select(Feature, Comparison, Group, Cond1, Cond2, 
+                dplyr::select(Feature, Comparison, Group, Cond1, Cond2,
                     logFC, adj.P.Val) |>
                 dplyr::filter(adj.P.Val < adjP_thres) |>
                 dplyr::filter(logFC > logFC_thres | logFC < -logFC_thres)

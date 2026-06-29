@@ -5,7 +5,7 @@
 #'
 #' @import SummarizedExperiment
 #'
-#' @returns A list of SummarizedExperiment objects for each group in the input 
+#' @returns A list of SummarizedExperiment objects for each group in the input
 #' object. Each object in the list corresponds to one group of samples.
 #' @export
 #' @examples

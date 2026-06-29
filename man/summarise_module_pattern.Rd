@@ -25,6 +25,6 @@ data("example_res_list")
 trendy_summary <- summarise_Trendy(example_res_list)
 
 data(example_net)
-example_module <- WGCNA_module(example_net) 
+example_module <- WGCNA_module(example_net)
 summarise_module_pattern(example_module, trendy_summary)
 }

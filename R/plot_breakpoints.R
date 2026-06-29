@@ -1,9 +1,9 @@
 #' Plot breakpoint distribution
 #' @description Plot breakpoint distribution among time points for each group
 #'
-#' @param res_list A list of the Trendy analysis results, output of 
+#' @param res_list A list of the Trendy analysis results, output of
 #' `run_Trendy()`
-#' @param group (Optional) A character vector of group names to be plotted. 
+#' @param group (Optional) A character vector of group names to be plotted.
 #' If NULL, all groups in the input list will be used (default is NULL)
 #' @param fontsize (Optional) Font size for the plot (default is 8)
 #' @param ... Additional arguments to be passed to `Trendy::topTrendy()`
@@ -11,7 +11,7 @@
 #' @import SummarizedExperiment
 #' @import ggplot2
 #'
-#' @returns A plot showing the distribution of breakpoints over time for 
+#' @returns A plot showing the distribution of breakpoints over time for
 #' each specified group
 #' @export
 #' @examples
@@ -27,7 +27,7 @@ plot_breakpoints <- function(res_list, group = NULL, fontsize = 8, ...) {
     if (is.null(group)) {
         group <- names(res_list)
     } else if (!all(group %in% names(res_list))) {
-        stop("At least one of the specified groups is not found in the ", 
+        stop("At least one of the specified groups is not found in the ",
         "input object list.")
     }
 

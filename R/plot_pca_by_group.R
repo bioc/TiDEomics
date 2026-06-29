@@ -151,7 +151,7 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
     arrows <- arrows[!is.na(arrows$x_end), ]
     if (circle && arrow) {
         p1 <- pc |>
-            dplyr::mutate(Time = factor(Time, 
+            dplyr::mutate(Time = factor(Time,
                 levels = unique(pc$Time) |> sort())) |>
             ggplot(aes(x = PC1, y = PC2, color = Time)) +
             geom_segment(
@@ -175,7 +175,7 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
             ylab(ylab)
     } else if (arrow) {
         p1 <- pc |>
-            dplyr::mutate(Time = factor(Time, 
+            dplyr::mutate(Time = factor(Time,
                 levels = unique(pc$Time) |> sort())) |>
             ggplot(aes(x = PC1, y = PC2, color = Time)) +
             geom_segment(
@@ -194,7 +194,7 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
             ylab(ylab)
     } else if (circle) {
         p1 <- pc |>
-            dplyr::mutate(Time = factor(Time, 
+            dplyr::mutate(Time = factor(Time,
                 levels = unique(pc$Time) |> sort())) |>
             ggplot(aes(x = PC1, y = PC2, color = Time)) +
             geom_point(size = 3) +
@@ -210,7 +210,7 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
             ylab(ylab)
     } else {
         p1 <- pc |>
-            dplyr::mutate(Time = factor(Time, 
+            dplyr::mutate(Time = factor(Time,
                 levels = unique(pc$Time) |> sort())) |>
             ggplot(aes(x = PC1, y = PC2, color = Time)) +
             geom_point(size = 3) +

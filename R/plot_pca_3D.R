@@ -1,20 +1,20 @@
 #' Plot PCA in 3D
 #'
-#' @description Plot principal component analysis (PCA) results in 3D. This 
+#' @description Plot principal component analysis (PCA) results in 3D. This
 #' function takes the output PCA object of the `plot_pca` function and
-#' visualizes the samples in a 3D space defined by the specified principal 
+#' visualizes the samples in a 3D space defined by the specified principal
 #' components.
 #'
 #' The samples are coloured by Group and sized by Time.
 #'
-#' @param pca A PCA object returned by the `plot_pca()` function (`$pca`) 
+#' @param pca A PCA object returned by the `plot_pca()` function (`$pca`)
 #' or PCAtools::pca().
 #' @param pcs A numeric vector specifying which three principal components
 #' to plot (default is 1:3)
 #'
 #'
-#' @returns An interactive 3D PCA plot showing the distribution of samples 
-#' in the space defined by the specified principal components. The samples 
+#' @returns An interactive 3D PCA plot showing the distribution of samples
+#' in the space defined by the specified principal components. The samples
 #' are coloured by Group and sized by Time.
 #' @export
 #' @examples
@@ -27,13 +27,13 @@ plot_pca_3D <- function(pca, pcs = seq(1, 3)) {
             "plot_pca()$pca or PCAtools::pca().")
     }
     if (!requireNamespace("plotly", quietly = TRUE))
-        stop("Package 'plotly' is required for 3D PCA. ", 
+        stop("Package 'plotly' is required for 3D PCA. ",
         "Install with: install.packages('plotly')")
     if (length(pcs) != 3) {
         stop("Please specify three principal components to plot.")
     }
     if (!all(pcs %in% seq(1, length(pca$variance)))) {
-        stop("Invalid PCs specified. Please choose from 1 to ", 
+        stop("Invalid PCs specified. Please choose from 1 to ",
             length(pca$variance))
     }
 
@@ -41,11 +41,11 @@ plot_pca_3D <- function(pca, pcs = seq(1, 3)) {
     pc$Sample <- rownames(pc)
     pc <- merge(pc, pca$metadata, by = "Sample")
 
-    xlab <- sprintf("PC%d: %.2f%%", pcs[1], 
+    xlab <- sprintf("PC%d: %.2f%%", pcs[1],
         pca$variance[[paste0("PC", pcs[1])]])
-    ylab <- sprintf("PC%d: %.2f%%", pcs[2], 
+    ylab <- sprintf("PC%d: %.2f%%", pcs[2],
         pca$variance[[paste0("PC", pcs[2])]])
-    zlab <- sprintf("PC%d: %.2f%%", pcs[3], 
+    zlab <- sprintf("PC%d: %.2f%%", pcs[3],
         pca$variance[[paste0("PC", pcs[3])]])
 
     # plot 3 PCs

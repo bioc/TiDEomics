@@ -29,7 +29,7 @@
 #' Hypergeometric enrichment test
 #'
 #' @description One-tailed hypergeometric (Fisher's exact) test of query
-#'   genes against named gene sets. 
+#'   genes against named gene sets.
 #'
 #' @param query Character vector of query genes.
 #' @param gene_sets Named list of gene vectors (gene set name -> genes,
