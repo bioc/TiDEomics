@@ -70,7 +70,7 @@ as_DeeDeeExperiment <- function(tide) {
             }
             list()
         }
-        # Case 1: Flat DE_between_group() output — all_list at top level
+        # Case 1: Flat DE_between_group() output - all_list at top level
         if (!is.null(de_list$all_list) && is.list(de_list$all_list)) {
             out <- list()
             for (contrast in names(de_list$all_list))
@@ -78,7 +78,7 @@ as_DeeDeeExperiment <- function(tide) {
                     de_list$all_list[[contrast]], contrast))
             return(out)
         }
-        # Case 2: Nested structure — x$DE$source$all_list$contrast$time
+        # Case 2: Nested structure - x$DE$source$all_list$contrast$time
         out <- list()
         for (nm in names(de_list)) {
             chunk <- de_list[[nm]]

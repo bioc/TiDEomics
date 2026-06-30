@@ -982,15 +982,15 @@ assays. The returned list `tide` contains:
 | `tide$se` | Unmerged SE, all features | Correlation matrix, PCA, UMAP, Pairwise DE, plot_trend | `data_obj` |
 | `tide$se_filtered$orig/norm` | Unmerged SE, filtered features | WGCNA | `data_obj_wgcna` |
 | `tide$merged_list` | Per-group merged SEs, all features | calc_feature_property, run_Trendy | `data_obj_merged_list` |
-| `tide$merged_list_filtered$orig/norm` | Per-group merged SEs, filtered features | - |  |
+| `tide$merged_list_filtered$orig/norm` | Per-group merged SEs, filtered features | - | - |
 | `tide$merged_se` | Single merged SE, all features | plot_modules_v/h | `data_obj_merged` |
 | `tide$merged_se_filtered$orig/norm` | Single merged SE, filtered features | plot_modules_v/h | - |
 | `tide$variance$orig/norm` | Variance decomposition | plot_variance, enrichGO_rank | `var_decomp` |
 | `tide$feature_property` | Feature property summary | group_specific_features | `property_tb` |
-| `tide$filter_summary` | Per-stage filtering stats | QC | — |
-| `tide$group_specific_filter` | Features removed by cross-group filter | Review group-specific features | — |
+| `tide$filter_summary` | Per-stage filtering stats | QC | - |
+| `tide$group_specific_filter` | Features removed by cross-group filter | Review group-specific features | - |
 | `tide$DE` | DE results placeholder | Centralised storage | `DE_between_time/group_out`|
-| `tide$enrichment` | Enrichment results placeholder | Centralised storage | `go_list`, etc. |
+| `tide$enrichment` | Enrichment results placeholder | Centralised storage | `go_list`, `gse_group`, `hallmark_msigdb` etc. |
 | `tide$WGCNA` | WGCNA results placeholder | Centralised storage | `net` |
 
 Pairwise DE, WGCNA and enrichment can be run on the returned elements, and the
