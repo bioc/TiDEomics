@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalise_to_start.R
 \name{normalise_to_start}
 \alias{normalise_to_start}
-\title{Normalise to time 0}
+\title{Normalise to starting time point}
 \usage{
 normalise_to_start(se_obj, by_subject = FALSE)
 }

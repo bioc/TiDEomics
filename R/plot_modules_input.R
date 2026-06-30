@@ -40,7 +40,21 @@
     }
 
     data_wgcna_merged <- data_wgcna_merged |>
-        tibble::rownames_to_column("Feature") |>
+        tibble::rownames_to_column("Feature")
+
+    missing_features <- setdiff(module$Feature, data_wgcna_merged$Feature)
+    if (length(missing_features) > 0) {
+        msg <- paste0(
+            length(missing_features),
+            " feature(s) in the module are missing from the assay and ",
+            "will be excluded: ",
+            paste(utils::head(missing_features, 5), collapse = ", "),
+            if (length(missing_features) > 5) " ..."
+        )
+        warning(msg, call. = FALSE)
+    }
+
+    data_wgcna_merged <- data_wgcna_merged |>
         dplyr::filter(Feature %in% module$Feature)
 
     data_module_long <- data_wgcna_merged |>

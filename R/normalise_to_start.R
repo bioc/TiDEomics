@@ -1,4 +1,4 @@
-#' Normalise to time 0
+#' Normalise to starting time point
 #' @description Normalise to starting time point, to make the mean of
 #' starting time point samples 0.
 #'
@@ -106,8 +106,8 @@ normalise_to_start <- function(se_obj, by_subject = FALSE) {
             if (n_later > 0) {
                 message(
                     "Group ", i, ": ", n_later,
-                    " feature(s) used first non-NA ",
-                    "at a later time point to normalise (not time 0)."
+                    " feature(s) has NA in the first time point, and used",
+                    " first non-NA at a later time point to normalise."
                 )
             }
 

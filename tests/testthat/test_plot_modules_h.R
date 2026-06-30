@@ -605,3 +605,53 @@ test_that("plot_modules_h skips category with no matching terms", {
         "HeatmapList"
     )
 })
+
+test_that(".plot_modules_input warns on features missing from assay", {
+    data(example_obj)
+    example_obj <- normalise_to_start(example_obj)
+    example_obj_list <- split_groups(example_obj)
+    example_obj_merged_list <- merge_replicates(example_obj_list)
+    example_obj_merged <- merge_groups(example_obj_merged_list)
+
+    data(example_net)
+    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
+
+    # Add a fake feature not present in the assay
+    mod_with_fake <- rbind(
+        example_module,
+        data.frame(Feature = "FAKE_NOT_IN_ASSAY", Module = "1",
+                   stringsAsFactors = FALSE)
+    )
+
+    expect_warning(
+        TiDEomics:::.plot_modules_input(
+            mod_with_fake, example_obj_merged,
+            assay = 2, scale = FALSE
+        ),
+        "feature\\(s\\) in the module are missing from the assay"
+    )
+})
+
+test_that("plot_modules_h warns when module has features missing from assay", {
+    data(example_obj)
+    example_obj <- normalise_to_start(example_obj)
+    example_obj_list <- split_groups(example_obj)
+    example_obj_merged_list <- merge_replicates(example_obj_list)
+    example_obj_merged <- merge_groups(example_obj_merged_list)
+
+    data(example_net)
+    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
+
+    # Add a fake feature not present in the assay
+    mod_with_fake <- rbind(
+        example_module,
+        data.frame(Feature = "FAKE_NOT_IN_ASSAY", Module = "1",
+                   stringsAsFactors = FALSE)
+    )
+
+    expect_warning(
+        plot_modules_h(mod_with_fake, example_obj_merged,
+            scale = FALSE, heatmap_width = 6, heatmap_height = 4),
+        "feature\\(s\\) in the module are missing from the assay"
+    )
+})
