@@ -57,10 +57,41 @@ local({
 
 ## Introduction
 
-[**TiDEomics**](https://github.com/hte123/TiDEomics) is an R package designed
-to streamline analysis of time-course omics data (e.g. proteomics,
-transcriptomics), compatible with both single group analysis and multiple group
-comparison, and accommodating data with missing values.
+[**TiDEomics**](https://github.com/hte123/TiDEomics) (Time-course Differential
+Expression analysis of omics data) is an R package for
+**multi-group time-course omics analysis** built on `SummarizedExperiment`,
+especially for comparison of more than two conditions across time.
+
+`TiDEomics` provides:
+
+- An integrated workflow from data processing to functional interpretation, on
+    different omics data types in feature x sample matrix format, with
+    handling of missing values.
+
+- An approach to separate **time-dominant**, **group-dominant**, and
+    **group-specific temporal** effects through the combination of pairwise
+    differential expression, variance decomposition, and co-expression module
+    analysis (WGCNA).
+
+- A filtering strategy based on **residual variance** after mixed-model
+    variance decomposition, prioritising features with structured
+    differential expression over unexplained variation. In comparison,
+    traditional filtering by total variance or coefficient of variation is less
+    appropriate when biological variation across groups and time course is
+    expected.
+
+Existing packages on time-course omics analysis are available, typically
+designed for transcriptomics data. Some packages are limited to two-group
+comparisons (e.g. `splineTimeR`) or expect raw sequencing counts (e.g.
+`ImpulseDE2`, `TCseq`). `maSigPro` supports multi-group time-course DE analysis
+via polynomial regression, complementary to `TiDEomics` with fewer
+assumptions about temporal trends. `TiDEomics` also integrates QC, filtering
+and downstream functional enrichment within the same workflow.
+
+TiDEomics incorporates `Trendy` [@Trendy] which operates on single time
+series to estimate breakpoints per group per feature,
+and derived variance decomposition from `PALMO` [@PALMO] and introduced
+residual variance as a filtering criterion.
 
 This tutorial demonstrates a basic workflow, explains key parameters, and gives
 practical tips.
@@ -70,7 +101,7 @@ Key features covered:
 - *Preparing input*: Create a `SummarizedExperiment` object with the data
     matrix and sample annotation, with checks for correct formatting.
 
-- *Quality control*: Check value distributions and missingness patterns.
+- *Quality control*: Visualise value distributions and missingness patterns.
 
 - *Normalisation, grouping and merging replicates*: Normalise each feature to
     the starting time point when focused on changes from baseline. Transform
@@ -105,14 +136,15 @@ Key features covered:
 ## Installation
 
 ```{r install, eval = FALSE}
-if (!require("remotes", quietly = TRUE)) install.packages("remotes")
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager")
+}
 
-remotes::install_github("hte123/TiDEomics")
+BiocManager::install("TiDEomics")
 ```
 
 ```{r load-packages}
 library(TiDEomics)
-library(magrittr)
 library(SummarizedExperiment)
 library(org.Mm.eg.db)
 ```
@@ -121,9 +153,11 @@ library(org.Mm.eg.db)
 
 TiDEomics expects:
 
-- `data`: log2-transformed data.frame, rows = features (e.g. genes, proteins),
-    columns = samples. First column should be feature names.
-    Missing values (NA) are allowed.
+- `data`: log2-transformed data.frame
+    - rows: features (e.g. genes, proteins)
+    - columns: First column should be feature identifiers.
+        Other columns are numeric measurements of features for each sample.
+    - Missing values (NA) are allowed.
 - `sample_ann`: data.frame with columns:
     - `Sample`: sample names, match column names of `data`
     - `Group`: experimental group
@@ -140,36 +174,63 @@ data set published in @Traxler2025.
 - Ensembl IDs were mapped to symbols, genes with all zero counts were excluded.
 - Use time 0 untreated samples for other groups' time 0.
 - Sample 500 random genes.
-
-Code for preparing the example data is available in `data-raw/tutorial_input.R`
-and the resulting data is stored in `data/tutorial_sample_info.rda` and
-`data/tutorial_data.rda`.
+- Normalised to `log2(CPM + 1)`
 
 ```{r load-example}
 data("tutorial_sample_info", package = "TiDEomics")
 data("tutorial_data", package = "TiDEomics")
+```
 
+### Preprocessing for different data types
+
+TiDEomics expects log-transformed, normalised data as input. The core workflow
+is compatible with any quantitative omics data in a feature x sample matrix.
+Enrichment analysis (`enrichGO_list`, `enrichGO_rank`, `enrichR_list`,
+`enrich_msigdb`) requires gene identifiers and is not applicable to non-gene
+features (e.g., metabolites, lipids).
+
+Batch correction should be applied before input if batch effects are present.
+
+For the most common scenarios in transcriptomics and proteomics:
+
+- RNA-seq data should be normalised for sequencing depth and composition bias
+    before TiDEomics, e.g. with TMM. The tutorial uses `log2(CPM + 1)` for
+    simplicity. For pairwise differential expression, `trend = TRUE` can be used
+    to account for the mean-variance relationship. See below section on
+    [pairwise differential expression](#pairwise-de) for details.
+
+- MS-based proteomics data processing software may include normalisation when
+    producing protein x sample matrix. Depending on software and settings,
+    manual normalisation and log transformation may be required, e.g. median
+    normalisation. Missing values are accepted in most TiDEomics functions,
+    and a basic imputation function `impute_groups()` is provided.
+
+## Workflow
+
+We present the workflow as below sections, explaining the usage and parameters.
+
+### Data preparation
+
+```{r create-input}
 data_obj <- create_input(
     data = tutorial_data,
     sample_ann = tutorial_sample_info)
 
-# Log-transform the data when not already done
-assays(data_obj)[[1]] <- log2(assays(data_obj)[[1]] + 1) # + 1 to avoid log(0)
-
 data_obj
 ```
 
+The `SummarizedExperiment` stores data in named **assays**: `"orig"`
+(assay 1) for the original input and `"norm"` (assay 2) for time-0-normalised
+values (added by `normalise_to_start()`). Downstream functions accept either the
+name or the index.
+
 ```{r view-data}
-assays(data_obj)[[1]] %>% head() # first few rows of the data matrix
+assays(data_obj)[["orig"]] |> as.data.frame() |> utils::head()
 ```
 
 ```{r coldata}
 colData(data_obj) # sample annotation
 ```
-
-## Workflow
-
-We present the workflow as below sections, explaining the usage and parameters.
 
 ### Optional: custom color palette
 
@@ -192,38 +253,42 @@ set_custom_palette(custom_palette)
 plot_distribution(data_obj, facet_by = "Group")
 ```
 
-If distributions differ drastically, consider global normalisation (e.g.,
+If distributions differ significantly, consider global normalisation (e.g.,
 quantile, median) *before* using TiDEomics.
 
 For data with missing values (e.g., proteomics), `plot_ID()` and
 `plot_missing()` can be used to check missingness patterns.
 
-### Normalisation to Time 0
+### Normalisation to starting time point
 
-`normalise_to_start()` subtracts the baseline value from each feature (at time
-0 or the first available time point if the feature is missing at time 0). Two
-modes are available for defining the baseline:
+`normalise_to_start()` subtracts the baseline value from each feature at
+starting time point (referred to as time 0) or the first available time point
+if the feature is missing at time 0.
+
+Two modes are available for defining the baseline:
 
 - `by_subject = FALSE` (default): group-level baseline, mean of all samples at
-    time 0 in the group. This is used when no subject-level information is
-    available or when between-subject baseline differences are of interest.
+    starting time point in the group. This is used when no subject-level
+    information is available or when between-subject baseline differences are
+    of interest.
 
-- `by_subject = TRUE`: subject-level baseline, mean of all samples at time 0
-    for each subject. This is used when subject-level information is available
-    and the focus is on subject-specific changes from baseline.
+- `by_subject = TRUE`: subject-level baseline, mean of all samples at starting
+    time point for each subject. This is used when subject-level information
+    is available and the focus is on subject-specific changes from baseline.
 
 ```{r norm0}
 data_obj <- normalise_to_start(data_obj)
 ```
 
 Both original and time-0 normalised data are stored in the
-`SummarizedExperiment` object and downstream functions allow to specify which
-to use for each analysis (`assay = 1` for original, `assay = 2` for time-0
-normalised).
+`SummarizedExperiment` object and downstream functions allow the user to specify
+which to use for each analysis (`assay = 1 or 'orig'` for original,
+`assay = 2 or 'norm'` for time-0 normalised).
 
-**When not to normalise**: Use original data when absolute abundance
+Use original data when absolute abundance
 differences across groups are of interest (e.g., constitutively different
-baseline levels).
+baseline levels). Use time-0 normalised data when relative changes from
+baseline are of interest.
 
 ### Splitting groups and merging replicates
 
@@ -280,7 +345,6 @@ with missing values in PCA and UMAP.
 
 ```{r pca}
 PC <- plot_pca(data_obj,
-    plot = TRUE,
     # pc1 = 1, pc2 = 2, # default to plot PC1 and PC2
     plot_screeplot = TRUE,
     plot_loadings = FALSE,
@@ -288,17 +352,18 @@ PC <- plot_pca(data_obj,
     circle = FALSE,
     morepc = 1:5
 )
+PC$p_list
 ```
 
 ```{r pca-3D}
-plot_pca_3D(PC, pcs = 1:3)
+plot_pca_3D(PC$pca, pcs = 1:3)
 ```
 
 Note: the 3D plot may not display properly in some html, but should work in an
 interactive R session.
 
 ```{r pca-eigencor}
-PCAtools::eigencorplot(PC,
+PCAtools::eigencorplot(PC$pca,
     metavars = c("Group", "Time"),
     components = paste0("PC", 1:5),
     col = colorRampPalette(c("#3C5488FF", "white", "#E64B35FF"))(100),
@@ -307,7 +372,8 @@ PCAtools::eigencorplot(PC,
 ```
 
 ```{r umap}
-umap_layout <- plot_umap(data_obj, seed = 1234)
+umap <- plot_umap(data_obj, seed = 1234)
+umap$p_list
 ```
 
 PCA and UMAP can also be performed separately on each group to explore
@@ -325,7 +391,7 @@ plot_umap_by_group(data_obj, seed = 1234, legend_pos = "top")
 # also accepts a list: plot_umap_by_group(data_obj_list)
 ```
 
-### Pairwise differential expression
+### Pairwise differential expression {#pairwise-de}
 
 The two DE functions for pairwise comparison between time points and groups are
 built based on the limma package [@limma].
@@ -340,13 +406,19 @@ built based on the limma package [@limma].
 - Use `plot_DE_between_time()` to summarise number of DE features per pair of
     time points per group.
 
+- When a Subject column is provided via `subject_col` in `create_input()`,
+    `DE_between_time()` automatically uses a paired design via
+    `limma::duplicateCorrelation(block = Subject)`.
+
 `DE_between_group()`:
 
 - Compare pairs of groups at each time point.
 
 - Output: Nested lists of DE statistics tables, including all features or
-    only significant features, and line plots summarising number of DE features
-    (can be removed by setting `plot = FALSE`).
+    only significant features.
+
+- Use `plot_DE_between_group()` to summarise number of DE features per pair of
+    groups with line plots.
 
 Common parameters for both functions:
 
@@ -358,12 +430,17 @@ Common parameters for both functions:
     1 non-NA value at both time points in the specific group, or in both groups
     at the specific time point).
 
-- `trend`: passed to `limma::eBayes(trend=)`. Set to `TRUE` for RNA-seq
-    count-derived data to model the mean-variance trend. Leave as `FALSE`
-    (default) for proteomics, metabolomics, or other log-intensity data where
-    the mean-variance relationship is typically flat.
+- `trend`: passed to `limma::eBayes()`. Set to `TRUE` for RNA-seq
+    count-derived data to model the mean-variance trend.
+    `FALSE` (default) is usually appropriate for other types of data,
+    where the trend is typically weak.
+    The trend can be visualised with `limma::plotSA()` with elements of
+    `$fit_list` of both functions' output.
 
 - Default thresholds for DE are `p.adj < 0.05` and `|log2FC| > 1`.
+
+- `plot_DE_between_time()` and `plot_DE_between_group()` allow re-filtering
+    DE by setting new thresholds.
 
 Please note that the example data only has two replicates per time point.
 More replicates are recommended for robust pairwise DE analysis.
@@ -372,37 +449,51 @@ DE_between_time():
 
 ```{r de-between-time, fig.width = 8, fig.height = 2, warning = FALSE}
 DE_between_time_out <- DE_between_time(data_obj, assay = 1,
-    filter = 1, trend = TRUE)
+    filter = 1, trend = FALSE)
 ```
 
 ```{r de-between-time-all}
-DE_between_time_out$all_list$IFNbeta$`t2-t0` %>% head()
+DE_between_time_out$all_list$IFNbeta$`t2-t0` |> utils::head()
 ```
 
 ```{r de-between-time-de}
-DE_between_time_out$de_list$IFNbeta$`t2-t0` %>% head()
+DE_between_time_out$de_list$IFNbeta$`t2-t0` |> utils::head()
 ```
 
 ```{r de-between-time-plot, fig.width = 7, fig.height = 2}
-plot_DE_between_time(data_obj,
-    de_list = DE_between_time_out$de_list,
+# Filtered with thresholds in `DE_between_time()`
+plot_DE_between_time(DE_between_time_out,
     fontsize = 8, value = FALSE, nrow = 1, heatmap_width = 3
+)
+
+# Re-filtering with new thresholds
+plot_DE_between_time(DE_between_time_out,
+    fontsize = 8, value = FALSE, nrow = 1, heatmap_width = 3,
+    adjP_thres = 0.01, logFC_thres = 1
 )
 ```
 
 DE_between_group():
 
-```{r de-between-group, fig.width = 3, fig.height = 2, out.width = "70%"}
+```{r de-between-group}
 DE_between_group_out <- DE_between_group(data_obj, assay = 2,
     filter = 1, trend = TRUE)
 ```
 
+```{r de-between-group-plot, fig.width = 3, fig.height = 2, out.width = "70%"}
+# Filtered with thresholds in `DE_between_group()`
+plot_DE_between_group(DE_between_group_out)
+
+# Re-filtering with new thresholds
+plot_DE_between_group(DE_between_group_out, adjP_thres = 0.01, logFC_thres = 1)
+```
+
 ```{r de-between-group-all}
-DE_between_group_out$all_list$`IFNgamma-untreated`$`24` %>% head()
+DE_between_group_out$all_list$`IFNgamma-untreated`$`24` |> utils::head()
 ```
 
 ```{r de-between-group-de}
-DE_between_group_out$de_list$`IFNgamma-untreated` %>% head()
+DE_between_group_out$de_list$`IFNgamma-untreated` |> utils::head()
 ```
 
 Output of `DE_between_group()`and `DE_between_time()` can be plotted with
@@ -414,25 +505,6 @@ plot_volcano(DE_between_group_out,
     group1 = "untreated", group2 = "IFNgamma", time = 24,
     logFC_thres = 0.5, adjP_thres = 0.05, label = TRUE)
 ```
-
-#### Statistical notes
-
-Both DE functions use `limma::lmFit()` followed by `limma::eBayes()` with
-empirical Bayes variance moderation, which stabilises variance estimates when
-the number of replicates is small. The input data should be log-transformed
-and normalised before analysis.
-
-For **RNA-seq** data with log-transformed counts (e.g., `log2(count + 1)` as
-used in this tutorial), set `trend = TRUE` to let limma model the mean-variance
-relationship - low-abundance features typically have higher variance.
-For **proteomics** (log~2~ intensity) and many other data, the mean-variance
-trend is typically weak or absent, so `trend = FALSE` (default) is commonly
-appropriate. However, this should be verified (e.g. with `limma::plotSA()`).
-
-When a Subject column is provided via `subject_col` in `create_input()`,
-`DE_between_time()` automatically uses a paired design via
-`limma::duplicateCorrelation(block = Subject)`. For independent-sample designs
-(no Subject), all replicates are treated as independent.
 
 ### Feature properties and classification
 
@@ -453,15 +525,28 @@ When a Subject column is provided via `subject_col` in `create_input()`,
 
 - `Exp_threshold`: user-set value threshold for a feature to be considered
     expressed in a sample. This can be used to filter features based on
-    expression level, e.g. setting `threshold = 0` means that only values
-    > 0 (log2(raw count + 1) > 0, i.e. raw count > 0 in the tutorial dataset)
-    are considered expressed. The default is NULL, which means all non-NA
+    expression level, e.g. setting `threshold = 0` means that only 
+    values > 0 (log2(CPM + 1) > 0, i.e. CPM > 0 in the tutorial dataset) are 
+    considered expressed. The default is NULL, which means all non-NA
     values are considered expressed.
 
 - `T_total`, `T_exp` and `Exp_ratio`: number of total time points, number of
     expressed time points with values > `Exp_threshold` (or non-NA values if
-    `threshold = NULL`), and proportion of expressed time points, which can be
-    used to filter features based on completeness or expression level.
+    `threshold = NULL`), and proportion of expressed time points (`T_exp` /
+    `T_total`).
+
+- `Rho_time`: Spearman correlation with time (positive = up, negative = down).
+    Requires at least 3 expressed time points.
+
+- `Peak_ratio`: proportion of time points that are local maxima (0 = monotonic,
+    higher = more oscillatory).
+
+- `Log2_CV`: `log2(1 + SD / |mean|)`, coefficient of variation for relative
+    temporal variability.
+
+- `AUC`: area under the time-0-normalised curve from assay 2. Positive =
+    net increase from baseline, negative = net decrease. `NA` if assay 2 is not
+    available (run `normalise_to_start()` first).
 
 The property values can be used to classify features into different categories
 (e.g., non-random vs. random, differentially expressed vs. stable) for
@@ -482,11 +567,11 @@ data_obj_merged_list <- calc_feature_property(data_obj_merged_list,
     threshold = 0)
 property_tb <- summarise_feature_property(data_obj_merged_list)
 
-head(property_tb)
+utils::head(property_tb)
 ```
 
-Features expressed in only a subset of groups can be extracted with
-`group_specific_features()` based on the output table of
+Features expressed in only one group or a subset of groups can be extracted
+with `group_specific_features()` based on the output table of
 `summarise_feature_property()`.
 
 ```{r group-specific}
@@ -543,8 +628,8 @@ selected features.
 ```{r trendy-plot, fig.height = 2.5, fig.width = 8}
 plot_segments(data_obj_merged_imp_list,
     example_res_list,
-    feature = c("Zfp639", "Tk1"), # example features
-    ylab = "Log2 (raw count + 1)"
+    feature = c("Slc25a51", "Aunip"), # example features
+    ylab = "Log2(CPM + 1)"
 )
 ```
 
@@ -557,7 +642,7 @@ and `extract_segment_trends()`.
 plot_breakpoints(example_res_list)
 
 trendy_summary <- summarise_Trendy(example_res_list)
-trendy_summary %>% head()
+trendy_summary |> utils::head()
 ```
 
 ```{r trendy-list}
@@ -598,12 +683,12 @@ replicates per combination are required for stable estimates.
 
 ```{r variance-decomposition, fig.height = 3}
 # filter genes for variance decomposition:
-# at least 50% values > 0 (raw count > 0) in at least 2 groups
+# at least 50% values > 0 in at least 2 groups
 decomp_filter_genes <- group_specific_features(property_tb,
     filter_ratio = 0.5,
     group_pct = 2 / 4,
     GO = FALSE, genename = FALSE
-)
+)$features
 
 var_decomp <- decomp_variance(data_obj,
     features = decomp_filter_genes,
@@ -630,10 +715,6 @@ with TiDEomics functions.
     also be pre-filtered with the calculated feature property (output of
     `calc_feature_property()` and `summarise_feature_property()`).
 
-<!-- - Features flagged as random (no trend) across groups can be -->
-<!--     excluded, based on the calculated feature property (e.g., remove -->
-<!--     features with `P_trend >= 0.05` in all groups). -->
-
 - Residual variance can be used to exclude noisy features.
 
 - It is not recommended to filter by differential expression before WGCNA, see
@@ -641,8 +722,8 @@ with TiDEomics functions.
 
 ```{r wgcna-prepare}
 # Example filtering by residual variance < Q3
-var_res_q3 <- quantile(var_decomp$Residual, 0.75, na.rm = TRUE)
-filter_wgcna <- var_decomp %>% dplyr::filter(Residual < var_res_q3) %>%
+var_res_q3 <- stats::quantile(var_decomp$Residual, 0.75, na.rm = TRUE)
+filter_wgcna <- var_decomp |> dplyr::filter(Residual < var_res_q3) |>
     dplyr::pull(Feature)
 
 data_obj_wgcna <- data_obj[filter_wgcna, ]
@@ -662,10 +743,10 @@ for details.
 
 ```{r choose-power}
 wgcna_input <- prepare_WGCNA(data_obj_wgcna, assay = 2,
-    powers = seq(1, 30),
+    powers = seq(1, 20),
     networkType = "signed", RsquaredCut = 0.8
 )
-wgcna_input$fitIndices
+wgcna_input$plot
 picked_power <- wgcna_input$powerEstimate
 picked_power
 ```
@@ -695,9 +776,16 @@ plot_WGCNA(net, fontsize = 8)
 ```{r extract-wgcna-modules}
 gene_module <- WGCNA_module(net, exclude_grey = TRUE)
 
-gene_module %>%
-    dplyr::group_by(Module) %>%
+gene_module |>
+    dplyr::group_by(Module) |>
     dplyr::summarise(n = dplyr::n())
+```
+
+Module metrics (size, mean kME, etc.) can be summarised with
+`summarise_module_metrics()`:
+
+```{r module-metrics}
+summarise_module_metrics(net)
 ```
 
 **Plot module profiles**:
@@ -705,14 +793,14 @@ gene_module %>%
 ```{r plot-wgcna-modules, fig.width = 6, fig.height = 6}
 plot_modules_v(gene_module,
     data_obj_merged, scale = TRUE,
-    ylabel = "Z-score of log2 (raw count + 1)",
+    ylabel = "Z-score of log2(CPM + 1)",
     height_ratio = 2
 )
 ```
 
 ### Functional enrichment
 
-Functions in TiDEomics wrap `clusterProfiler::enrichGO()` and
+TiDEomics wrap `clusterProfiler::enrichGO()` and
 `clusterProfiler::gseGO()`[@clusterProfiler_1; @clusterProfiler_2;
 @clusterProfiler_3; @clusterProfiler_4]
 to run GO enrichment efficiently on gene sets and ranked gene list.
@@ -747,22 +835,56 @@ go_list <- enrichGO_list(
     simplify = FALSE,
     keyType = "SYMBOL"
 )
+
 plot_GO(go_list$all, plot_dotplot = TRUE,
     plot_emapplot = FALSE,
     plot_cnetplot = FALSE,
     showCategory_dotplot = 3)
 ```
 
-Enriched GO terms can be added to the module profile plot with
+Enrichment can also be performed against the Molecular Signatures Database
+([MSigDB](https://www.gsea-msigdb.org/gsea/msigdb)) via `enrich_msigdb()`,
+which queries the gene sets with `msigdbr::msigdbr()`
+and runs a hypergeometric test across
+user-selected collections (Hallmark, GO, etc.) or specific gene sets.
+
+```{r enrich-msigdb}
+# Mouse Hallmark gene sets
+hallmark_msigdb <- enrich_msigdb(gene_module, universe = background_wgcna,
+    minGSSize = 5, category = "MH", species = "Mus musculus", db_species = "MM")
+
+# Human C2 (chemical and genetic perturbations)
+perturb_msigdb <- enrich_msigdb(gene_module, universe = background_wgcna,
+    category = "C2", subcategory = "CGP", species = "Mus musculus")
+
+# Specific gene sets (category not required)
+ifn_msigdb <- enrich_msigdb(gene_module, universe = background_wgcna,
+    gene_sets = c("HALLMARK_INTERFERON_ALPHA_RESPONSE",
+        "HALLMARK_INTERFERON_GAMMA_RESPONSE"),
+    minGSSize = 5, species = "Mus musculus", db_species = "MM")
+```
+
+Enrichment of other gene sets (e.g., drug signatures, TF targets, pathways) can
+be performed with `enrichR_list()`, which wraps `enrichR::enrichr()`.
+Available databases can be checked with `enrichR::listEnrichrDbs()`.
+
+`enrichGO_list()`, `enrich_msigdb()` and `enrichR_list()` all
+return a named list of data.frames (one per category for `enrichGO_list`,
+one for `enrich_msigdb()`, one per database for `enrichR_list()`) with
+`Cluster` and `Description` columns, compatible with `plot_modules_h()`.
+
+### Integrated visualisation of WGCNA modules and functional enrichment
+
+Enriched terms can be added to the module profile plot with
 `plot_modules_h()`, which is similar to `plot_modules_v()` above but
 horizontally aligned with annotation of the modules with their top enriched
 GO terms. The plotting function is adapted from ClusterGVis
 package [@ClusterGVis].
 
-```{r plot-wgcna-modules-go, fig.width = 9}
+```{r plot-wgcna-modules-go, fig.width = 8}
 plot_modules_h(gene_module,
     data_obj_merged, scale = TRUE,
-    ylabel = "Z-score of log2 (raw count + 1)",
+    ylabel = "Z-score of log2(CPM + 1)",
     enrich_list = go_list$all,
     enrich_category = "BP",
     heatmap_width = 6,
@@ -770,11 +892,32 @@ plot_modules_h(gene_module,
 )
 ```
 
-Enrichment of other gene sets (e.g., drug signatures, TF targets, pathways) can
-be performed with `enrichR_list()`, which wraps `enrichR::enrichr()`. It
-returns a named list of data.frames (one per database) with `Cluster` and
-`Description` columns, compatible with `plot_modules_h()`. Available databases
-can be checked with `enrichR::listEnrichrDbs()`.
+Multiple enrichment categories (e.g. GO BP, CC, MF, MSigDB collections,
+enrichR databases) can be displayed side-by-side
+by passing a vector to `enrich_category`. Features of interest can
+be marked on the heatmap or shown as an annotation column via
+`mark_features` and `enrich_category = "Hub features"`. The
+`enrich_p_threshold` parameter controls per-category p-value colour-coding
+of enrichment terms; set to `NA` for "Hub features", which use auto-assigned
+colours instead.
+
+Hub features can be extracted by WGCNA module membership (the correlation of
+the feature with the corresponding module eigengene) with `extract_hubs()`
+
+```{r plot-wgcna-modules-multi, fig.width = 15}
+hub_features <- extract_hubs(net, top_n = 3)
+
+plot_modules_h(gene_module,
+    data_obj_merged, scale = TRUE,
+    ylabel = "Z-score of log2(CPM + 1)",
+    enrich_list = c(go_list$all, hallmark_msigdb),
+    enrich_category = c("BP", "CC", "MH"),
+    enrich_p_threshold = c(0.05, 0.05, 0.05),
+    mark_features = hub_features,
+    heatmap_width = 6,
+    heatmap_height = 8
+)
+```
 
 ### Universal: plot features of interest
 
@@ -782,15 +925,15 @@ Selected features can be plotted with `plot_trend()`, which shows the mean and
 standard deviation of replicates at each time point.
 
 ```{r plot-feature}
-plot_trend(data_obj, assay = 1, features = c("Actb", "Cd69", "Fosb", "Il23a"),
+plot_trend(data_obj, assay = 1,
+    features = c("Abtb1", "Dram1", "Ifi27", "Nufip1"),
     title = "Example features")
-plot_trend(data_obj, assay = 2, features = c("Actb", "Cd69", "Fosb", "Il23a"),
-    title = "Example features with time 0 normalisation")
 
 # Or pre-calculate mean and sd with calc_mean_sd()
-# table_mean_sd_orig <- calc_mean_sd(data_obj)$orig
-# plot_trend(table_mean_sd_orig, features = c("Actb", "Cd69", "Fosb", "Il23a"),
-#     title = "Example features")
+table_mean_sd_orig <- calc_mean_sd(data_obj)$orig
+plot_trend(table_mean_sd_orig,
+    features = c("Abtb1", "Dram1", "Ifi27", "Nufip1"),
+    title = "Example features")
 ```
 
 Visualisation of features with high & low residual variance justify the
@@ -798,17 +941,98 @@ filtering strategy for WGCNA input.
 
 ```{r plot-residual}
 plot_trend(data_obj, assay = 1,
-    features = var_decomp %>%
-        dplyr::arrange(Residual) %>% head(12) %>% dplyr::pull(Feature),
+    features = var_decomp |>
+        dplyr::arrange(Residual) |> utils::head(12) |> dplyr::pull(Feature),
     title = "Features with lowest residual variance"
 )
 
 plot_trend(data_obj, assay = 1,
-    features = var_decomp %>%
-        dplyr::arrange(dplyr::desc(Residual)) %>%
-        head(12) %>% dplyr::pull(Feature),
+    features = var_decomp |>
+        dplyr::arrange(dplyr::desc(Residual)) |>
+        utils::head(12) |> dplyr::pull(Feature),
     title = "Features with highest residual variance"
 )
+```
+
+### One-step preprocessing with `prepare_tide()`
+
+`prepare_tide()` is a wrapper function that runs multiple preprocessing steps
+in a single call, including input creation, normalisation, merging replicates,
+variance decomposition, and feature filtering. It is convenient for standard
+analyses, while running each step individually allows for more control over
+parameters.
+
+```{r prepare-tide}
+tide <- prepare_tide(
+    data = tutorial_data,
+    sample_ann = tutorial_sample_info,
+    filter_ratio = 0.5,
+    min_groups = 2,
+    keep = "below_quantile",
+    residual_threshold = 0.75
+)
+tide$filter_summary
+```
+
+Variance decomposition and filtering are run on both `"orig"` and `"norm"`
+assays. The returned list `tide` contains:
+
+| Element | Description | Use for | Step-by-step equivalent in the tutorial |
+|---------|-------------|---------|-------------------------|
+| `tide$se` | Unmerged SE, all features | Correlation matrix, PCA, UMAP, Pairwise DE, plot_trend | `data_obj` |
+| `tide$se_filtered$orig/norm` | Unmerged SE, filtered features | WGCNA | `data_obj_wgcna` |
+| `tide$merged_list` | Per-group merged SEs, all features | calc_feature_property, run_Trendy | `data_obj_merged_list` |
+| `tide$merged_list_filtered$orig/norm` | Per-group merged SEs, filtered features | - |  |
+| `tide$merged_se` | Single merged SE, all features | plot_modules_v/h | `data_obj_merged` |
+| `tide$merged_se_filtered$orig/norm` | Single merged SE, filtered features | plot_modules_v/h | - |
+| `tide$variance$orig/norm` | Variance decomposition | plot_variance, enrichGO_rank | `var_decomp` |
+| `tide$feature_property` | Feature property summary | group_specific_features | `property_tb` |
+| `tide$filter_summary` | Per-stage filtering stats | QC | — |
+| `tide$group_specific_filter` | Features removed by cross-group filter | Review group-specific features | — |
+| `tide$DE` | DE results placeholder | Centralised storage | `DE_between_time/group_out`|
+| `tide$enrichment` | Enrichment results placeholder | Centralised storage | `go_list`, etc. |
+| `tide$WGCNA` | WGCNA results placeholder | Centralised storage | `net` |
+
+Pairwise DE, WGCNA and enrichment can be run on the returned elements, and the
+results can be appended to the list for centralised storage.
+
+```{r tide-de}
+tide$DE <- list(
+    between_group = DE_between_group_out,
+    between_time  = DE_between_time_out
+)
+tide$WGCNA <- net
+
+tide$enrichment$GO_modules <- go_list
+tide$enrichment$MSigDB <- hallmark_msigdb
+tide$enrichment$GO_group <- gse_group
+```
+
+## Interoperability within Bioconductor ecosystem
+
+TiDEomics uses SummarizedExperiment as the central data container. It keeps
+the feature x sample matrices, sample annotation, and feature metadata
+synchronized during normalisation, splitting, and filtering. The use of
+multiple assays within the same object also allows original ("orig") and
+baseline-normalized ("norm") data to remain linked throughout the workflow.
+
+As SummarizedExperiment is a standard Bioconductor container, TiDEomics
+data can be passed to other Bioconductor tools for further custom analysis
+and visualisation. For example, [iSEE](https://bioconductor.org/packages/iSEE)
+interactive SummarizedExperiment browser can be used to explore the data
+in an interactive Shiny app.
+
+```{r isee, eval = FALSE}
+iSEE::iSEE(data_obj)
+```
+
+`prepare_tide()` output can be converted to a
+[`DeeDeeExperiment`](https://bioconductor.org/packages/DeeDeeExperiment)
+object for formatted summary.
+
+```{r deedee}
+dde <- as_DeeDeeExperiment(tide)
+summary(dde)
 ```
 
 ## Common usage scenarios
@@ -834,8 +1058,8 @@ TiDEomics to answer them. For example:
     `calc_feature_property()`, `run_Trendy()`.
 
 - Which features differ between groups at the same time point? ->
-    `DE_between_group()` (For time 0, use `assay = 1`; for later time points,
-    use `assay = 1` for original input data, or use `assay = 2` for
+    `DE_between_group()` (For starting time point, use `assay = 1`; for later
+    time points, use `assay = 1` for original input data, or use `assay = 2` for
     change-from-baseline).
 
 - What is the temporal pattern for individual features? -> `run_Trendy()` +
@@ -860,7 +1084,7 @@ TiDEomics to answer them. For example:
     correction when appropriate, before `create_input()`.
 
 - How to handle missing values? -> `impute_groups()` for `run_Trendy`.
-    `plot_pca()` and `plot_umap()` automatically excluded features with missing
+    `plot_pca()` and `plot_umap()` automatically exclude features with missing
     values. `prepare_WGCNA()` filter out features with too many missing values.
 
 ## Session information
@@ -868,11 +1092,5 @@ TiDEomics to answer them. For example:
 ```{r session-info}
 sessionInfo()
 ```
-
-<!-- ```{r} -->
-<!-- # save object for function examples -->
-<!-- example_obj = data_obj[1:100, ] -->
-<!-- save(example_obj, file = "../data/example.rda") -->
-<!-- ``` -->
 
 ## References

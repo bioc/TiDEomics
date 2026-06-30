@@ -22,28 +22,40 @@ experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](h
 <!-- [![Codecov test coverage](https://codecov.io/gh/hte123/TiDEomics/graph/badge.svg)](https://app.codecov.io/gh/hte123/TiDEomics) -->
 <!-- badges: end -->
 
-`TiDEomics` is designed to streamline **Ti**me-course **D**ifferential
-**E**xpression analysis of **omics** data with **multiple experimental
-groups / conditions**, for example, different cell lines or different
-treatments sampled at several time points.
+`TiDEomics` provides an integrated framework for **Ti**me-course
+**D**ifferential **E**xpression analysis of **omics** data with
+**multiple experimental groups / conditions**.
 
-The package’s main goals are:
+`TiDEomics` enables:
 
-- Compare multiple time courses systematically.
-- Identify features (e.g. genes, proteins) and pathways differentially
-  expressed by **time**, **condition**, and **both** factors (time x
-  condition interactions).
-- Provide utilities for quality control, data processing, sample-level
-  and feature-level analysis, tailored for time-course multi-condition
-  data.
-- Output high-quality tables and figures to facilitate interpretation
-  and reporting.
+- Analysis of feature x sample format data from different omics
+  technologies.
+- Comparison of multiple (more than two) time courses systematically.
+- Filtering of features by residual variance, accounting for group and
+  temporal structure.
+- Identification of features (e.g. genes, proteins) and pathways
+  differentially expressed by **time**, **group**, and **both** factors
+  (time x group interactions).
+- Integration of quality control, data processing, sample-level and
+  feature-level analysis, tailored for time-course multi-condition data.
+- Functional enrichment with high-quality visualisation.
+
+Existing time-course analysis tools typically focus on a single analysis
+step or are limited to two-group designs or transcriptomics input, and
+do not provide an integrated workflow.
 
 <img src="man/figures/TiDEomics_workflow_v1.png" style="width:70.0%" />
 
-The package supports datasets with missing values, and operates on
-SummarizedExperiment objects to ensure compatibility with the
-Bioconductor ecosystem.
+Example applications include:
+
+- Transcriptomics analysis of a cell type’s response to different
+  stimuli over time.
+- Proteomics analysis of wild type and multiple mutant cell lines
+  sampled at several time points.
+
+`TiDEomics` supports datasets with missing values (e.g. mass
+spectrometry-based proteomics), and operates on `SummarizedExperiment`
+objects to ensure compatibility with the Bioconductor ecosystem.
 
 `TiDEomics` supports both independent-sample designs (e.g. cell culture)
 and repeated-measures designs (e.g. patient longitudinal studies, via
@@ -52,21 +64,19 @@ data structure.
 
 ## Installation
 
-<!-- Get the latest stable `R` release from [CRAN](http://cran.r-project.org/). Then install `TiDEomics` from [Bioconductor](http://bioconductor.org/) using the following code: -->
+Get the latest stable `R` release from
+[CRAN](http://cran.r-project.org/). Then install `TiDEomics` from
+[Bioconductor](http://bioconductor.org/) using the following code:
 
-<!-- ```{r 'install', eval = FALSE} -->
+``` r
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+    install.packages("BiocManager")
+}
 
-<!-- if (!requireNamespace("BiocManager", quietly = TRUE)) { -->
+BiocManager::install("TiDEomics")
+```
 
-<!--     install.packages("BiocManager") -->
-
-<!-- } -->
-
-<!-- # BiocManager::install("TiDEomics") -->
-
-<!-- ``` -->
-
-Install the development version from
+The development version can be installed from
 [GitHub](https://github.com/hte123/TiDEomics) with:
 
 ``` r
@@ -92,7 +102,7 @@ print(citation("TiDEomics"), bibtex = TRUE)
 #> To cite package 'TiDEomics' in publications use:
 #> 
 #>   He T (2026). _TiDEomics: Time-course Differential Expression analysis
-#>   of omics data_. R package version 0.99.0,
+#>   of omics data_. R package version 0.99.2,
 #>   <https://github.com/hte123/TiDEomics>.
 #> 
 #> A BibTeX entry for LaTeX users is
@@ -101,7 +111,7 @@ print(citation("TiDEomics"), bibtex = TRUE)
 #>     title = {TiDEomics: Time-course Differential Expression analysis of omics data},
 #>     author = {Tianen He},
 #>     year = {2026},
-#>     note = {R package version 0.99.0},
+#>     note = {R package version 0.99.2},
 #>     url = {https://github.com/hte123/TiDEomics},
 #>   }
 ```
@@ -137,8 +147,6 @@ contributing to this project, you agree to abide by its terms.
 - The documentation is formatted thanks to
   *[devtools](https://CRAN.R-project.org/package=devtools)* and
   *[roxygen2](https://CRAN.R-project.org/package=roxygen2)*.
-
-<!-- For more details, check the `dev` directory. -->
 
 This package was developed using
 *[biocthis](https://bioconductor.org/packages/3.24/biocthis)*.
