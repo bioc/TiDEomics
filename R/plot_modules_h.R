@@ -163,17 +163,16 @@
 #' @param heatmap_width Width of the heatmap body in cm (default: 8)
 #' @param heatmap_height Height of the heatmap body in cm (default: 8)
 #' @param mark_features Features to highlight. Accepts two forms:
-#'   \itemize{
-#'     \item A **character vector** --- all marked in black on the left.
-#'     \item A **named list** of character vectors, e.g.
-#'       `list("Hub 1" = c("gene1"), "Hub 2" = c("gene2"))`.
-#'       Names become categories with auto-assigned colours (via
-#'       `ggsci::pal_jco()`). Auto-routed: shown as `anno_mark` (left
-#'       side, connecting lines) unless `"Hub features"` is present in
-#'       `enrich_category`, in which case an `anno_textbox` (right side)
-#'       is built instead, using the same colours.
-#'   }
-#'   Set to `NULL` (default) to skip marking.
+#'     - A **character vector**: all marked in black on the left.
+#'     - A **named list** of character vectors, e.g.
+#'         `list("Hub 1" = c("gene1"), "Hub 2" = c("gene2"))`.
+#'         Names become categories with auto-assigned colours (via
+#'         `ggsci::pal_jco()`).
+#'     Auto-routed: shown as `anno_mark` (left
+#'     side, connecting lines) unless `"Hub features"` is present in
+#'     `enrich_category`, in which case an `anno_textbox` (right side)
+#'     is built instead, using the same colours.
+#'     Set to `NULL` (default) to skip marking.
 #' @param width Width of the saved image (default is 16 (cm))
 #' @param height Height of the saved image (default is 12 (cm))
 #' @param res Resolution of the saved image (except pdf format)
@@ -260,8 +259,7 @@ plot_modules_h <- function(
         .check_list(enrich_list, "enrich_list")
     if (!is.null(enrich_p_threshold)) {
         valid_vals <- enrich_p_threshold[!is.na(enrich_p_threshold)]
-        if (length(valid_vals) > 0)
-            .check_pval(valid_vals, "enrich_p_threshold")
+        for (v in valid_vals) .check_pval(v, "enrich_p_threshold")
     }
     if (!is.null(mark_features)) {
         if (!is.character(mark_features) && !is.list(mark_features)) {

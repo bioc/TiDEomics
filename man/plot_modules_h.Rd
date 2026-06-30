@@ -92,16 +92,17 @@ terms black). Set to \code{NA} for categories using a pre-assigned
 
 \item{mark_features}{Features to highlight. Accepts two forms:
 \itemize{
-\item A \strong{character vector} --- all marked in black on the left.
+\item A \strong{character vector}: all marked in black on the left.
 \item A \strong{named list} of character vectors, e.g.
 \code{list("Hub 1" = c("gene1"), "Hub 2" = c("gene2"))}.
 Names become categories with auto-assigned colours (via
-\code{ggsci::pal_jco()}). Auto-routed: shown as \code{anno_mark} (left
+\code{ggsci::pal_jco()}).
+Auto-routed: shown as \code{anno_mark} (left
 side, connecting lines) unless \code{"Hub features"} is present in
 \code{enrich_category}, in which case an \code{anno_textbox} (right side)
 is built instead, using the same colours.
-}
-Set to \code{NULL} (default) to skip marking.}
+Set to \code{NULL} (default) to skip marking.
+}}
 
 \item{width}{Width of the saved image (default is 16 (cm))}
 
