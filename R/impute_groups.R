@@ -89,6 +89,10 @@ impute_groups <- function(se_obj_list, fun = min,
             assay_list[[assay]] <- M_imp
         }
 
+        # Preserve assay names from input
+        assay_names <- names(assays(input))
+        if (!is.null(assay_names)) names(assay_list) <- assay_names
+
         se_obj_imp <- input
         assays(se_obj_imp) <- assay_list
         se_obj_imp_list[[i]] <- se_obj_imp

@@ -1,91 +1,44 @@
-# Tests for Trendy pipeline (segmented regression)
+# ---- Shared Trendy result ----
+data("example_obj")
+example_obj <- normalise_to_start(example_obj)
+example_obj_list <- split_groups(example_obj)
+example_obj_merged_list <- merge_replicates(example_obj_list)
+example_obj_merged_imp_list <- impute_groups(example_obj_merged_list)
+test_features <- utils::head(rownames(example_obj_merged_imp_list[[1]]), 10)
 
-test_that("run_Trendy works on imputed merged data", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged_imp_list <- impute_groups(example_obj_merged_list)
+trendy_res <- run_Trendy(example_obj_merged_imp_list,
+    feature = test_features,
+    minExp = 0.5, maxK = 1, minNumInSeg = 2,
+    meanCut = 0, NCores = 1)
 
-    # Small subset for speed
-    test_features <- utils::head(rownames(example_obj_merged_imp_list[[1]]), 10)
+trendy_summary <- summarise_Trendy(trendy_res)
 
-    res <- run_Trendy(example_obj_merged_imp_list,
-        feature = test_features,
-        minExp = 0.5, maxK = 1, minNumInSeg = 2,
-        meanCut = 0, NCores = 1)
+# ---- Tests ----
 
-    expect_true(is.list(res))
-    # Results may be a subset (groups with too few points are skipped)
-    expect_true(all(names(res) %in% names(example_obj_merged_imp_list)))
+test_that("run_Trendy works", {
+    expect_true(is.list(trendy_res))
+    expect_true(all(names(trendy_res) %in% names(example_obj_merged_imp_list)))
 })
 
 test_that("summarise_Trendy produces expected columns", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged_imp_list <- impute_groups(example_obj_merged_list)
-
-    test_features <- utils::head(rownames(example_obj_merged_imp_list[[1]]), 10)
-    res <- run_Trendy(example_obj_merged_imp_list,
-        feature = test_features,
-        minExp = 0.5, maxK = 1, minNumInSeg = 2,
-        meanCut = 0, NCores = 1)
-
-    ts <- summarise_Trendy(res)
-
-    expect_s3_class(ts, "data.frame")
-    expect_true("Feature" %in% colnames(ts))
-    expect_true("Group" %in% colnames(ts))
+    expect_s3_class(trendy_summary, "data.frame")
+    expect_true("Feature" %in% colnames(trendy_summary))
+    expect_true("Group" %in% colnames(trendy_summary))
 })
 
 test_that("extract_segment_trends works", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged_imp_list <- impute_groups(example_obj_merged_list)
-
-    test_features <- utils::head(rownames(example_obj_merged_imp_list[[1]]), 10)
-    res <- run_Trendy(example_obj_merged_imp_list,
-        feature = test_features,
-        minExp = 0.5, maxK = 1, minNumInSeg = 2,
-        meanCut = 0, NCores = 1)
-    ts <- summarise_Trendy(res)
-
-    tl <- extract_segment_trends(ts)
+    tl <- extract_segment_trends(trendy_summary)
     expect_true(is.list(tl))
-    # Should have one entry per group
-    groups <- unique(ts$Group)
+    groups <- unique(trendy_summary$Group)
     expect_true(all(groups %in% names(tl)))
 })
 
 test_that("plot_breakpoints returns ggplot", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged_imp_list <- impute_groups(example_obj_merged_list)
-
-    test_features <- utils::head(rownames(example_obj_merged_imp_list[[1]]), 10)
-    res <- run_Trendy(example_obj_merged_imp_list,
-        feature = test_features,
-        minExp = 0.5, maxK = 1, minNumInSeg = 2,
-        meanCut = 0, NCores = 1)
-
-    p <- plot_breakpoints(res)
+    p <- plot_breakpoints(trendy_res)
     expect_s3_class(p, "ggplot")
 })
 
 test_that("run_Trendy validates feature argument", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged_imp_list <- impute_groups(example_obj_merged_list)
-
-    # feature must be present in data
     expect_error(
         run_Trendy(example_obj_merged_imp_list, feature = "nonexistent",
             maxK = 1, minNumInSeg = 2, NCores = 1),
@@ -94,13 +47,7 @@ test_that("run_Trendy validates feature argument", {
 })
 
 test_that("run_Trendy validates minNumInSeg", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged_imp_list <- impute_groups(example_obj_merged_list)
     feat <- rownames(example_obj_merged_imp_list[[1]])[1]
-
     expect_error(
         run_Trendy(example_obj_merged_imp_list, feature = feat,
             maxK = 1, minNumInSeg = 0, NCores = 1),
@@ -115,16 +62,17 @@ test_that("summarise_Trendy returns NULL when all groups skipped", {
 })
 
 test_that("run_Trendy handles feature = NULL", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged_list <- calc_feature_property(example_obj_merged_list,
+    merged_list_prop <- calc_feature_property(example_obj_merged_list,
         threshold = 0)
-    example_obj_merged_imp_list <- impute_groups(example_obj_merged_list)
+    imp_list <- impute_groups(merged_list_prop)
+    sub_feat <- rownames(imp_list[[1]])[1:10]
+    imp_list_sub <- lapply(imp_list, function(x) {
+        sub <- x[sub_feat, , drop = FALSE]
+        SummarizedExperiment::rowData(sub)[["Feature"]] <- rownames(sub)
+        sub
+    })
     expect_no_error(
-        run_Trendy(example_obj_merged_imp_list,
-            feature = NULL, maxK = 1, minNumInSeg = 2, NCores = 1)
+        run_Trendy(imp_list_sub, feature = NULL, maxK = 1, minNumInSeg = 2, NCores = 1)
     )
 })
 
@@ -160,17 +108,10 @@ test_that("plot_breakpoints skips NULL groups with message", {
 })
 
 test_that("run_Trendy errors on invalid group name", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged_imp_list <- impute_groups(example_obj_merged_list)
     feat <- rownames(example_obj_merged_imp_list[[1]])[1]
-
     expect_error(
         run_Trendy(example_obj_merged_imp_list, feature = feat,
             group = "nonexistent"),
         "not found"
     )
 })
-

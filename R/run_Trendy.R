@@ -56,7 +56,8 @@
 #' # "untreated" group has only 3 time points, so Trendy analysis will not be
 #' # performed for this group
 #' example_res_list <- run_Trendy(example_obj_merged_imp_list, maxK = 1,
-#'     minNumInSeg = 2, meanCut = 0)
+#'     minNumInSeg = 2, meanCut = 0,
+#'     feature = rownames(example_obj_merged_imp_list[[1]])[1:10])
 run_Trendy <- function(se_obj_imp_list, group = NULL,
     feature = NULL, minExp = 0.5, maxK = 1,
     meanCut = 0, minNumInSeg = 3, NCores = 1, ...) {

@@ -72,6 +72,23 @@
 #' @usage data(example_net)
 "example_net"
 
+#' `enrichGO_list()` output object for runnable examples
+#'
+#' Code for producing the data is in `inst/script/generate_example_go.R`
+#'
+#' @format A nested list with GO enrichment results for modules "1" and "2"
+#' from 'example_net', containing categories "BP" and "CC",
+#' with simplify = TRUE applied:
+#' \describe{
+#'   \item{all}{Merged results across gene sets for each GO category}
+#'   \item{simplified}{Simplified merged results}
+#'   \item{unmerged_all}{Per-gene-set results for each category}
+#'   \item{unmerged_simplified}{Simplified per-gene-set results}
+#' }
+#' @source GSE263759
+#' @usage data(example_go)
+"example_go"
+
 #' `run_Trendy` output object for runnable examples
 #'
 #' Code for preparing the data is in `inst/script/generate_example_res_list.R`

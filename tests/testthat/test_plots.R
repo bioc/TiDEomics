@@ -1,11 +1,12 @@
-# Tests for plotting functions - validate returns and no-error behavior
+# ---- Shared data and precomputation ----
+data(example_obj)
+se <- normalise_to_start(example_obj)
+vd <- decomp_variance(se, features = rownames(se)[1:20],
+    fixed_effect_var = NULL, assay = "orig", core = 1)
+
+# ---- Tests ----
 
 test_that("plot_variance works, validates, and handles edge cases", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
-    vd <- decomp_variance(se, features = rownames(se)[1:20],
-        fixed_effect_var = NULL, assay = "orig", core = 1)
-
     expect_s3_class(plot_variance(vd, rank = "Time", top_n = 5), "ggplot")
     expect_s3_class(plot_variance(vd, rank = "Group", top_n = 10), "ggplot")
     expect_error(plot_variance(NULL), "data.frame")
@@ -18,8 +19,6 @@ test_that("plot_variance works, validates, and handles edge cases", {
 })
 
 test_that("plot_trend works with SE, table, errorbar, groups, and title", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
     tbl <- calc_mean_sd(se)
     feats <- utils::head(unique(tbl$orig$Feature), 3)
     grp <- as.character(unique(tbl$orig$Group)[1])
@@ -37,15 +36,11 @@ test_that("plot_trend works with SE, table, errorbar, groups, and title", {
 })
 
 test_that("plot_cor_matrix runs and validates", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
     expect_no_error(plot_cor_matrix(se, method = "spearman"))
     expect_error(plot_cor_matrix(NULL), "SummarizedExperiment")
 })
 
 test_that("plot_distribution works with and without facet_by and validates", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
     expect_s3_class(plot_distribution(se, facet_by = "Group"), "ggplot")
     expect_s3_class(plot_distribution(se, facet_by = "Time"), "ggplot")
     expect_s3_class(plot_distribution(se), "ggplot")
@@ -54,17 +49,12 @@ test_that("plot_distribution works with and without facet_by and validates", {
 })
 
 test_that("plot_cv returns ggplot and validates", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
     p <- plot_cv(se)
     expect_s3_class(p, "ggplot")
     expect_error(plot_cv(NULL), "SummarizedExperiment")
 })
 
 test_that("plot_ID and plot_missing return list, validate, and handle signif", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
-
     p <- plot_ID(se)
     expect_type(p, "list")
     expect_s3_class(p$comparison, "ggplot")
@@ -79,9 +69,7 @@ test_that("plot_ID and plot_missing return list, validate, and handle signif", {
     expect_s3_class(res$comparison, "ggplot")
 })
 
-test_that("plot_pca returns pca object and plots", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
+test_that("plot_pca handles circle, screeplot, and loadings variants", {
     res <- plot_pca(se, plot_screeplot = FALSE,
         plot_loadings = FALSE, plot_morepc = FALSE,
         circle = FALSE)
@@ -90,21 +78,12 @@ test_that("plot_pca returns pca object and plots", {
     expect_true("pca" %in% names(res))
     expect_true("rotated" %in% names(res$pca))
     expect_true("variance" %in% names(res$pca))
-})
 
-test_that("plot_pca with circle=TRUE runs", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
     expect_no_error(
         plot_pca(se, plot_screeplot = FALSE,
             plot_loadings = FALSE, plot_morepc = FALSE,
             circle = TRUE)
     )
-})
-
-test_that("plot_pca with screeplot and loadings", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
     expect_no_error(
         plot_pca(se, plot_screeplot = TRUE,
             plot_loadings = TRUE, plot_morepc = FALSE,
@@ -112,10 +91,7 @@ test_that("plot_pca with screeplot and loadings", {
     )
 })
 
-
 test_that("plot_umap returns layout, plots, and handles circle/plot_ID", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
     res <- plot_umap(se, seed = 42)
     expect_type(res, "list")
     expect_true(all(c("p_list", "umap_layout") %in% names(res)))
@@ -125,17 +101,13 @@ test_that("plot_umap returns layout, plots, and handles circle/plot_ID", {
     expect_no_error(plot_umap(se, plot_ID = TRUE, seed = 42))
 })
 
-test_that("plot_pca_3D runs without error", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
-    pca_res <- plot_pca(se, plot_screeplot = FALSE,
-        plot_loadings = FALSE, plot_morepc = FALSE)$pca
+pca_res <- plot_pca(se, plot_screeplot = FALSE,
+    plot_loadings = FALSE, plot_morepc = FALSE)$pca
+
+test_that("plot_pca_3D runs and validates", {
     expect_no_error(
         plot_pca_3D(pca_res, pcs = 1:3)
     )
-})
-
-test_that("plot_pca_3D errors on NULL or invalid pca object", {
     expect_error(
         plot_pca_3D(NULL),
         "must be a PCA result"
@@ -148,17 +120,6 @@ test_that("plot_pca_3D errors on NULL or invalid pca object", {
         plot_pca_3D(list(rotated = NULL, variance = NULL)),
         "must be a PCA result"
     )
-})
-
-# The requireNamespace("plotly") defensive branch is not tested here because
-# base::requireNamespace cannot be mocked without modifying locked namespaces.
-# The branch exists to guard against missing plotly at runtime.
-
-test_that("plot_pca_3D validates pcs argument", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
-    pca_res <- plot_pca(se, plot_screeplot = FALSE,
-        plot_loadings = FALSE, plot_morepc = FALSE)$pca
 
     # Wrong length
     expect_error(plot_pca_3D(pca_res, pcs = 1:2),
@@ -175,8 +136,6 @@ test_that("plot_pca_3D validates pcs argument", {
 })
 
 test_that("plot_volcano runs with DE_between_group output", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
     de_out <- suppressMessages(DE_between_group(se, assay = 2, filter = 1))
     groups <- levels(se$Group)
     p <- plot_volcano(de_out,
@@ -187,8 +146,6 @@ test_that("plot_volcano runs with DE_between_group output", {
 })
 
 test_that("plot_DE_between_time runs", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
     de_out <- suppressMessages(DE_between_time(se, assay = 1, filter = 1))
     expect_no_error(
         plot_DE_between_time(de_out, fontsize = 8)
@@ -201,8 +158,6 @@ test_that("plot_DE_between_group runs and validates input", {
         "must be the output of DE_between_group"
     )
 
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
     de_out <- suppressMessages(DE_between_group(se, assay = 1, filter = 1))
 
     expect_no_error(
@@ -215,8 +170,6 @@ test_that("plot_DE_between_group runs and validates input", {
 })
 
 test_that("plot_pca_by_group works with SE, list, and circle/arrow variants", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
     se_list <- split_groups(se)
 
     expect_s3_class(plot_pca_by_group(se, circle = FALSE, arrow = FALSE,
@@ -233,8 +186,6 @@ test_that("plot_pca_by_group works with SE, list, and circle/arrow variants", {
 })
 
 test_that("plot_umap_by_group works with SE and list", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
     se_list <- split_groups(se)
 
     expect_s3_class(plot_umap_by_group(se, seed = 42, legend_pos = "none"),
@@ -244,9 +195,6 @@ test_that("plot_umap_by_group works with SE and list", {
 })
 
 test_that("plot_pca_arrows returns ggplot and warns on multiple groups", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
-
     expect_warning(
         plot_pca_arrows(se, circle = FALSE, arrow = FALSE),
         "multiple groups"
@@ -270,8 +218,6 @@ test_that("plot_breakpoints validates arguments", {
 })
 
 test_that("plot_pca warns on out-of-range morepc", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
     expect_warning(
         plot_pca(se, plot_screeplot = FALSE,
             plot_loadings = FALSE,
@@ -284,7 +230,6 @@ test_that("plot_pca warns on out-of-range morepc", {
 # ---- plot_trend stop conditions ----
 
 test_that("plot_trend errors on invalid inputs", {
-    data(example_obj)
     expect_error(plot_trend(list(), features = "Gene1", title = "test",
         ylab = "Abundance"), "must be a SummarizedExperiment or a data.frame")
     expect_error(plot_trend(example_obj, features = character(0),
@@ -299,28 +244,24 @@ test_that("plot_trend errors on invalid inputs", {
 # ---- plot_variance edge branches ----
 
 test_that("plot_variance edge cases", {
-    data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
-    vd <- decomp_variance(example_obj, features = rownames(example_obj)[1:10],
-        assay = "orig", core = 1)
+    vd_small <- decomp_variance(se, features = rownames(se)[1:10],
+        fixed_effect_var = NULL, assay = "orig", core = 1)
 
     expect_message(
-        plot_variance(vd, rank = "Group", top_n = 100),
+        plot_variance(vd_small, rank = "Group", top_n = 100),
         "Plotting all"
     )
     expect_error(
-        plot_variance(vd, features = c("NotAFeature", "AlsoNot")),
+        plot_variance(vd_small, features = c("NotAFeature", "AlsoNot")),
         "not found"
     )
-    p <- plot_variance(vd, rank = "Group", top_n = 5, show_ylab = FALSE)
+    p <- plot_variance(vd_small, rank = "Group", top_n = 5, show_ylab = FALSE)
     expect_s3_class(p, "ggplot")
 })
 
 # ---- plot_pca edge branches ----
 
 test_that("plot_pca validates pc1 and pc2 via missing()", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
     # Explicit pc1/pc2 triggers !missing() validation
     expect_error(
         plot_pca(se, pc1 = 0, plot_screeplot = FALSE,
@@ -335,8 +276,6 @@ test_that("plot_pca validates pc1 and pc2 via missing()", {
 })
 
 test_that("plot_pca validates xlim and ylim", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
     expect_error(
         plot_pca(se, xlim_min = "not_numeric", plot_screeplot = FALSE,
             plot_loadings = FALSE, plot_morepc = FALSE, circle = FALSE),
@@ -350,8 +289,6 @@ test_that("plot_pca validates xlim and ylim", {
 })
 
 test_that("plot_pca messages on missing values", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
     # Inject NA into first feature
     assay(se, 1)[1, 1] <- NA
 
@@ -363,8 +300,6 @@ test_that("plot_pca messages on missing values", {
 })
 
 test_that("plot_pca warns when fewer than 2 valid PCs for pairs plot", {
-    data("example_obj")
-    se <- normalise_to_start(example_obj)
     # Only 1 valid PC: triggers length(morepc) < 2
     expect_warning(
         plot_pca(se, plot_screeplot = FALSE, plot_loadings = FALSE,

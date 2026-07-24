@@ -1,5 +1,9 @@
 # Tests for argument validation
 
+data("example_obj")
+se_norm <- normalise_to_start(example_obj)
+DE_res <- DE_between_group(se_norm, assay = 2)
+
 test_that(".check_numeric accepts numeric", {
     expect_silent(.check_numeric(1, "x"))
     expect_silent(.check_numeric(1.5, "x"))
@@ -20,30 +24,20 @@ test_that("DE_between_group validates se_obj", {
 })
 
 test_that("DE_between_group validates pval thresholds", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-    expect_error(DE_between_group(example_obj, assay = 2, adjP_thres = -0.1), "between 0 and 1")
-    expect_error(DE_between_group(example_obj, assay = 2, adjP_thres = 1.5), "between 0 and 1")
-    expect_error(DE_between_group(example_obj, assay = 2, logFC_thres = -1), "non-negative")
+    expect_error(DE_between_group(se_norm, assay = 2, adjP_thres = -0.1), "between 0 and 1")
+    expect_error(DE_between_group(se_norm, assay = 2, adjP_thres = 1.5), "between 0 and 1")
+    expect_error(DE_between_group(se_norm, assay = 2, logFC_thres = -1), "non-negative")
 })
 
 test_that("DE_between_group returns ref_groups and all_groups", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-    res <- DE_between_group(example_obj, assay = 2)
-
-    expect_true("ref_groups" %in% names(res))
-    expect_true("all_groups" %in% names(res))
-    expect_s3_class(res$ref_groups, "factor")
-    expect_type(res$all_groups, "character")
+    expect_true("ref_groups" %in% names(DE_res))
+    expect_true("all_groups" %in% names(DE_res))
+    expect_s3_class(DE_res$ref_groups, "factor")
+    expect_type(DE_res$all_groups, "character")
 })
 
 # plot_volcano validation
 test_that("plot_volcano validates group/time params conditionally", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-    DE_res <- DE_between_group(example_obj, assay = 2)
-
     # Missing required params
     expect_error(
         plot_volcano(DE_res, group1 = "untreated"),

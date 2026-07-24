@@ -45,17 +45,19 @@
 #' all or simplified terms for each gene set and GO category.
 #' @export
 #' @examples
-#' library(org.Mm.eg.db)
-#' library(clusterProfiler)
-#' data(example_net)
-#' # select two modules for demonstration
-#' example_module <- WGCNA_module(example_net) |>
-#'     dplyr::filter(Module %in% c("1", "2"))
-#' # set cutoff to 1 to show all results for demonstration
-#' example_go_list = enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
-#'     universe = example_module$Feature,
-#'     pvalueCutoff = 1, qvalueCutoff = 1,
-#'     category = "BP", simplify = FALSE)
+#' if (requireNamespace("org.Mm.eg.db", quietly = TRUE)) {
+#'     library(org.Mm.eg.db)
+#'     library(clusterProfiler)
+#'     data(example_net)
+#'     # select two modules for demonstration
+#'     example_module <- WGCNA_module(example_net) |>
+#'         dplyr::filter(Module %in% c("1", "2"))
+#'     # set cutoff to 1 to show all results for demonstration
+#'     example_go_list = enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
+#'         universe = WGCNA_module(example_net, exclude_grey = FALSE)$Feature,
+#'         pvalueCutoff = 1, qvalueCutoff = 1,
+#'         category = "BP", simplify = FALSE)
+#' }
 enrichGO_list <- function(gene_list, keyType = "SYMBOL",
     OrgDb,
     universe = NULL,

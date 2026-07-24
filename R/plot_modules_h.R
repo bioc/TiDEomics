@@ -60,16 +60,16 @@
                                         fontsize, mod_levels) {
     if (!is.list(mark_features)) {
         # Character vector: all black, like anno_mark
-        feats <- as.character(mark_features)
+        feats <- mark_features
+        marked_in_mod <- intersect(feats, module_df$Feature)
     } else {
         # Named list: map each feature to its category
         feats <- stats::setNames(
             rep(names(mark_features), lengths(mark_features)),
             unlist(mark_features, use.names = FALSE)
         )
+        marked_in_mod <- intersect(names(feats), module_df$Feature)
     }
-
-    marked_in_mod <- intersect(names(feats), module_df$Feature)
     if (length(marked_in_mod) == 0) return(NULL)
 
     mod_map <- stats::setNames(as.character(module_df$Module),
@@ -142,8 +142,8 @@
 #' @param enrich_category Category name(s) of enrichment to display:
 #'   a single string (e.g. `"BP"`), or a vector for multiple
 #'   categories (e.g. `c("BP", "CC", "Hub features")`).
-#'   When `"Hub features"` is included, a textbox is auto-built from
-#'   `mark_features` with colors matching `anno_mark`.
+#'   When `"Hub features"` is included, `mark_features` are shown as a column
+#'   in the textbox.
 #' @param enrich_rank_by Column to rank enrichment terms. A single string
 #'   (default: `"p.adjust"`) is recycled for all categories in
 #'   `enrich_category`. Supply a character vector of matching length for
@@ -157,12 +157,12 @@
 #'   recycled for all categories; supply a vector of matching length for
 #'   per-category control. Terms below threshold are drawn in black,
 #'   terms above in grey70. Set to `NULL` to skip colour-coding (all
-#'   terms black). Set to `NA` for categories using a pre-assigned
-#'   `col` column (e.g. `"Hub features"`).
+#'   terms black). Set to `NA` for `"Hub features"`.
 #' @param fontsize Base font size (default: 8)
 #' @param heatmap_width Width of the heatmap body in cm (default: 8)
-#' @param heatmap_height Height of the heatmap body in cm (default: 8)
-#' @param mark_features Features to highlight. Accepts two forms:
+#' @param heatmap_height Height of the heatmap body in cm (default: 8).
+#'   Set to `NULL` to auto-size.
+#' @param mark_features Features to label. Accepts two forms:
 #'     - A **character vector**: all marked in black on the left.
 #'     - A **named list** of character vectors, e.g.
 #'         `list("Hub 1" = c("gene1"), "Hub 2" = c("gene2"))`.
@@ -170,7 +170,7 @@
 #'         `ggsci::pal_jco()`).
 #'     Auto-routed: shown as `anno_mark` (left
 #'     side, connecting lines) unless `"Hub features"` is present in
-#'     `enrich_category`, in which case an `anno_textbox` (right side)
+#'     `enrich_category`, in which case an `anno_multicol_textbox` (right side)
 #'     is built instead, using the same colours.
 #'     Set to `NULL` (default) to skip marking.
 #' @param width Width of the saved image (default is 16 (cm))
@@ -189,8 +189,6 @@
 #' terms for each WGCNA module
 #' @export
 #' @examples
-#' library(org.Mm.eg.db)
-#'
 #' data(example_obj)
 #' example_obj <- normalise_to_start(example_obj)
 #' example_obj_list <- split_groups(example_obj)
@@ -201,16 +199,14 @@
 #' # select two modules for demonstration
 #' example_module <- WGCNA_module(example_net) |>
 #'     dplyr::filter(Module %in% c("1", "2"))
-#' # set cutoff to 1 to show all results for demonstration
-#' example_go_list = enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
-#'     universe = example_module$Feature,
-#'     pvalueCutoff = 1, qvalueCutoff = 1,
-#'     category = "BP", simplify = FALSE)
+#'
+#' data(example_go)
 #'
 #' plot_modules_h(example_module |> dplyr::filter(Module != '0'),
 #'     example_obj_merged, scale = TRUE,
 #'     ylabel = "Z-score of log2 expression",
-#'     enrich_list = example_go_list$all, enrich_category = "BP",
+#'     enrich_list = example_go$all,
+#'     enrich_category = "BP",
 #'     heatmap_width = 6, heatmap_height = 4)
 #' @references https://github.com/junjunlab/ClusterGVis
 plot_modules_h <- function(
@@ -245,7 +241,8 @@ plot_modules_h <- function(
     .check_positive_int(enrich_top_n, "enrich_top_n")
     .check_positive(fontsize, "fontsize")
     .check_positive(heatmap_width, "heatmap_width")
-    .check_positive(heatmap_height, "heatmap_height")
+    if (!is.null(heatmap_height))
+        .check_positive(heatmap_height, "heatmap_height")
     .check_positive(width, "width")
     .check_positive(height, "height")
     .check_positive_int(res, "res")
@@ -298,9 +295,8 @@ plot_modules_h <- function(
     data_module_wider <- data_module_long |>
         tidyr::pivot_wider(id_cols = c(Feature, Module),
             names_from = c(Group, Time), values_from = Abundance) |>
-        tibble::column_to_rownames("Feature") |>
-        as.data.frame() |>
-        dplyr::arrange(Module)
+        dplyr::arrange(Module) |>
+        tibble::column_to_rownames("Feature")
     mat <- data_module_wider |>
         dplyr::select(-Module) |>
         as.matrix()
@@ -482,6 +478,8 @@ plot_modules_h <- function(
             )
             if (!is.null(hres)) {
                 cat_terms[["Hub features"]] <- hres
+            } else {
+                message("Hub features: no marked features found in module data")
             }
         }
 
@@ -543,7 +541,7 @@ plot_modules_h <- function(
                     side = "left",
                     labels_gp = grid::gpar(
                         col = cols,
-                        fontsize = fontsize - 1
+                        fontsize = fontsize
                     ),
                     link_gp = grid::gpar(col = "grey40", lwd = 0.5),
                     padding = unit(2, "mm")
@@ -575,7 +573,8 @@ plot_modules_h <- function(
             labels_gp = grid::gpar(fontsize = fontsize)
         ),
         width = grid::unit(heatmap_width, "cm"),
-        height = grid::unit(heatmap_height, "cm")
+        height = if (is.null(heatmap_height)) NULL
+            else grid::unit(heatmap_height, "cm")
     )
     if (!is.null(left_ann)) ht_args$left_annotation <- left_ann
     heatmap <- do.call(ComplexHeatmap::Heatmap, ht_args)
@@ -629,7 +628,8 @@ plot_modules_h <- function(
                         lgd_list <- c(lgd_list, list(hub_lgd))
                     }
                 }
-            } else if (!is.na(pt) && !is.null(pt)) {
+            } else if (!is.null(enrich_list[[cate]]) &&
+                !is.na(pt) && !is.null(pt)) {
                 go_lgd <- ComplexHeatmap::Legend(
                     title = cate,
                     labels = c(

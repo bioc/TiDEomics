@@ -63,8 +63,8 @@ If NULL (default), no enrichment terms will be displayed.}
 \item{enrich_category}{Category name(s) of enrichment to display:
 a single string (e.g. \code{"BP"}), or a vector for multiple
 categories (e.g. \code{c("BP", "CC", "Hub features")}).
-When \code{"Hub features"} is included, a textbox is auto-built from
-\code{mark_features} with colors matching \code{anno_mark}.}
+When \code{"Hub features"} is included, \code{mark_features} are shown as a column
+in the textbox.}
 
 \item{enrich_rank_by}{Column to rank enrichment terms. A single string
 (default: \code{"p.adjust"}) is recycled for all categories in
@@ -81,16 +81,16 @@ colour-coding enrichment terms. A single value (default: 0.05) is
 recycled for all categories; supply a vector of matching length for
 per-category control. Terms below threshold are drawn in black,
 terms above in grey70. Set to \code{NULL} to skip colour-coding (all
-terms black). Set to \code{NA} for categories using a pre-assigned
-\code{col} column (e.g. \code{"Hub features"}).}
+terms black). Set to \code{NA} for \code{"Hub features"}.}
 
 \item{fontsize}{Base font size (default: 8)}
 
 \item{heatmap_width}{Width of the heatmap body in cm (default: 8)}
 
-\item{heatmap_height}{Height of the heatmap body in cm (default: 8)}
+\item{heatmap_height}{Height of the heatmap body in cm (default: 8).
+Set to \code{NULL} to auto-size.}
 
-\item{mark_features}{Features to highlight. Accepts two forms:
+\item{mark_features}{Features to label. Accepts two forms:
 \itemize{
 \item A \strong{character vector}: all marked in black on the left.
 \item A \strong{named list} of character vectors, e.g.
@@ -99,7 +99,7 @@ Names become categories with auto-assigned colours (via
 \code{ggsci::pal_jco()}).
 Auto-routed: shown as \code{anno_mark} (left
 side, connecting lines) unless \code{"Hub features"} is present in
-\code{enrich_category}, in which case an \code{anno_textbox} (right side)
+\code{enrich_category}, in which case an \code{anno_multicol_textbox} (right side)
 is built instead, using the same colours.
 Set to \code{NULL} (default) to skip marking.
 }}
@@ -134,8 +134,6 @@ feature (gene).
 If certain time points are missing in some groups, NA values are added.
 }
 \examples{
-library(org.Mm.eg.db)
-
 data(example_obj)
 example_obj <- normalise_to_start(example_obj)
 example_obj_list <- split_groups(example_obj)
@@ -146,16 +144,14 @@ data(example_net)
 # select two modules for demonstration
 example_module <- WGCNA_module(example_net) |>
     dplyr::filter(Module \%in\% c("1", "2"))
-# set cutoff to 1 to show all results for demonstration
-example_go_list = enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
-    universe = example_module$Feature,
-    pvalueCutoff = 1, qvalueCutoff = 1,
-    category = "BP", simplify = FALSE)
+
+data(example_go)
 
 plot_modules_h(example_module |> dplyr::filter(Module != '0'),
     example_obj_merged, scale = TRUE,
     ylabel = "Z-score of log2 expression",
-    enrich_list = example_go_list$all, enrich_category = "BP",
+    enrich_list = example_go$all,
+    enrich_category = "BP",
     heatmap_width = 6, heatmap_height = 4)
 }
 \references{

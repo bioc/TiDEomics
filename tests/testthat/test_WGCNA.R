@@ -1,7 +1,10 @@
-test_that("WGCNA works", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
+# ---- Shared data ----
+data("example_obj")
+example_obj <- normalise_to_start(example_obj)
 
+# ---- Tests ----
+
+test_that("WGCNA works", {
     wgcna_input <- prepare_WGCNA(example_obj, assay = 2, powers = seq(1, 30),
         networkType = "signed", RsquaredCut = 0.8)
 
@@ -24,26 +27,24 @@ test_that("WGCNA works", {
 
     if (inherits(example_net$dendrograms[[1]], "dendrogram"))
         expect_no_error(plot_WGCNA(example_net, fontsize = 8))
-}
-)
+})
 
 # ---- WGCNA_module ----
 
-test_that("WGCNA_module returns correct structure", {
+test_that("WGCNA_module works correctly", {
     data("example_net")
     mod <- WGCNA_module(example_net)
     expect_s3_class(mod, "data.frame")
     expect_named(mod, c("Feature", "Module"))
     expect_type(mod$Feature, "character")
     expect_s3_class(mod$Module, "factor")
-})
 
-test_that("WGCNA_module excludes grey when requested", {
-    data("example_net")
     mod_all <- WGCNA_module(example_net, exclude_grey = FALSE)
     mod_nogrey <- WGCNA_module(example_net, exclude_grey = TRUE)
     expect_true(any(c("0", "grey", "gray") %in% levels(mod_all$Module)))
     expect_true(nrow(mod_nogrey) <= nrow(mod_all))
+
+    expect_equal(mod, dplyr::arrange(mod, Module))
 })
 
 test_that("WGCNA_module errors on invalid input", {
@@ -53,17 +54,9 @@ test_that("WGCNA_module errors on invalid input", {
         "must contain a 'colors'")
 })
 
-test_that("WGCNA_module Module is sorted", {
-    data("example_net")
-    mod <- WGCNA_module(example_net)
-    expect_equal(mod, dplyr::arrange(mod, Module))
-})
-
 # ---- prepare_WGCNA ----
 
 test_that("prepare_WGCNA validates assay index", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
     expect_error(
         prepare_WGCNA(example_obj, assay = 99,
             powers = seq(1, 10), RsquaredCut = 0.8),
@@ -74,8 +67,6 @@ test_that("prepare_WGCNA validates assay index", {
 test_that("run_WGCNA validates arguments", {
     expect_error(run_WGCNA(NULL, power = 6), "must be a list")
     expect_error(run_WGCNA("bad", power = 6), "prepare_WGCNA")
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
     wgcna_input <- prepare_WGCNA(example_obj, assay = 2, powers = seq(1, 10),
         RsquaredCut = 0.8)
     expect_error(run_WGCNA(wgcna_input, power = 0), "positive")

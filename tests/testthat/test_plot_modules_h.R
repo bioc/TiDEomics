@@ -1,227 +1,127 @@
+# ---- Shared data and enrichment precomputation ----
+library(dplyr)
+data(example_obj)
+data(example_net)
+data(example_go)
+norm_obj <- normalise_to_start(example_obj)
+se_list <- split_groups(norm_obj)
+merged_list <- merge_replicates(se_list)
+merged <- merge_groups(merged_list)
+example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
+
+# ---- Tests ----
+
 test_that("plot_modules_h works", {
-    skip_if_not_installed("org.Mm.eg.db")
-    library(dplyr)
-    library(org.Mm.eg.db)
+    pq <- plot_modules_h(example_module |> dplyr::filter(Module != '0'),
+        merged, scale = TRUE,
+        ylabel = "Z-score of log2 (expression)",
+        enrich_list = example_go$all, enrich_category = "BP",
+        fontsize = 6)
 
-    data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged <- merge_groups(example_obj_merged_list)
+    expect_s4_class(pq, "HeatmapList")
+})
 
-    data(example_net)
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
+test_that("plot_modules_h validates module argument", {
+    expect_error(plot_modules_h(NULL, data.frame()), "data.frame")
+    expect_error(plot_modules_h(data.frame(), data.frame()), "at least 1 row")
+})
 
-    # set cutoff to 1 to show all results for demonstration
-    example_go_list <- enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
-        universe = example_module$Feature,
-        pvalueCutoff = 0.9, qvalueCutoff = 0.9,
-        category = "BP", simplify = FALSE)
-    plot_GO(example_go_list$all, plot_dotplot = TRUE,
-        plot_emapplot = FALSE, plot_cnetplot = FALSE)
+test_that("plot_modules_h runs without scale", {
+    pq <- plot_modules_h(example_module |> dplyr::filter(Module != '0'),
+        merged, scale = FALSE,
+        enrich_list = example_go$all, enrich_category = "BP",
+        fontsize = 6)
+    expect_s4_class(pq, "HeatmapList")
+})
 
-    expect_s4_class(plot_modules_h(example_module |> dplyr::filter(Module != "0"),
-        example_obj_merged, scale = TRUE,
-        ylabel = "Z-score of log2 expression",
-        enrich_list = example_go_list$all, enrich_category = "BP",
-        heatmap_width = 6, heatmap_height = 4), "HeatmapList")
+test_that("plot_modules_h handles single module", {
+    mod_one <- example_module |>
+        dplyr::filter(Module == levels(Module)[1])
 
-    expect_warning(plot_modules_h(example_module |> dplyr::filter(Module != "0"),
-        example_obj_merged, scale = TRUE,
-        ylabel = "Z-score of log2 expression",
-        enrich_list = example_go_list$all, enrich_category = "CC",
-        heatmap_width = 6, heatmap_height = 4))
+    pq <- plot_modules_h(mod_one, merged,
+        scale = TRUE, fontsize = 6)
+    expect_s4_class(pq, "HeatmapList")
 })
 
 test_that("plot_modules_h supports multi-category enrichment", {
-    skip_if_not_installed("org.Mm.eg.db")
-    library(dplyr)
-    library(org.Mm.eg.db)
-
-    data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged <- merge_groups(example_obj_merged_list)
-
-    data(example_net)
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-
-    example_go_list <- enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
-        universe = example_module$Feature,
-        pvalueCutoff = 0.9, qvalueCutoff = 0.9,
-        category = c("BP", "MF", "CC"), simplify = FALSE)
-
-    # Multi-category enrichment
     expect_s4_class(plot_modules_h(example_module,
-        example_obj_merged, scale = TRUE,
+        merged, scale = TRUE,
         ylabel = "Z-score of log2 expression",
-        enrich_list = example_go_list$all,
-        enrich_category = c("BP", "MF"),
+        enrich_list = example_go$all,
+        enrich_category = c("BP", "CC"),
         enrich_p_threshold = NULL,
         heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 })
 
 test_that("plot_modules_h handles mark_features with Hub features", {
-    skip_if_not_installed("org.Mm.eg.db")
-    library(dplyr)
-    library(org.Mm.eg.db)
-
-    data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged <- merge_groups(example_obj_merged_list)
-
-    data(example_net)
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-
-    example_go_list <- enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
-        universe = example_module$Feature,
-        pvalueCutoff = 0.9, qvalueCutoff = 0.9,
-        category = "BP", simplify = FALSE)
-
-    # Character vector mark_features with Hub features
     hubs <- utils::head(example_module$Feature, 3)
+
+    # Character vector mark_features
     expect_s4_class(plot_modules_h(example_module,
-        example_obj_merged, scale = TRUE,
+        merged, scale = TRUE,
         ylabel = "Z-score of log2 expression",
-        enrich_list = example_go_list$all,
+        enrich_list = example_go$all,
         enrich_category = c("BP", "Hub features"),
         mark_features = hubs,
         heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 
-    # Named list mark_features with Hub features
+    # Named list mark_features
     hub_list <- list(
         "Hub1" = utils::head(example_module$Feature, 2),
         "Hub2" = tail(example_module$Feature, 2)
     )
     expect_s4_class(plot_modules_h(example_module,
-        example_obj_merged, scale = TRUE,
+        merged, scale = TRUE,
         ylabel = "Z-score of log2 expression",
-        enrich_list = example_go_list$all,
+        enrich_list = example_go$all,
         enrich_category = c("BP", "Hub features"),
         mark_features = hub_list,
         heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 })
 
 test_that("plot_modules_h handles per-category enrich_top_n and enrich_rank_by", {
-    skip_if_not_installed("org.Mm.eg.db")
-    library(dplyr)
-    library(org.Mm.eg.db)
-
-    data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged <- merge_groups(example_obj_merged_list)
-
-    data(example_net)
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-
-    example_go_list <- enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
-        universe = example_module$Feature,
-        pvalueCutoff = 0.9, qvalueCutoff = 0.9,
-        category = c("BP", "MF"), simplify = FALSE)
-
-    # Per-category top_n and rank_by
     expect_s4_class(plot_modules_h(example_module,
-        example_obj_merged, scale = TRUE,
+        merged, scale = TRUE,
         ylabel = "Z-score of log2 expression",
-        enrich_list = example_go_list$all,
-        enrich_category = c("BP", "MF"),
+        enrich_list = example_go$all,
+        enrich_category = c("BP", "CC"),
         enrich_top_n = 3,
         enrich_rank_by = c("p.adjust", "pvalue"),
         enrich_p_threshold = NULL,
         heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 })
 
-test_that("plot_modules_h validates module argument", {
-    expect_error(plot_modules_h(NULL, data.frame()), "data.frame")
-    expect_error(plot_modules_h(data.frame(), data.frame()),
-        "at least 1 row")
-    data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged <- merge_groups(example_obj_merged_list)
-    data(example_net)
-    mod <- WGCNA_module(example_net, exclude_grey = TRUE)
-    expect_error(plot_modules_h(mod, example_obj_merged,
+test_that("plot_modules_h validates enrichment parameters", {
+    expect_error(plot_modules_h(example_module, merged,
         enrich_category = 123), "character")
-    expect_error(plot_modules_h(mod, example_obj_merged,
+    expect_error(plot_modules_h(example_module, merged,
         enrich_top_n = -1), "positive")
-    expect_error(plot_modules_h(mod, example_obj_merged,
+    expect_error(plot_modules_h(example_module, merged,
         fontsize = -1), "positive")
 })
 
 test_that("plot_modules_h runs without enrich_list", {
-    library(dplyr)
-    data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged <- merge_groups(example_obj_merged_list)
-
-    data(example_net)
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-
     expect_s4_class(plot_modules_h(example_module,
-        example_obj_merged, scale = TRUE,
+        merged, scale = TRUE,
         ylabel = "Z-score of log2 expression",
         heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 })
 
 test_that("plot_modules_h handles NULL mark_features safely", {
-    skip_if_not_installed("org.Mm.eg.db")
-    library(dplyr)
-    library(org.Mm.eg.db)
-    data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged <- merge_groups(example_obj_merged_list)
-    data(example_net)
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-    example_go_list <- enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
-        universe = example_module$Feature,
-        pvalueCutoff = 0.9, qvalueCutoff = 0.9,
-        category = "BP", simplify = FALSE)
-
-    # mark_features = NULL should not error
     expect_s4_class(plot_modules_h(example_module,
-        example_obj_merged, scale = TRUE,
+        merged, scale = TRUE,
         ylabel = "Z-score of log2 expression",
-        enrich_list = example_go_list$all,
+        enrich_list = example_go$all,
         enrich_category = "BP",
         mark_features = NULL,
         heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 })
 
 test_that("plot_modules_h handles enrich_p_threshold = NULL and NA", {
-    skip_if_not_installed("org.Mm.eg.db")
-    library(dplyr)
-    library(org.Mm.eg.db)
-
-    data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged <- merge_groups(example_obj_merged_list)
-
-    data(example_net)
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-
-    example_go_list <- enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
-        universe = example_module$Feature,
-        pvalueCutoff = 0.9, qvalueCutoff = 0.9,
-        category = "BP", simplify = FALSE)
-
-    # enrich_p_threshold = NULL (skip colour-coding)
     expect_s4_class(plot_modules_h(example_module,
-        example_obj_merged, scale = TRUE,
+        merged, scale = TRUE,
         ylabel = "Z-score of log2 expression",
-        enrich_list = example_go_list$all,
+        enrich_list = example_go$all,
         enrich_category = "BP",
         enrich_p_threshold = NULL,
         heatmap_width = 6, heatmap_height = 4), "HeatmapList")
@@ -240,11 +140,8 @@ test_that(".reformat_cat_terms pivots category to module", {
     expect_named(res, c("M1", "M2"))
     expect_named(res$M1, c("BP", "MF"))
     expect_equal(res$M1$BP$text, "term1")
-    # M2 missing MF gets empty placeholder
     expect_equal(nrow(res$M2$MF), 0)
 })
-
-# ---- .textbox_grob ----
 
 test_that(".textbox_grob handles word_wrap = TRUE, first_text_from = 'top'", {
     pdf(file = NULL)
@@ -310,8 +207,6 @@ test_that(".textbox_grob handles padding of length 2", {
     expect_true("textbox" %in% class(res))
 })
 
-# ---- .multicol_textbox_grob ----
-
 test_that(".multicol_textbox_grob returns nullGrob for empty cats", {
     pdf(file = NULL)
     on.exit(dev.off())
@@ -320,8 +215,6 @@ test_that(".multicol_textbox_grob returns nullGrob for empty cats", {
     expect_s3_class(res, "null")
 })
 
-# ---- .measure_multicol_widths ----
-
 test_that(".measure_multicol_widths handles empty cats", {
     pdf(file = NULL)
     on.exit(dev.off())
@@ -329,8 +222,6 @@ test_that(".measure_multicol_widths handles empty cats", {
     res <- TiDEomics:::.measure_multicol_widths(text = list())
     expect_named(res, character(0))
 })
-
-# ---- .anno_multicol_textbox ----
 
 test_that(".anno_multicol_textbox errors on which = 'column'", {
     expect_error(
@@ -394,7 +285,6 @@ test_that(".anno_multicol_textbox sets default background_gp fill/col/lty/lwd", 
     )
     align_list <- list(M1 = 1:3, M2 = 4:6)
 
-    # gpar() without fill/col/lty/lwd -- function fills defaults
     res <- TiDEomics:::.anno_multicol_textbox(
         align_to = align_list,
         text = text_list,
@@ -435,22 +325,7 @@ test_that(".anno_multicol_textbox handles by = 'anno_block'", {
     expect_s4_class(res, "AnnotationFunction")
 })
 
-# ---- plot_modules_h enrichment / save branches ----
-
 test_that("plot_modules_h with pre-existing col in enrichment", {
-    skip_if_not_installed("org.Mm.eg.db")
-    library(dplyr)
-    library(org.Mm.eg.db)
-
-    data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged <- merge_groups(example_obj_merged_list)
-
-    data(example_net)
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-
     enrich_mock <- list(
         BP = data.frame(
             Cluster = example_module$Module[1:5],
@@ -462,7 +337,7 @@ test_that("plot_modules_h with pre-existing col in enrichment", {
     )
 
     expect_s4_class(
-        plot_modules_h(example_module, example_obj_merged,
+        plot_modules_h(example_module, merged,
             scale = TRUE, enrich_list = enrich_mock,
             enrich_category = "BP", enrich_top_n = 3,
             heatmap_width = 6, heatmap_height = 4),
@@ -471,28 +346,10 @@ test_that("plot_modules_h with pre-existing col in enrichment", {
 })
 
 test_that("plot_modules_h .check_len length mismatch message", {
-    skip_if_not_installed("org.Mm.eg.db")
-    library(dplyr)
-    library(org.Mm.eg.db)
-
-    data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged <- merge_groups(example_obj_merged_list)
-
-    data(example_net)
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-
-    example_go_list <- enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
-        universe = example_module$Feature,
-        pvalueCutoff = 0.9, qvalueCutoff = 0.9,
-        category = c("BP", "MF"), simplify = FALSE)
-
     expect_message(
-        plot_modules_h(example_module, example_obj_merged,
-            scale = TRUE, enrich_list = example_go_list$all,
-            enrich_category = c("BP", "MF"),
+        plot_modules_h(example_module, merged,
+            scale = TRUE, enrich_list = example_go$all,
+            enrich_category = c("BP", "CC"),
             enrich_rank_by = c("p.adjust", "pvalue", "qvalue"),
             enrich_top_n = 3,
             heatmap_width = 6, heatmap_height = 4),
@@ -501,29 +358,11 @@ test_that("plot_modules_h .check_len length mismatch message", {
 })
 
 test_that("plot_modules_h mark_features without Hub creates anno_mark", {
-    skip_if_not_installed("org.Mm.eg.db")
-    library(dplyr)
-    library(org.Mm.eg.db)
-
-    data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged <- merge_groups(example_obj_merged_list)
-
-    data(example_net)
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-
-    example_go_list <- enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
-        universe = example_module$Feature,
-        pvalueCutoff = 0.9, qvalueCutoff = 0.9,
-        category = "BP", simplify = FALSE)
-
     hubs <- utils::head(example_module$Feature, 3)
     expect_s4_class(
-        plot_modules_h(example_module, example_obj_merged,
+        plot_modules_h(example_module, merged,
             scale = TRUE,
-            enrich_list = example_go_list$all,
+            enrich_list = example_go$all,
             enrich_category = "BP",
             mark_features = hubs,
             heatmap_width = 6, heatmap_height = 4),
@@ -532,32 +371,14 @@ test_that("plot_modules_h mark_features without Hub creates anno_mark", {
 })
 
 test_that("plot_modules_h with save writes files", {
-    skip_if_not_installed("org.Mm.eg.db")
-    library(dplyr)
-    library(org.Mm.eg.db)
-
-    data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged <- merge_groups(example_obj_merged_list)
-
-    data(example_net)
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-
-    example_go_list <- enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
-        universe = example_module$Feature,
-        pvalueCutoff = 0.9, qvalueCutoff = 0.9,
-        category = "BP", simplify = FALSE)
-
     tmpdir <- tempfile()
     dir.create(tmpdir)
     on.exit(unlink(tmpdir, recursive = TRUE))
 
     expect_s4_class(
-        plot_modules_h(example_module, example_obj_merged,
+        plot_modules_h(example_module, merged,
             scale = TRUE,
-            enrich_list = example_go_list$all,
+            enrich_list = example_go$all,
             enrich_category = "BP",
             save = tmpdir, device = "png",
             heatmap_width = 6, heatmap_height = 4),
@@ -568,20 +389,6 @@ test_that("plot_modules_h with save writes files", {
 })
 
 test_that("plot_modules_h skips category with no matching terms", {
-    skip_if_not_installed("org.Mm.eg.db")
-    library(dplyr)
-    library(org.Mm.eg.db)
-
-    data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged <- merge_groups(example_obj_merged_list)
-
-    data(example_net)
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-
-    # BP has valid terms; MF has module IDs that don't match
     enrich_mock <- list(
         BP = data.frame(
             Cluster = example_module$Module[1:3],
@@ -598,25 +405,15 @@ test_that("plot_modules_h skips category with no matching terms", {
     )
 
     expect_s4_class(
-        plot_modules_h(example_module, example_obj_merged,
+        plot_modules_h(example_module, merged,
             scale = TRUE, enrich_list = enrich_mock,
-            enrich_category = c("BP", "MF"), enrich_top_n = 3,
+            enrich_category = c("BP", "CC"), enrich_top_n = 3,
             heatmap_width = 6, heatmap_height = 4),
         "HeatmapList"
     )
 })
 
 test_that(".plot_modules_input warns on features missing from assay", {
-    data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged <- merge_groups(example_obj_merged_list)
-
-    data(example_net)
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-
-    # Add a fake feature not present in the assay
     mod_with_fake <- rbind(
         example_module,
         data.frame(Feature = "FAKE_NOT_IN_ASSAY", Module = "1",
@@ -625,7 +422,7 @@ test_that(".plot_modules_input warns on features missing from assay", {
 
     expect_warning(
         TiDEomics:::.plot_modules_input(
-            mod_with_fake, example_obj_merged,
+            mod_with_fake, merged,
             assay = 2, scale = FALSE
         ),
         "feature\\(s\\) in the module are missing from the assay"
@@ -633,16 +430,6 @@ test_that(".plot_modules_input warns on features missing from assay", {
 })
 
 test_that("plot_modules_h warns when module has features missing from assay", {
-    data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
-    example_obj_list <- split_groups(example_obj)
-    example_obj_merged_list <- merge_replicates(example_obj_list)
-    example_obj_merged <- merge_groups(example_obj_merged_list)
-
-    data(example_net)
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-
-    # Add a fake feature not present in the assay
     mod_with_fake <- rbind(
         example_module,
         data.frame(Feature = "FAKE_NOT_IN_ASSAY", Module = "1",
@@ -650,7 +437,7 @@ test_that("plot_modules_h warns when module has features missing from assay", {
     )
 
     expect_warning(
-        plot_modules_h(mod_with_fake, example_obj_merged,
+        plot_modules_h(mod_with_fake, merged,
             scale = FALSE, heatmap_width = 6, heatmap_height = 4),
         "feature\\(s\\) in the module are missing from the assay"
     )

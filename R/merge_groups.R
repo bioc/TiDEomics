@@ -68,6 +68,10 @@ merge_groups <- function(se_obj_list) {
         cd_all$Batch <- 1
     }
 
+    # Preserve assay names from input
+    assay_names <- names(assays(se_obj_list[[1]]))
+    if (!is.null(assay_names)) names(assay_list) <- assay_names
+
     se_obj_merged <- SummarizedExperiment(
         assays = assay_list,
         colData = cd_all

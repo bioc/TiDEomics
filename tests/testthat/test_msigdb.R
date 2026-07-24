@@ -1,9 +1,20 @@
 # Tests for enrich_msigdb
 
+# ---- Shared setup ----
+data("example_net")
+example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
+example_module_filt <- WGCNA_module(example_net) |>
+    dplyr::filter(Module %in% c("1", "2"))
+
+if (requireNamespace("msigdbr", quietly = TRUE)) {
+    msigdb_res <- enrich_msigdb(example_module, species = "Mus musculus",
+        db_species = "MM", category = "MH",
+        universe = example_module$Feature,
+        minGSSize = 1, maxGSSize = 1000, pvalueCutoff = 0.99)
+}
+
 test_that("enrich_msigdb validates gene_list format", {
     skip_if_not_installed("msigdbr")
-    data("example_net")
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
 
     # Data.frame input (from WGCNA_module)
     expect_error(
@@ -23,9 +34,6 @@ test_that("enrich_msigdb validates gene_list format", {
 })
 
 test_that("enrich_msigdb validates parameters (no msigdbr required)", {
-    data("example_net")
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-
     # pvalueCutoff validation
     expect_error(
         enrich_msigdb(example_module, universe = example_module$Feature,
@@ -77,12 +85,16 @@ test_that("enrich_msigdb validates parameters (no msigdbr required)", {
             db_species = "XX"),
         "should be one of"
     )
+    # name must be character
+    expect_error(
+        enrich_msigdb(example_module_filt, universe = example_module_filt$Feature,
+            category = "MH", species = "Mus musculus", db_species = "MM",
+            minGSSize = 1, pvalueCutoff = 0.99, name = 42),
+        "character"
+    )
 })
 
 test_that("enrich_msigdb requires category or gene_sets", {
-    data("example_net")
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-
     expect_error(
         enrich_msigdb(example_module,
             universe = example_module$Feature),
@@ -90,28 +102,25 @@ test_that("enrich_msigdb requires category or gene_sets", {
     )
 })
 
-test_that("enrich_msigdb returns valid output", {
+test_that("enrich_msigdb returns valid output with expected columns", {
     skip_if_not_installed("msigdbr")
-    data("example_net")
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-
-    res <- enrich_msigdb(example_module, species = "Mus musculus",
-        db_species = "MM", category = "MH",
-        universe = example_module$Feature,
-        minGSSize = 1, pvalueCutoff = 0.99)
 
     # Returns a named list
-    expect_type(res, "list")
-    expect_true(length(res) > 0)
-    expect_true(length(names(res)) > 0)
+    expect_type(msigdb_res, "list")
+    expect_true(length(msigdb_res) > 0)
+    expect_true(length(names(msigdb_res)) > 0)
 
-    # Each element is a data.frame with expected columns
-    for (df in res) {
-        expect_true(is.data.frame(df) || is.null(df))
-        if (is.data.frame(df) && nrow(df) > 0) {
-            expect_true("Description" %in% colnames(df))
-            expect_true("Cluster" %in% colnames(df))
-        }
+    df <- msigdb_res[[1]]
+    if (is.data.frame(df) && nrow(df) > 0) {
+        # Expected columns
+        expect_true("Description" %in% colnames(df))
+        expect_true("Cluster" %in% colnames(df))
+
+        expected <- c("Cluster", "ID", "Description", "GeneRatio",
+                      "BgRatio", "pvalue", "p.adjust", "Count", "geneID")
+        expect_true(all(expected %in% colnames(df)))
+        expect_true(all(nchar(df$geneID) > 0))
+        expect_equal(df$Count, lengths(strsplit(df$geneID, ";")))
     }
 })
 
@@ -187,10 +196,7 @@ test_that(".hypergeometric_test returns NULL for no passing gene sets", {
 
 test_that("enrich_msigdb handles gene_sets parameter", {
     skip_if_not_installed("msigdbr")
-    data("example_net")
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
 
-    # Using specific gene sets instead of full category
     res <- enrich_msigdb(example_module, species = "Mus musculus", db_species = "MM",
         gene_sets = "HALLMARK_APOPTOSIS",
         universe = example_module$Feature)
@@ -199,12 +205,7 @@ test_that("enrich_msigdb handles gene_sets parameter", {
 
 test_that("enrich_msigdb skips empty gene lists", {
     skip_if_not_installed("msigdbr")
-    data("example_net")
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
 
-    # Add an empty module to trigger the "Gene list X is empty" path
-    example_module_empty <- rbind(example_module,
-        data.frame(Feature = character(0), Module = character(0)))
     gene_list <- list(M1 = character(0),
                       M2 = example_module$Feature[example_module$Module == "2"])
     res <- enrich_msigdb(gene_list, species = "Mus musculus",
@@ -215,8 +216,6 @@ test_that("enrich_msigdb skips empty gene lists", {
 
 test_that("enrich_msigdb warns when no gene sets match size range", {
     skip_if_not_installed("msigdbr")
-    data("example_net")
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
 
     expect_warning(
         res <- enrich_msigdb(example_module, species = "Mus musculus",
@@ -228,34 +227,9 @@ test_that("enrich_msigdb warns when no gene sets match size range", {
     expect_null(res[[1]])
 })
 
-test_that("enrich_msigdb output columns match expected format", {
-    skip_if_not_installed("msigdbr")
-    data("example_net")
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-
-    res <- enrich_msigdb(example_module, species = "Mus musculus",
-        db_species = "MM", category = "MH",
-        universe = example_module$Feature,
-        pvalueCutoff = 0.9, minGSSize = 1, maxGSSize = 1000)
-
-    df <- res[[1]]
-    if (is.data.frame(df) && nrow(df) > 0) {
-        expected <- c("Cluster", "ID", "Description", "GeneRatio",
-                      "BgRatio", "pvalue", "p.adjust", "Count", "geneID")
-        expect_true(all(expected %in% colnames(df)))
-        # geneID should contain semicolons or single genes
-        expect_true(all(nchar(df$geneID) > 0))
-        # Count should match the number of genes in geneID
-        expect_equal(df$Count, lengths(strsplit(df$geneID, ";")))
-    }
-})
-
-# ---- edge case coverage ----
-
 test_that("enrich_msigdb warns on missing gene_sets", {
     skip_if_not_installed("msigdbr")
-    data("example_net")
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
+
     expect_warning(
         enrich_msigdb(example_module,
             species = "Mus musculus", db_species = "MM",
@@ -266,8 +240,7 @@ test_that("enrich_msigdb warns on missing gene_sets", {
 
 test_that("enrich_msigdb errors when gene_sets finds nothing", {
     skip_if_not_installed("msigdbr")
-    data("example_net")
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
+
     expect_error(
         enrich_msigdb(example_module,
             species = "Mus musculus", db_species = "MM",
@@ -278,9 +251,7 @@ test_that("enrich_msigdb errors when gene_sets finds nothing", {
 
 test_that("enrich_msigdb errors on unknown collection", {
     skip_if_not_installed("msigdbr")
-    data("example_net")
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-    # msigdbr errors on unknown collection (verified: C5 not valid for MM)
+
     expect_error(
         enrich_msigdb(example_module,
             species = "Mus musculus", db_species = "MM",
@@ -291,27 +262,11 @@ test_that("enrich_msigdb errors on unknown collection", {
     )
 })
 
-test_that("enrich_msigdb validates name argument", {
-    data(example_net)
-    example_module <- WGCNA_module(example_net) |>
-        dplyr::filter(Module %in% c("1", "2"))
-
-    expect_error(
-        enrich_msigdb(example_module, universe = example_module$Feature,
-            category = "MH", species = "Mus musculus", db_species = "MM",
-            minGSSize = 1, pvalueCutoff = 0.99, name = 42),
-        "character"
-    )
-})
-
 test_that("enrich_msigdb warns when no terms pass pvalue cutoff", {
-    data(example_net)
-    example_module <- WGCNA_module(example_net) |>
-        dplyr::filter(Module %in% c("1", "2"))
-
     skip_if_not_installed("msigdbr")
+
     expect_warning(
-        enrich_msigdb(example_module, universe = example_module$Feature,
+        enrich_msigdb(example_module_filt, universe = example_module_filt$Feature,
             category = "MH", species = "Mus musculus", db_species = "MM",
             minGSSize = 1, pvalueCutoff = 1e-10),
         "No enriched terms pass cutoffs"

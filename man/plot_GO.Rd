@@ -51,16 +51,7 @@ Visualization of GO enrichment analysis with dotplot,
 cnetplot, or emapplot in clusterProfiler
 }
 \examples{
-library(org.Mm.eg.db)
-data(example_net)
-# select two modules for demonstration
-example_module <- WGCNA_module(example_net) |>
-    dplyr::filter(Module \%in\% c("1", "2"))
-# set cutoff to 1 to show all results for demonstration
-example_go_list = enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
-    universe = example_module$Feature,
-    pvalueCutoff = 1, qvalueCutoff = 1,
-    category = "BP", simplify = FALSE)
-plot_GO(example_go_list$all, plot_dotplot = TRUE,
+data(example_go)
+plot_GO(example_go$all, plot_dotplot = TRUE,
     plot_emapplot = FALSE, plot_cnetplot = FALSE)
 }

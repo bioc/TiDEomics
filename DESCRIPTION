@@ -1,19 +1,20 @@
 Package: TiDEomics
 Title: Time-course Differential Expression analysis of omics data
-Version: 0.99.2
-Date: 2026-06-30
+Version: 0.99.3
+Date: 2026-07-24
 Authors@R:
     person("Tianen", "He",
             email = "tianen.he@ndm.ox.ac.uk",
             role = c("aut", "cre"),
             comment = c(ORCID = "0000-0001-6864-0723"))
-Description: TiDEomics provides tools for time-course omics data analysis,
-    focusing on differential expression across multiple experimental groups
-    (>2 conditions). The package implements workflows for quality control,
-    data processing, and analysis of temporal patterns, enabling integrated
-    analysis of all groups in addition to pairwise comparisons. It supports
-    datasets with missing values, including mass spectrometry-based proteomics,
-    and operates on SummarizedExperiment objects to ensure compatibility with
+Description: TiDEomics provides a comprehensive workflow for multi-group
+    time-course omics data analysis, analysing time-dominant, group-dominant,
+    and group-specific temporal effects through pairwise differential
+    expression, variance decomposition, and co-expression module analysis
+    (WGCNA). The package integrates quality control, data processing,
+    functional enrichment, and extensive visualisation. It supports datasets
+    with missing values (e.g., mass spectrometry-based proteomics), and
+    operates on SummarizedExperiment objects to ensure compatibility with
     the Bioconductor ecosystem.
 License: GPL (>= 2)
 URL: https://github.com/hte123/TiDEomics, https://hte123.github.io/TiDEomics

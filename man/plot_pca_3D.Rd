@@ -29,5 +29,7 @@ The samples are coloured by Group and sized by Time.
 \examples{
 data(example_obj)
 PC = plot_pca(example_obj, morepc = seq(1, 3))
-plot_pca_3D(PC$pca, pcs = seq(1, 3))
+if (requireNamespace("plotly", quietly = TRUE)) {
+    plot_pca_3D(PC$pca, pcs = seq(1, 3))
+}
 }

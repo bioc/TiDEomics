@@ -82,12 +82,14 @@ Multiple testing: P-values are adjusted (Benjamini-Hochberg)
 per module across the gene-set tests within that module.
 }
 \examples{
-data(example_net)
-example_module <- WGCNA_module(example_net) |>
-    dplyr::filter(Module \%in\% c("1", "2"))
-hallmark_msigdb <- enrich_msigdb(example_module, category = "MH",
-    species = "Mus musculus", db_species = "MM",
-    minGSSize = 1,
-    pvalueCutoff = 0.9,
-    universe = example_module$Feature)
+if (requireNamespace("msigdbr", quietly = TRUE)) {
+    data(example_net)
+    example_module <- WGCNA_module(example_net) |>
+        dplyr::filter(Module \%in\% c("1", "2"))
+    hallmark_msigdb <- enrich_msigdb(example_module, category = "MH",
+        species = "Mus musculus", db_species = "MM",
+        minGSSize = 1,
+        pvalueCutoff = 0.9,
+        universe = WGCNA_module(example_net, exclude_grey = FALSE)$Feature)
+}
 }

@@ -297,11 +297,7 @@
 #' @keywords internal
 .multicol_textbox_col_grob <- function(df, ...) {
     if (!is.data.frame(df) || nrow(df) == 0) {
-        gp <- grid::gpar(col = "transparent", fontsize = 6)
-        return(.textbox_grob(
-            text = " ", gp = gp,
-            add_new_line = TRUE, ...
-        ))
+        return(grid::nullGrob())
     }
     gp <- grid::gpar(
         col = as.character(df$col),
@@ -417,7 +413,8 @@
     pad_b <- grid::convertHeight(padding[[3]], "mm", valueOnly = TRUE)
 
     n <- length(cats)
-    total_w_mm <- sum(slot_widths_mm) + gap_mm * max(n - 1L, 0L) + pad_l + pad_r
+    total_w_mm <- sum(slot_widths_mm) + gap_mm * max(n - 1L, 0L) 
+        + pad_l + pad_r
     total_h_mm <- max(heights_mm) + pad_t + pad_b
 
     vp <- grid::viewport(
@@ -505,7 +502,8 @@
         align_to <- split(seq_along(align_to), align_to)
         cn <- intersect(names(align_to), names(text))
         if (length(cn) == 0) {
-            stop("names of `text` should have overlap to levels in `align_to`.")
+            stop("names of `text` should have overlap to levels in ",
+                "`align_to`.")
         }
         align_to <- align_to[cn]
         text <- text[cn]
@@ -548,7 +546,8 @@
                 max(df$fontsize, na.rm = TRUE)
             }, numeric(1))
         }), use.names = FALSE)
-        header_gp$fontsize <- if (length(header_sizes)) max(header_sizes) else 8
+        header_gp$fontsize <- if (length(header_sizes)) 
+            max(header_sizes) else 8
     }
     if (is.null(header_offset)) {
         header_offset <- unit(1.5, "mm")
@@ -582,29 +581,48 @@
 
     side <- match.arg(side)
     first_nm <- names(gbl)[1]
+
+    # Detect empty panels (all categories have no terms) for
+    # transparent background
+    empty_panels <- vapply(text, function(txt) {
+        all(vapply(txt, function(df) {
+            !is.data.frame(df) || nrow(df) == 0
+        }, logical(1)))
+    }, logical(1))
+
     if (by %in% c("anno_link", "anno_zoom")) {
         panel_fun <- function(index, nm) {
             grid::pushViewport(grid::viewport(clip = "off"))
+            is_empty <- isTRUE(empty_panels[[nm]])
+            bg_fill <- if (is_empty) "transparent"
+                else background_gp$fill
+            bg_col  <- if (is_empty) "transparent"
+                else background_gp$col
+
             grid::grid.rect(gp = grid::gpar(
-                fill = background_gp$fill, col = background_gp$fill,
+                fill = bg_fill, col = bg_col,
                 lty = background_gp$lty, lwd = background_gp$lwd
             ))
-            if (side == "right") {
-                grid::grid.lines(c(0, 1, 1, 0), c(0, 0, 1, 1),
-                    gp = grid::gpar(
-                        col = background_gp$col, lty = background_gp$lty,
-                        lwd = background_gp$lwd
-                    ),
-                    default.units = "npc"
-                )
-            } else {
-                grid::grid.lines(c(1, 0, 0, 1), c(0, 0, 1, 1),
-                    gp = grid::gpar(
-                        col = background_gp$col, lty = background_gp$lty,
-                        lwd = background_gp$lwd
-                    ),
-                    default.units = "npc"
-                )
+            if (!is_empty) {
+                if (side == "right") {
+                    grid::grid.lines(c(0, 1, 1, 0), c(0, 0, 1, 1),
+                        gp = grid::gpar(
+                            col = background_gp$col,
+                            lty = background_gp$lty,
+                            lwd = background_gp$lwd
+                        ),
+                        default.units = "npc"
+                    )
+                } else {
+                    grid::grid.lines(c(1, 0, 0, 1), c(0, 0, 1, 1),
+                        gp = grid::gpar(
+                            col = background_gp$col,
+                            lty = background_gp$lty,
+                            lwd = background_gp$lwd
+                        ),
+                        default.units = "npc"
+                    )
+                }
             }
             gb <- gbl[[nm]]
             if (show_headers && identical(nm, first_nm)) {
@@ -650,9 +668,14 @@
     } else {
         panel_fun <- function(index, nm) {
             grid::pushViewport(grid::viewport())
+            is_empty <- isTRUE(empty_panels[[nm]])
+            bg_fill <- if (is_empty) "transparent"
+                else background_gp$fill
+            bg_col  <- if (is_empty) "transparent"
+                else background_gp$col
             grid::grid.rect(gp = grid::gpar(
-                fill = background_gp$fill,
-                col = background_gp$col, lty = background_gp$lty,
+                fill = bg_fill,
+                col = bg_col, lty = background_gp$lty,
                 lwd = background_gp$lwd
             ))
             grid::pushViewport(grid::viewport(

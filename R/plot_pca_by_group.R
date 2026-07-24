@@ -118,7 +118,9 @@ plot_pca_arrows <- function(se_obj, circle = TRUE, arrow = TRUE,
         "before plotting.")
     }
 
-    pca2 <- plot_pca(se_obj, assay = assay)$pca
+    pca2 <- plot_pca(se_obj, assay = assay,
+        plot_screeplot = FALSE, plot_loadings = FALSE,
+        plot_morepc = FALSE)$pca
     pc <- as.data.frame(pca2$rotated)
     pc$Sample <- rownames(pc)
     pc <- merge(pc, as.data.frame(colData(se_obj)), by = "Sample")

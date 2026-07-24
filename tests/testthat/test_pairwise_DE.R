@@ -1,10 +1,15 @@
+# ---- Shared data and DE precomputation ----
+data("example_obj")
+example_obj <- normalise_to_start(example_obj)
+
+DE_between_group_out <- DE_between_group(example_obj, assay = 2,
+    adjP_thres = 0.05, logFC_thres = 1)
+
+DE_between_time_out <- DE_between_time(example_obj, assay = 1)
+
+# ---- Tests ----
+
 test_that("DE_between_group works and de_list contains significant features", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-
-    DE_between_group_out <- DE_between_group(example_obj, assay = 2,
-        adjP_thres = 0.05, logFC_thres = 1)
-
     expect_true(is.list(DE_between_group_out))
     expect_true(all(c("all_list", "de_list", "fit_list",
         "ref_groups", "all_groups") %in% names(DE_between_group_out)))
@@ -24,9 +29,6 @@ test_that("DE_between_group works and de_list contains significant features", {
 })
 
 test_that("DE_between_group with trend=TRUE and filter works", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-
     DE_res <- DE_between_group(example_obj, assay = 2,
         filter = 1, trend = TRUE)
 
@@ -35,34 +37,13 @@ test_that("DE_between_group with trend=TRUE and filter works", {
 })
 
 test_that("DE_between_group validates group argument", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-
     expect_error(
         DE_between_group(example_obj, assay = 2, group = "nonexistent"),
         "not found"
     )
 })
 
-test_that("DE_between_time validates parameters", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-
-    expect_error(
-        DE_between_time(example_obj, assay = 1, group = "nonexistent"),
-        "not found"
-    )
-})
-
 test_that("DE_between_time works", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-
-    DE_between_time_out <- DE_between_time(example_obj, assay = 1)
-
-    plot_DE_between_time(DE_between_time_out,
-        fontsize = 8, value = TRUE, nrow = 1, heatmap_width = 3)
-
     expect_true(is.list(DE_between_time_out))
     expect_true(all(c("all_list", "de_list") %in% names(DE_between_time_out)))
     expect_all_true(names(DE_between_time_out$all_list) ==
@@ -72,12 +53,21 @@ test_that("DE_between_time works", {
     expect_true("t2-t0" %in% names(DE_between_time_out$all_list$IFNbeta))
 })
 
+test_that("DE_between_time validates parameters", {
+    expect_error(
+        DE_between_time(example_obj, assay = 1, group = "nonexistent"),
+        "not found"
+    )
+})
+
+test_that("DE_between_time errors when filter exceeds replicates", {
+    expect_error(
+        DE_between_time(example_obj, assay = 1, filter = 100),
+        "Filter value is larger than the number of replicates"
+    )
+})
+
 test_that("plot_volcano works", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-
-    DE_between_group_out <- DE_between_group(example_obj, assay = 2)
-
     plot_volcano(DE_between_group_out, group1 = "untreated",
         group2 = "IFNbeta", time = 24,
         logFC_thres = 0.5, adjP_thres = 0.05, label = TRUE)
@@ -100,8 +90,6 @@ test_that("plot_volcano works", {
     expect_error(plot_volcano(DE_between_group_out, group1 = "untreated",
         group2 = "IFNbeta", time1 = 24),
         "provide either")
-
-    DE_between_time_out <- DE_between_time(example_obj, assay = 1)
 
     plot_volcano(DE_between_time_out, group = "IFNbeta", time1 = 0,
         time2 = 24, logFC_thres = 0.5, adjP_thres = 0.05, label = TRUE)
@@ -127,41 +115,28 @@ test_that("plot_volcano works", {
 })
 
 test_that("plot_DE_between_time handles value=TRUE and value=FALSE", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-    DE_between_time_out <- DE_between_time(example_obj, assay = 2)
+    DE_between_time_out_a2 <- DE_between_time(example_obj, assay = 2)
 
     # value=TRUE with thresholds
     expect_error(
-        plot_DE_between_time(DE_between_time_out, fontsize = 8,
+        plot_DE_between_time(DE_between_time_out_a2, fontsize = 8,
             adjP_thres = 0.05, logFC_thres = 1,
             value = TRUE, nrow = 1, heatmap_width = 3),
         NA
     )
     # value=FALSE returns ggplot
-    p <- plot_DE_between_time(DE_between_time_out, fontsize = 8,
+    p <- plot_DE_between_time(DE_between_time_out_a2, fontsize = 8,
         value = FALSE, nrow = 1, heatmap_width = 3)
     expect_true(inherits(p, "gg"))
 })
 
 test_that("plot_DE_between_group filters by adjP and logFC thresholds", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
     DE_res <- DE_between_group(example_obj, assay = 2, filter = 1)
 
     expect_error(
         plot_DE_between_group(DE_res, group = "untreated",
             adjP_thres = 0.05, logFC_thres = 1),
         NA
-    )
-})
-
-test_that("DE_between_time errors when filter exceeds replicates", {
-    data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
-    expect_error(
-        DE_between_time(example_obj, assay = 1, filter = 100),
-        "Filter value is larger than the number of replicates"
     )
 })
 

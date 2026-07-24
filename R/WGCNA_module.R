@@ -37,10 +37,13 @@ WGCNA_module <- function(net, exclude_grey = FALSE) {
         gene_module$Module <- droplevels(gene_module$Module)
     }
 
-    # Order modules by size (largest first)
+    # Order modules by size (largest first), grey/M0 always first
     mod_sizes <- table(gene_module$Module)
+    grey_levels <- intersect(c("0", "grey", "gray"), names(mod_sizes))
+    other_levels <- setdiff(names(sort(mod_sizes, decreasing = TRUE)),
+                            grey_levels)
     gene_module$Module <- factor(gene_module$Module,
-        levels = names(sort(mod_sizes, decreasing = TRUE)))
+        levels = c(grey_levels, other_levels))
 
     gene_module <- gene_module |>
         tibble::rownames_to_column("Feature") |>

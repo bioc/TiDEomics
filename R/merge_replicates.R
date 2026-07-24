@@ -73,6 +73,10 @@ merge_replicates <- function(se_obj_list) {
             Time = colnames(d_mean) |> as.numeric()
         )
 
+        # Preserve assay names from input
+        assay_names <- names(assays(input))
+        if (!is.null(assay_names)) names(assay_list) <- assay_names
+
         se_obj_merged <- SummarizedExperiment(
             assays = assay_list,
             colData = coldata_group

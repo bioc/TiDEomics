@@ -1028,11 +1028,22 @@ iSEE::iSEE(data_obj)
 
 `prepare_tide()` output can be converted to a
 [`DeeDeeExperiment`](https://bioconductor.org/packages/DeeDeeExperiment)
-object for formatted summary.
+object for formatted summary. The nested DE and enrichment
+results can be flattened with `flatten_DE()` or `flatten_enrich()` before
+passing to the `DeeDeeExperiment` constructor.
 
 ```{r deedee}
-dde <- as_DeeDeeExperiment(tide)
-summary(dde)
+# Flatten nested results
+de_flat <- flatten_DE(tide$DE)
+enrich_flat <- flatten_enrich(tide$enrichment)
+
+# Build DeeDeeExperiment
+dde <- DeeDeeExperiment::DeeDeeExperiment(
+    sce = tide$se,
+    de_results = de_flat,
+    enrich_results = enrich_flat
+)
+DeeDeeExperiment:::summary.DeeDeeExperiment(dde)
 ```
 
 ## Common usage scenarios

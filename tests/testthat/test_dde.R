@@ -1,167 +1,68 @@
-# Tests for as_DeeDeeExperiment and enrichment format compatibility
+# Tests for flatten_DE, flatten_enrich, and enrichment format compatibility
 
-test_that("as_DeeDeeExperiment validates input", {
-    expect_error(as_DeeDeeExperiment(NULL), "must be a list")
-    expect_error(as_DeeDeeExperiment(list()), "Missing elements")
+# ---- Shared setup ----
+data("example_net")
+data("example_go")
+data("tutorial_data")
+data("tutorial_sample_info")
+example_module_all <- WGCNA_module(example_net, exclude_grey = TRUE)
+example_module_filt <- example_module_all |>
+    dplyr::filter(Module %in% c("1", "2"))
+
+tide <- prepare_tide(tutorial_data, tutorial_sample_info,
+    keep = "threshold", residual_threshold = 100)
+
+if (requireNamespace("msigdbr", quietly = TRUE)) {
+    msigdb_res_dde <- enrich_msigdb(example_module_all,
+        species = "Mus musculus", db_species = "MM",
+        category = "MH", universe = example_module_all$Feature,
+        pvalueCutoff = 0.9, minGSSize = 1, maxGSSize = 1000)
+}
+
+# ---- flatten_DE ----
+
+test_that("flatten_DE validates input", {
+    expect_error(flatten_DE(NULL), "must be a list")
+    expect_equal(flatten_DE(list()), list())
 })
 
-test_that("as_DeeDeeExperiment handles empty results and WGCNA metadata", {
-    skip_if_not_installed("DeeDeeExperiment")
-    data("tutorial_data")
-    data("tutorial_sample_info")
-    tide <- prepare_tide(tutorial_data, tutorial_sample_info,
-        keep = "threshold", residual_threshold = 100)
-
-    # Empty DE and enrichment
-    dde <- as_DeeDeeExperiment(tide)
-    expect_s4_class(dde, "DeeDeeExperiment")
-
-    # WGCNA stored in metadata
-    tide$WGCNA <- list(modules = "test")
-    dde2 <- as_DeeDeeExperiment(tide)
-    expect_equal(dde2@metadata$WGCNA, list(modules = "test"))
+test_that("flatten_DE handles empty DE within prepare_tide output", {
+    result <- flatten_DE(tide$DE)
+    expect_type(result, "list")
 })
 
-test_that("as_DeeDeeExperiment correctly renames DE columns", {
-    skip_if_not_installed("DeeDeeExperiment")
-    data("tutorial_data")
-    data("tutorial_sample_info")
-    tide <- prepare_tide(tutorial_data, tutorial_sample_info,
-        keep = "threshold", residual_threshold = 100)
-
-    # Run a simple DE
-    tide$DE <- DE_between_group(tide$se, assay = "norm",
+test_that("flatten_DE flattens and renames DE_between_group output", {
+    tide_de <- tide
+    tide_de$DE <- DE_between_group(tide$se, assay = "norm",
         filter = 1, trend = TRUE)
 
-    dde <- as_DeeDeeExperiment(tide)
-    expect_s4_class(dde, "DeeDeeExperiment")
-})
-
-test_that("enrichGO_list output format is compatible with DeeDeeExperiment", {
-    skip_if_not_installed("org.Mm.eg.db")
-    library(org.Mm.eg.db)
-
-    data("example_net")
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE) |>
-        dplyr::filter(Module %in% c("1", "2"))
-
-    go_list <- enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
-        universe = example_module$Feature,
-        pvalueCutoff = 0.9, qvalueCutoff = 0.9,
-        category = c("BP", "MF"), simplify = FALSE)
-
-    # $all is a named list of data.frames
-    enrich <- go_list$all
-    expect_type(enrich, "list")
-    expect_true(length(enrich) > 0)
-
-    # Check non-null data.frames have clusterProfiler columns
-    for (nm in names(enrich)) {
-        df <- enrich[[nm]]
-        if (!is.null(df) && is.data.frame(df) && nrow(df) > 0) {
-            expect_true("Description" %in% colnames(df))
-            expect_true("p.adjust" %in% colnames(df))
-            expect_true("Cluster" %in% colnames(df))
-        }
+    result <- flatten_DE(tide_de$DE)
+    expect_type(result, "list")
+    expect_true(length(result) > 0)
+    for (nm in names(result)) {
+        df <- result[[nm]]
+        expect_s3_class(df, "data.frame")
+        expect_true("log2FoldChange" %in% colnames(df))
+        expect_true("pvalue" %in% colnames(df))
+        expect_true("padj" %in% colnames(df))
+        expect_false("logFC" %in% colnames(df))
+        expect_false("P.Value" %in% colnames(df))
+        expect_false("adj.P.Val" %in% colnames(df))
     }
 })
 
-test_that("enrichR_list output format is compatible with DeeDeeExperiment", {
-    skip_if_not_installed("enrichR")
-    data("example_net")
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
+test_that("flatten_DE handles DE_between_time naming without double T prefix", {
+    tide_de <- tide
+    tide_de$DE <- DE_between_time(tide$se, assay = "norm", filter = 1)
 
-    enrichR_res <- enrichR_list(example_module,
-        databases = "DSigDB",
-        pvalueCutoff = 0.9)
-
-    # Should be a named list of data.frames
-    expect_type(enrichR_res, "list")
-    expect_true("DSigDB" %in% names(enrichR_res))
-    expect_true(is.data.frame(enrichR_res[["DSigDB"]]))
-
-    # Has required columns
-    df <- enrichR_res[["DSigDB"]]
-    expect_true("Description" %in% colnames(df))
-    expect_true("Cluster" %in% colnames(df))
-})
-
-test_that("as_DeeDeeExperiment handles enrichGO_list unmerged enrichResults", {
-    skip_if_not_installed("DeeDeeExperiment")
-    skip_if_not_installed("org.Mm.eg.db")
-    library(org.Mm.eg.db)
-    data("tutorial_data")
-    data("tutorial_sample_info")
-    tide <- prepare_tide(tutorial_data, tutorial_sample_info,
-        keep = "threshold", residual_threshold = 100)
-
-    data("example_net")
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-    tide$enrichment$GO <- enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
-        universe = example_module$Feature,
-        pvalueCutoff = 0.9, qvalueCutoff = 0.9,
-        category = "BP", simplify = FALSE)
-
-    dde <- as_DeeDeeExperiment(tide)
-    expect_s4_class(dde, "DeeDeeExperiment")
-    # Should have fea entries from unmerged enrichResult objects
-    fea_names <- DeeDeeExperiment::getFEANames(dde)
-    expect_true(length(fea_names) > 0)
-})
-
-test_that("as_DeeDeeExperiment handles multiple enrichment sources", {
-    skip_if_not_installed("DeeDeeExperiment")
-    skip_if_not_installed("org.Mm.eg.db")
-    skip_if_not_installed("msigdbr")
-    library(org.Mm.eg.db)
-    data("tutorial_data")
-    data("tutorial_sample_info")
-    tide <- prepare_tide(tutorial_data, tutorial_sample_info,
-        keep = "threshold", residual_threshold = 100)
-
-    data("example_net")
-    example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
-
-    tide$enrichment$GO <- enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
-        universe = example_module$Feature,
-        pvalueCutoff = 0.9, qvalueCutoff = 0.9,
-        category = "BP", simplify = FALSE)
-    tide$enrichment$MSigDB <- enrich_msigdb(example_module,
-        species = "Mus musculus", db_species = "MM",
-        category = "MH", universe = example_module$Feature,
-        pvalueCutoff = 0.9, minGSSize = 1, maxGSSize = 1000)
-
-    dde <- as_DeeDeeExperiment(tide)
-    expect_s4_class(dde, "DeeDeeExperiment")
-    fea_names <- DeeDeeExperiment::getFEANames(dde)
-    # Should have entries from both sources
-    expect_true(length(fea_names) >= 2)
-})
-
-test_that("as_DeeDeeExperiment handles DE_between_time naming", {
-    skip_if_not_installed("DeeDeeExperiment")
-    data("tutorial_data")
-    data("tutorial_sample_info")
-    tide <- prepare_tide(tutorial_data, tutorial_sample_info,
-        keep = "threshold", residual_threshold = 100)
-
-    tide$DE <- DE_between_time(tide$se, assay = "norm", filter = 1)
-
-    dde <- as_DeeDeeExperiment(tide)
-    expect_s4_class(dde, "DeeDeeExperiment")
-    dea_names <- DeeDeeExperiment::getDEANames(dde)
-    # Time labels (t2-t0) should NOT get double T-prefix
-    time_labels <- grep("Tt", dea_names, value = TRUE)
+    result <- flatten_DE(tide_de$DE)
+    expect_type(result, "list")
+    expect_true(length(result) > 0)
+    time_labels <- grep("Tt", names(result), value = TRUE)
     expect_length(time_labels, 0)
-    # Should have entries
-    expect_true(length(dea_names) > 0)
 })
 
-test_that("as_DeeDeeExperiment handles nested DE (Case 2: DE_between_time)", {
-    skip_if_not_installed("DeeDeeExperiment")
-    library(DeeDeeExperiment)
-    library(SingleCellExperiment)
-
+test_that("flatten_DE handles nested DE structure", {
     data(example_obj)
     example_obj <- normalise_to_start(example_obj)
 
@@ -175,24 +76,106 @@ test_that("as_DeeDeeExperiment handles nested DE (Case 2: DE_between_time)", {
         )
     }
 
-    tide <- list(
-        se = example_obj,
-        DE = list(
-            untreated = list(all_list = list(
-                T2 = make_de_df(rownames(example_obj)[1:20]),
-                T6 = make_de_df(rownames(example_obj)[21:40])
-            )),
-            IFNbeta = list(all_list = list(
-                T2 = make_de_df(rownames(example_obj)[41:60])
-            ))
-        ),
-        enrichment = list(go = list(), enrichr = list(), msigdb = list()),
-        variance = list(),
-        feature_property = list(),
-        filter_summary = list(),
-        WGCNA = list()
+    de_list <- list(
+        untreated = list(all_list = list(
+            T2 = make_de_df(rownames(example_obj)[1:20]),
+            T6 = make_de_df(rownames(example_obj)[21:40])
+        )),
+        IFNbeta = list(all_list = list(
+            T2 = make_de_df(rownames(example_obj)[41:60])
+        ))
     )
 
-    dde <- as_DeeDeeExperiment(tide)
-    expect_s4_class(dde, "DeeDeeExperiment")
+    result <- flatten_DE(de_list)
+    expect_type(result, "list")
+    expect_true(length(result) >= 3)
+    for (nm in names(result)) {
+        expect_true("log2FoldChange" %in% colnames(result[[nm]]))
+    }
+})
+
+# ---- flatten_enrich ----
+
+test_that("flatten_enrich validates input", {
+    expect_error(flatten_enrich(NULL), "must be a list")
+    expect_equal(flatten_enrich(list()), list())
+})
+
+test_that("flatten_enrich handles enrichGO_list with DDE-compatible output", {
+    enrich_flat <- flatten_enrich(example_go)
+    expect_type(enrich_flat, "list")
+    expect_true(length(enrich_flat) > 0)
+    expect_true(all(grepl("^clusterProfiler_", names(enrich_flat))))
+    for (nm in names(enrich_flat)) {
+        expect_true(is.data.frame(enrich_flat[[nm]]) ||
+            inherits(enrich_flat[[nm]], "enrichResult"))
+    }
+})
+
+test_that("flatten_enrich handles multiple enrichment sources and flat msigdb", {
+    skip_if_not_installed("msigdbr")
+
+    # Already-flat enrich_msigdb
+    enrich_flat_flat <- flatten_enrich(msigdb_res_dde)
+    expect_type(enrich_flat_flat, "list")
+    expect_true(length(enrich_flat_flat) > 0)
+    expect_true(all(grepl("^clusterProfiler_", names(enrich_flat_flat))))
+
+    # Multiple sources (GO + MSigDB)
+    enrich_list <- list(
+        GO = example_go,
+        MSigDB = msigdb_res_dde
+    )
+    enrich_flat <- flatten_enrich(enrich_list)
+    expect_type(enrich_flat, "list")
+    expect_true(length(enrich_flat) >= 2)
+    has_prefix <- grepl("^clusterProfiler_", names(enrich_flat))
+    expect_true(all(has_prefix))
+})
+
+test_that("flatten_enrich handles already-flat enrichR_list", {
+    skip_if_not_installed("enrichR")
+
+    enrichR_res <- enrichR_list(example_module_filt,
+        databases = "DSigDB",
+        pvalueCutoff = 0.9)
+
+    enrich_flat <- flatten_enrich(enrichR_res)
+    expect_type(enrich_flat, "list")
+    expect_true("enrichr_DSigDB" %in% names(enrich_flat))
+    df <- enrich_flat[["enrichr_DSigDB"]]
+    expect_true("Term" %in% colnames(df))
+    expect_true("Adjusted.P.value" %in% colnames(df))
+})
+
+# ---- Enrichment output format compatibility ----
+
+test_that("enrichGO_list output format is compatible with DeeDeeExperiment", {
+    enrich <- example_go$all
+    expect_type(enrich, "list")
+    expect_true(length(enrich) > 0)
+    for (nm in names(enrich)) {
+        df <- enrich[[nm]]
+        if (!is.null(df) && is.data.frame(df) && nrow(df) > 0) {
+            expect_true("Description" %in% colnames(df))
+            expect_true("p.adjust" %in% colnames(df))
+            expect_true("Cluster" %in% colnames(df))
+        }
+    }
+})
+
+test_that("enrichR_list output format is compatible with DeeDeeExperiment", {
+    skip_if_not_installed("enrichR")
+
+    enrichR_res <- enrichR_list(example_module_filt,
+        databases = "DSigDB",
+        pvalueCutoff = 0.9)
+
+    expect_type(enrichR_res, "list")
+    expect_true("DSigDB" %in% names(enrichR_res))
+    expect_true(is.data.frame(enrichR_res[["DSigDB"]]))
+
+    df <- enrichR_res[["DSigDB"]]
+    expect_true("Description" %in% colnames(df))
+    expect_true("Cluster" %in% colnames(df))
 })

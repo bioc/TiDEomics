@@ -68,5 +68,6 @@ example_module <- WGCNA_module(example_net) |>
 # Use high pvalueCutoff for demonstration
 # enrichr_out <- enrichR_list(example_module,
 #     databases = c("KEGG_2019_Mouse"),
-#     universe = example_module$Feature, pvalueCutoff = 0.5)
+#     universe = WGCNA_module(example_net, exclude_grey = FALSE)$Feature,
+#     pvalueCutoff = 0.5)
 }

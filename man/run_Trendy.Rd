@@ -81,5 +81,6 @@ example_obj_merged_imp_list <- impute_groups(example_obj_merged_list)
 # "untreated" group has only 3 time points, so Trendy analysis will not be
 # performed for this group
 example_res_list <- run_Trendy(example_obj_merged_imp_list, maxK = 1,
-    minNumInSeg = 2, meanCut = 0)
+    minNumInSeg = 2, meanCut = 0,
+    feature = rownames(example_obj_merged_imp_list[[1]])[1:10])
 }
