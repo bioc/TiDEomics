@@ -44,6 +44,10 @@ test_that("DE_between_group validates group argument", {
 })
 
 test_that("DE_between_time works", {
+    expect_no_error(
+        plot_DE_between_time(DE_between_time_out, fontsize = 8)
+    )
+
     expect_true(is.list(DE_between_time_out))
     expect_true(all(c("all_list", "de_list") %in% names(DE_between_time_out)))
     expect_all_true(names(DE_between_time_out$all_list) ==
@@ -68,6 +72,13 @@ test_that("DE_between_time errors when filter exceeds replicates", {
 })
 
 test_that("plot_volcano works", {
+    groups <- levels(example_obj$Group)
+    p <- plot_volcano(DE_between_group_out,
+        group1 = groups[1], group2 = groups[2],
+        time = unique(example_obj$Time)[2],
+        logFC_thres = 0.5, adjP_thres = 0.99, label = FALSE)
+    expect_s3_class(p, "ggplot")
+
     plot_volcano(DE_between_group_out, group1 = "untreated",
         group2 = "IFNbeta", time = 24,
         logFC_thres = 0.5, adjP_thres = 0.05, label = TRUE)

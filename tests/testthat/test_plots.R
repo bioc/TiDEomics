@@ -135,23 +135,6 @@ test_that("plot_pca_3D runs and validates", {
         "Invalid PCs specified")
 })
 
-test_that("plot_volcano runs with DE_between_group output", {
-    de_out <- suppressMessages(DE_between_group(se, assay = 2, filter = 1))
-    groups <- levels(se$Group)
-    p <- plot_volcano(de_out,
-        group1 = groups[1], group2 = groups[2],
-        time = unique(se$Time)[2],
-        logFC_thres = 0.5, adjP_thres = 0.99, label = FALSE)
-    expect_s3_class(p, "ggplot")
-})
-
-test_that("plot_DE_between_time runs", {
-    de_out <- suppressMessages(DE_between_time(se, assay = 1, filter = 1))
-    expect_no_error(
-        plot_DE_between_time(de_out, fontsize = 8)
-    )
-})
-
 test_that("plot_DE_between_group runs and validates input", {
     expect_error(
         plot_DE_between_group(list()),

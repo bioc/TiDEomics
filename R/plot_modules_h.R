@@ -336,15 +336,27 @@ plot_modules_h <- function(
             )
         }
     }
+
+    # Pretty time breaks for profile x-axis
+    time_vals <- as.numeric(levels(data_module_long$Time))
+    t_range <- range(time_vals)
+    time_breaks <- pretty(t_range, n = 4)
+    time_breaks <- time_breaks[time_breaks >= t_range[1] &
+        time_breaks <= t_range[2]]
+    t_range_exp <- t_range + c(-1, 1) * 0.05 * diff(t_range)
+    time_breaks_norm <- (time_breaks - t_range_exp[1]) / diff(t_range_exp)
+    last_mod <- utils::tail(levels(data_module_long$Module), 1)
+
     ggplot2_profile_list <- list()
     for (i in levels(data_module_long$Module)) {
-        ggplot2_profile_list[[i]] <- ggplot(
-            data_module_long |> dplyr::filter(Module == i),
-            aes(x = Time, y = Abundance, group = Feature)
-        ) +
+        ggplot2_profile_list[[i]] <- data_module_long |>
+            dplyr::filter(Module == i) |>
+            dplyr::mutate(Time = as.numeric(as.character(Time))) |>
+            ggplot(aes(x = Time, y = Abundance, group = Feature)) +
             stat_summary(aes(group = Group, color = Group),
                 fun = mean, geom = "line", linewidth = 1
             ) +
+            scale_x_continuous(expand = c(0.05, 0)) + # default
             scale_color_manual(values = get_custom_palette(groups)) +
             labs(x = NULL, y = NULL, title = NULL) +
             theme_custom(panel_border = TRUE) +
@@ -368,6 +380,16 @@ plot_modules_h <- function(
             grid::grid.rect()
             grid::grid.draw(g)
             grid::popViewport()
+            if (nm == last_mod) {
+                grid::grid.xaxis(at = time_breaks_norm,
+                    label = as.character(time_breaks),
+                    gp = grid::gpar(fontsize = fontsize))
+                grid::grid.text("Time",
+                    x = unit(0.5, "npc"),
+                    y = unit(0, "npc") - unit(6, "mm"),
+                    just = c("center", "top"),
+                    gp = grid::gpar(fontsize = fontsize))
+            }
         },
         size = 1 / n_modules,
         gap = unit(0, "cm"),
@@ -649,11 +671,12 @@ plot_modules_h <- function(
             lgd_list <- c(lgd_list, list(mark_state$lgd))
         }
 
-        pad_right <- 2
+        pad_bottom <- 10
         ComplexHeatmap::draw(heatmap,
             heatmap_legend_list = lgd_list,
             heatmap_legend_side = "right", merge_legends = TRUE,
-            padding = unit(c(2, 2, pad_right, 2), "mm")
+            # top, right, bottom, left
+            padding = unit(c(2, 2, pad_bottom, 2), "mm")
         )
     }
 

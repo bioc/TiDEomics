@@ -38,7 +38,7 @@ summarise_Trendy <- function(res_list, ...) {
 
     seg_cols <- grep("^Segment[0-9]+\\.Trend$", colnames(df), value = TRUE)
     df[seg_cols] <- df[seg_cols] |> lapply(function(col) {
-        plyr::mapvalues(col, c(1, 0, -1), c("up", "stable", "down"))
+        c("1" = "up", "0" = "stable", "-1" = "down")[as.character(col)]
     })
 
     # all combinations of segment trends

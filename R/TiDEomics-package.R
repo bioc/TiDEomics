@@ -55,5 +55,40 @@
 #' @import SummarizedExperiment
 #' @import ggplot2
 #' @import patchwork
+#' @importFrom circlize colorRamp2
+#' @importFrom clusterProfiler bitr cnetplot dotplot emapplot enrichGO gseGO
+#' @importFrom clusterProfiler merge_result simplify
+#' @importFrom ComplexHeatmap Heatmap HeatmapAnnotation Legend anno_block
+#' @importFrom ComplexHeatmap anno_link anno_mark anno_zoom draw packLegend
+#' @importFrom ComplexHeatmap rowAnnotation
+#' @importFrom dplyr across all_of anti_join arrange bind_rows count desc
+#' @importFrom dplyr distinct everything filter full_join group_by mutate n
+#' @importFrom dplyr n_distinct pull rename row_number select slice slice_head
+#' @importFrom dplyr slice_min summarise ungroup
+#' @importFrom enrichplot pairwise_termsim
+#' @importFrom ggforce geom_mark_ellipse
+#' @importFrom ggh4x elem_list_rect facet_grid2 strip_themed
+#' @importFrom ggplotify as.ggplot
+#' @importFrom ggpubr annotate_figure ggarrange stat_compare_means text_grob
+#' @importFrom ggridges geom_density_ridges
+#' @importFrom ggrepel geom_text_repel
+#' @importFrom ggsci pal_iterm pal_jco pal_simpsons
+#' @importFrom limma contrasts.fit duplicateCorrelation eBayes lmFit
+#' @importFrom limma makeContrasts topTable
+#' @importFrom lme4 VarCorr lmer lmerControl
+#' @importFrom pbapply pblapply pboptions
+#' @importFrom PCAtools getComponents pairsplot pca plotloadings screeplot
+#' @importFrom randtests bartels.rank.test
+#' @importFrom scales pal_hue pal_viridis
+#' @importFrom tibble column_to_rownames rownames_to_column
+#' @importFrom tidyr complete pivot_longer pivot_wider unite
+#' @importFrom Trendy breakpointDist formatResults plotFeature results
+#' @importFrom Trendy topTrendy trendy
+#' @importFrom umap umap
+#' @importFrom WGCNA allowWGCNAThreads binarizeCategoricalColumns
+#' @importFrom WGCNA blockwiseModules cor corPvalueStudent goodGenes
+#' @importFrom WGCNA goodSamples labeledHeatmap labels2colors moduleEigengenes
+#' @importFrom WGCNA orderMEs pickSoftThreshold plotDendroAndColors plotMEpairs
+#' @importFrom WGCNA signedKME
 #' @keywords internal
 "_PACKAGE"

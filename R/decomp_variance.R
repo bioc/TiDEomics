@@ -80,8 +80,7 @@ decomp_variance <- function(
         dplyr::mutate(Time = factor(Time))
 
     mat <- assays(se_obj)[[assay]] |> as.data.frame()
-    colnames(mat) <- colnames(mat) |>
-        plyr::mapvalues(from = ann$Sample, to = ann$Sample_new)
+    colnames(mat) <- ann$Sample_new[match(colnames(mat), ann$Sample)]
 
     ann <- ann |>
         dplyr::select(-Sample) |>

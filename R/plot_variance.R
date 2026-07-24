@@ -51,7 +51,7 @@ plot_variance <- function(var_decomp, rank = "Group",
                 " features ", "ranked by ", as.character(rank), ".")
         }
         features <- var_decomp |>
-            dplyr::arrange(dplyr::desc(!!rank)) |>
+            dplyr::arrange(dplyr::desc(!!rank), Feature) |>
             dplyr::slice(seq(1, top_n)) |>
             dplyr::pull(Feature)
     } else if (!all(features %in% var_decomp$Feature)) {

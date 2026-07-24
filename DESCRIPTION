@@ -1,6 +1,6 @@
 Package: TiDEomics
 Title: Time-course Differential Expression analysis of omics data
-Version: 0.99.3
+Version: 0.99.4
 Date: 2026-07-24
 Authors@R:
     person("Tianen", "He",
@@ -44,7 +44,6 @@ Imports:
     patchwork,
     pbapply,
     PCAtools,
-    plyr,
     randtests,
     scales,
     SummarizedExperiment,
@@ -66,8 +65,7 @@ Suggests:
     org.Hs.eg.db,
     org.Mm.eg.db,
     msigdbr,
-    DeeDeeExperiment,
-    SingleCellExperiment
+    DeeDeeExperiment
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0

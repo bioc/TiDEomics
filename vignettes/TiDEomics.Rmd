@@ -881,7 +881,7 @@ horizontally aligned with annotation of the modules with their top enriched
 GO terms. The plotting function is adapted from ClusterGVis
 package [@ClusterGVis].
 
-```{r plot-wgcna-modules-go, fig.width = 8}
+```{r plot-wgcna-modules-go, fig.width = 8, fig.height = 5}
 plot_modules_h(gene_module,
     data_obj_merged, scale = TRUE,
     ylabel = "Z-score of log2(CPM + 1)",
@@ -904,7 +904,7 @@ colours instead.
 Hub features can be extracted by WGCNA module membership (the correlation of
 the feature with the corresponding module eigengene) with `extract_hubs()`
 
-```{r plot-wgcna-modules-multi, fig.width = 15}
+```{r plot-wgcna-modules-multi, fig.width = 15, fig.height = 5}
 hub_features <- extract_hubs(net, top_n = 3)
 
 plot_modules_h(gene_module,
@@ -1043,7 +1043,6 @@ dde <- DeeDeeExperiment::DeeDeeExperiment(
     de_results = de_flat,
     enrich_results = enrich_flat
 )
-DeeDeeExperiment:::summary.DeeDeeExperiment(dde)
 ```
 
 ## Common usage scenarios
