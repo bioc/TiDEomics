@@ -12,7 +12,7 @@
 #' before running WGCNA.
 #' @param assay The assay to use in the SummarizedExperiment object: a numeric
 #'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
-#'   for time 0 normalised data. (Default: 2.)
+#'   for time 0 normalised data. (Required, no default.)
 #' @param networkType Parameter of `WGCNA::pickSoftThreshold()`
 #' (default is "signed")
 #' @param RsquaredCut Parameter of `WGCNA::pickSoftThreshold()`
@@ -38,7 +38,7 @@
 #' picked_power <- wgcna_input$powerEstimate
 #' @references https://github.com/edo98811/WGCNA_official_documentation/
 prepare_WGCNA <- function(
-    se_obj, assay = 2,
+    se_obj, assay,
     networkType = "signed",
     RsquaredCut = 0.8,
     MeanConnectivity = 100,

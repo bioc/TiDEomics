@@ -6,7 +6,7 @@
 \usage{
 prepare_WGCNA(
   se_obj,
-  assay = 2,
+  assay,
   networkType = "signed",
   RsquaredCut = 0.8,
   MeanConnectivity = 100,
@@ -24,7 +24,7 @@ before running WGCNA.}
 
 \item{assay}{The assay to use in the SummarizedExperiment object: a numeric
 index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
-for time 0 normalised data. (Default: 2.)}
+for time 0 normalised data. (Required, no default.)}
 
 \item{networkType}{Parameter of \code{WGCNA::pickSoftThreshold()}
 (default is "signed")}
