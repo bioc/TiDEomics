@@ -14,9 +14,10 @@
 #' @param pc1 Principal component for the x-axis (default: 1).
 #' @param pc2 Principal component for the y-axis (default: 2).
 #' @param nrow Number of rows for arranging the plots (default: 1).
-#' @param fontsize Base font size (default: 8).
-#' @param assay Assay index to use, where 1 is the original data and 2 is
-#'   normalised to time 0 (if available) (default: 1).
+#' @param fontsize Font size for the plot (default is 8)
+#' @param assay The assay to use in the SummarizedExperiment object: a numeric
+#'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+#'   for time 0 normalised data. (Default: 1.)
 #' @param legend_pos Legend position (default: "right").
 #'
 #' @import ggplot2
@@ -88,9 +89,10 @@ plot_pca_by_group <- function(se_obj, circle = TRUE, arrow = TRUE,
 #'   over time (default: TRUE).
 #' @param pc1 Principal component for the x-axis (default: 1).
 #' @param pc2 Principal component for the y-axis (default: 2).
-#' @param fontsize Base font size (default: 8).
-#' @param assay Assay index to use, where 1 is the original data and 2 is
-#'   normalised to time 0 (if available) (default: 1).
+#' @param fontsize Font size for the plot (default is 8)
+#' @param assay The assay to use in the SummarizedExperiment object: a numeric
+#'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+#'   for time 0 normalised data. (Default: 1.)
 #'
 #' @import ggplot2
 #' @import SummarizedExperiment

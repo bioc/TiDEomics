@@ -1,14 +1,15 @@
-# TiDEomics 0.99.0
-
-NEW FEATURES
-
-* Added a `NEWS.md` file to track changes to the package.
+# TiDEomics 0.99.5
 
 SIGNIFICANT USER-VISIBLE CHANGES
 
-* New package.
+* `enrich_p_threshold` renamed to `enrich_threshold` in `plot_modules_h()`.
+* `assay` parameter in `plot_modules_h()` and `plot_modules_v()` now
+  must be specified explicitly (no default).
+* `plot_trend()`: `ylab` parameter renamed to `ylabel`, default changed from
+  `"Abundance"` to `"Log2 abundance"`.
+* `plot_modules_v()`: default `ylabel` changed from
+  `"Log2 abundance normalised to Time 0"` to `"Log2 abundance"`.
 
-BUG FIXES
+# TiDEomics 0.99.4
 
-* Your bug fixes. See more details at
-  [http://bioconductor.org/developers/package-guidelines/#news](http://bioconductor.org/developers/package-guidelines/#news).
+* Accepted by Bioconductor.

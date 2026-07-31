@@ -14,7 +14,7 @@ example_module <- WGCNA_module(example_net)
 
 test_that("plot_modules_v works, handles variants, and saves", {
     pq <- plot_modules_v(example_module |> dplyr::filter(Module != '0'),
-        example_obj_merged, scale = TRUE,
+        example_obj_merged, assay = 2, scale = TRUE,
         ylabel = "Z-score of log2 (expression)",
         height_ratio = 2,
         fontsize = 6)
@@ -23,18 +23,18 @@ test_that("plot_modules_v works, handles variants, and saves", {
     expect_true("gg" %in% class(pq))
 
     pq <- plot_modules_v(example_module |> dplyr::filter(Module != '0'),
-        example_obj_merged, scale = FALSE, height_ratio = 2, fontsize = 6)
+        example_obj_merged, assay = 2, scale = FALSE, height_ratio = 2, fontsize = 6)
     expect_true("patchwork" %in% class(pq))
 
     mod_one <- example_module |>
         dplyr::filter(Module == levels(Module)[1])
     pq <- plot_modules_v(mod_one, example_obj_merged,
-        scale = TRUE, height_ratio = 2, fontsize = 6)
+        assay = 2, scale = TRUE, height_ratio = 2, fontsize = 6)
     expect_true("patchwork" %in% class(pq))
 
     tmp_dir <- tempdir()
     pq <- plot_modules_v(example_module |> dplyr::filter(Module != '0'),
-        example_obj_merged, scale = TRUE, ylabel = "Abundance",
+        example_obj_merged, assay = 2, scale = TRUE, ylabel = "Abundance",
         suffix = "test_sfx", save = tmp_dir,
         device = "png", height_ratio = 2, fontsize = 6)
     expect_true("patchwork" %in% class(pq))

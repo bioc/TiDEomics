@@ -629,7 +629,7 @@ selected features.
 plot_segments(data_obj_merged_imp_list,
     example_res_list,
     feature = c("Slc25a51", "Aunip"), # example features
-    ylab = "Log2(CPM + 1)"
+    ylabel = "Log2(CPM + 1)"
 )
 ```
 
@@ -792,7 +792,7 @@ summarise_module_metrics(net)
 
 ```{r plot-wgcna-modules, fig.width = 6, fig.height = 6}
 plot_modules_v(gene_module,
-    data_obj_merged, scale = TRUE,
+    data_obj_merged, assay = 2, scale = TRUE,
     ylabel = "Z-score of log2(CPM + 1)",
     height_ratio = 2
 )
@@ -883,7 +883,7 @@ package [@ClusterGVis].
 
 ```{r plot-wgcna-modules-go, fig.width = 8, fig.height = 5}
 plot_modules_h(gene_module,
-    data_obj_merged, scale = TRUE,
+    data_obj_merged, assay = 2, scale = TRUE,
     ylabel = "Z-score of log2(CPM + 1)",
     enrich_list = go_list$all,
     enrich_category = "BP",
@@ -897,7 +897,7 @@ enrichR databases) can be displayed side-by-side
 by passing a vector to `enrich_category`. Features of interest can
 be marked on the heatmap or shown as an annotation column via
 `mark_features` and `enrich_category = "Hub features"`. The
-`enrich_p_threshold` parameter controls per-category p-value colour-coding
+`enrich_threshold` parameter controls per-category p-value colour-coding
 of enrichment terms; set to `NA` for "Hub features", which use auto-assigned
 colours instead.
 
@@ -908,11 +908,11 @@ the feature with the corresponding module eigengene) with `extract_hubs()`
 hub_features <- extract_hubs(net, top_n = 3)
 
 plot_modules_h(gene_module,
-    data_obj_merged, scale = TRUE,
+    data_obj_merged, assay = 2, scale = TRUE,
     ylabel = "Z-score of log2(CPM + 1)",
     enrich_list = c(go_list$all, hallmark_msigdb),
     enrich_category = c("BP", "CC", "MH"),
-    enrich_p_threshold = c(0.05, 0.05, 0.05),
+    enrich_threshold = c(0.05, 0.05, 0.05),
     mark_features = hub_features,
     heatmap_width = 6,
     heatmap_height = 8

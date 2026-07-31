@@ -40,18 +40,18 @@ First time point for comparison}
 \item{time2}{(Required for \code{DE_between_time()} output)
 Second time point for comparison}
 
-\item{logFC_thres}{(Optional) Log2 fold change threshold for
+\item{logFC_thres}{Log2 fold change threshold for
 highlighting DE features, default is NULL (using threshold when
 \code{DE_between_group()} or \code{DE_between_time()} was run)}
 
-\item{adjP_thres}{(Optional) Adjusted p-value threshold for
+\item{adjP_thres}{Adjusted p-value threshold for
 highlighting DE features, default is NULL (using threshold when
 \code{DE_between_group()} or \code{DE_between_time()} was run)}
 
-\item{label}{(Optional) Whether to label names of DE features on the plot
+\item{label}{Whether to label names of DE features on the plot
 (default is FALSE)}
 
-\item{fontsize}{(Optional) Font size for the plot (default is 8)}
+\item{fontsize}{Font size for the plot (default is 8)}
 
 \item{...}{Additional arguments for ggrepel::geom_text_repel()
 when label = TRUE}

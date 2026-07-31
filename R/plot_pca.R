@@ -28,8 +28,9 @@
 #' @param ylim_max Maximum y-axis limit when drawing ellipses
 #' (default: NULL, auto-computed as 1.5×max PC2)
 #' @param fontsize Font size for the PCA plot (default is 8)
-#' @param assay Assay index to use, where 1 is the original data and 2 is
-#' normalised to time 0 (if available) (default is 1)
+#' @param assay The assay to use in the SummarizedExperiment object: a numeric
+#'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+#'   for time 0 normalised data. (Default: 1.)
 #'
 #' @import ggplot2
 #' @import SummarizedExperiment

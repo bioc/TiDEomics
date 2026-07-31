@@ -3,9 +3,9 @@
 #'
 #' @param res_list A list of the Trendy analysis results, output of
 #' `run_Trendy()`
-#' @param group (Optional) A character vector of group names to be plotted.
+#' @param group A character vector of group names to be plotted.
 #' If NULL, all groups in the input list will be used (default is NULL)
-#' @param fontsize (Optional) Font size for the plot (default is 8)
+#' @param fontsize Font size for the plot (default is 8)
 #' @param ... Additional arguments to be passed to `Trendy::topTrendy()`
 #'
 #' @import SummarizedExperiment

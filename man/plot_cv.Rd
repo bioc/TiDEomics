@@ -10,7 +10,7 @@ plot_cv(se_obj, fontsize = 8)
 \item{se_obj}{A SummarizedExperiment object, produced by \code{create_input()}
 function, containing the abundance data and associated sample information.}
 
-\item{fontsize}{(Optional) An integer specifying the font size for the plot
+\item{fontsize}{Font size for the plot (default is 8)
 (default is 8).}
 }
 \value{

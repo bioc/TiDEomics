@@ -10,15 +10,14 @@
 #' `all_list`, `de_list`, `time_series` elements.
 #' @param value Whether to display the actual number of DE features in each
 #' heatmap cell (default is TRUE)
-#' @param fontsize Font size for the heatmap displaying the number of DE
-#' features between time points (default is 8)
+#' @param fontsize Font size for the plot (default is 8)
 #' @param nrow Number of rows for arranging the heatmaps (default is 1)
 #' @param heatmap_width Width of each heatmap (default is 4)
 #' @param heatmap_unit Unit for the heatmap width (default is "cm")
-#' @param adjP_thres (Optional) Threshold for adjusted p-value to consider a
+#' @param adjP_thres Threshold for adjusted p-value to consider a
 #' feature as differentially expressed, for re-filtering
 #' the DE features. (default is NULL, no re-filtering)
-#' @param logFC_thres (Optional) Threshold for log2 fold change to consider a
+#' @param logFC_thres Threshold for log2 fold change to consider a
 #' feature as differentially expressed, for re-filtering
 #' the DE features. (default is NULL, no re-filtering)
 #'

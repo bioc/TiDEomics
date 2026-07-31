@@ -46,8 +46,9 @@ each group (default is FALSE)}
 
 \item{fontsize}{Font size for the plot (default is 8)}
 
-\item{assay}{Assay index to use, where 1 is the original data and 2 is
-normalised to time 0 (if available) (default is 1)}
+\item{assay}{The assay to use in the SummarizedExperiment object: a numeric
+index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+for time 0 normalised data. (Default: 1.)}
 }
 \value{
 A list of UMAP plots showing the distribution of samples. And a data

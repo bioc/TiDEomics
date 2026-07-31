@@ -10,7 +10,7 @@ plot_trend(
   groups = NULL,
   features,
   title = "Feature",
-  ylab = "Abundance",
+  ylabel = "Log2 abundance",
   errorbar = TRUE,
   fontsize = 8
 )
@@ -19,8 +19,9 @@ plot_trend(
 \item{se_obj}{A SummarizedExperiment object, or a data.frame from
 \code{calc_mean_sd()} with columns: Feature, Time, Group, Mean, SD.}
 
-\item{assay}{Assay index when \code{se_obj} is a SummarizedExperiment
-(default: 1 = original, 2 = time-0 normalised).}
+\item{assay}{The assay to use in the SummarizedExperiment object: a numeric
+index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+for time 0 normalised data. (Default: 1.)}
 
 \item{groups}{Groups to be plotted, if NULL, all groups will be used
 (default is NULL)}
@@ -29,7 +30,7 @@ plot_trend(
 
 \item{title}{Title of the plot (default is "Feature")}
 
-\item{ylab}{Y axis label of the plot (default is "Abundance")}
+\item{ylabel}{Y axis label of the plot (default is "Log2 abundance")}
 
 \item{errorbar}{Whether to plot error bars (default is TRUE)}
 

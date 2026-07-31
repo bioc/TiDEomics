@@ -13,7 +13,7 @@ example_module <- WGCNA_module(example_net, exclude_grey = TRUE)
 
 test_that("plot_modules_h works", {
     pq <- plot_modules_h(example_module |> dplyr::filter(Module != '0'),
-        merged, scale = TRUE,
+        merged, assay = 2, scale = TRUE,
         ylabel = "Z-score of log2 (expression)",
         enrich_list = example_go$all, enrich_category = "BP",
         fontsize = 6)
@@ -22,13 +22,13 @@ test_that("plot_modules_h works", {
 })
 
 test_that("plot_modules_h validates module argument", {
-    expect_error(plot_modules_h(NULL, data.frame()), "data.frame")
-    expect_error(plot_modules_h(data.frame(), data.frame()), "at least 1 row")
+    expect_error(plot_modules_h(NULL, data.frame(), assay = 2), "data.frame")
+    expect_error(plot_modules_h(data.frame(), data.frame(), assay = 2), "at least 1 row")
 })
 
 test_that("plot_modules_h runs without scale", {
     pq <- plot_modules_h(example_module |> dplyr::filter(Module != '0'),
-        merged, scale = FALSE,
+        merged, assay = 2, scale = FALSE,
         enrich_list = example_go$all, enrich_category = "BP",
         fontsize = 6)
     expect_s4_class(pq, "HeatmapList")
@@ -39,17 +39,17 @@ test_that("plot_modules_h handles single module", {
         dplyr::filter(Module == levels(Module)[1])
 
     pq <- plot_modules_h(mod_one, merged,
-        scale = TRUE, fontsize = 6)
+        assay = 2, scale = TRUE, fontsize = 6)
     expect_s4_class(pq, "HeatmapList")
 })
 
 test_that("plot_modules_h supports multi-category enrichment", {
     expect_s4_class(plot_modules_h(example_module,
-        merged, scale = TRUE,
+        merged, assay = 2, scale = TRUE,
         ylabel = "Z-score of log2 expression",
         enrich_list = example_go$all,
         enrich_category = c("BP", "CC"),
-        enrich_p_threshold = NULL,
+        enrich_threshold = NULL,
         heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 })
 
@@ -58,7 +58,7 @@ test_that("plot_modules_h handles mark_features with Hub features", {
 
     # Character vector mark_features
     expect_s4_class(plot_modules_h(example_module,
-        merged, scale = TRUE,
+        merged, assay = 2, scale = TRUE,
         ylabel = "Z-score of log2 expression",
         enrich_list = example_go$all,
         enrich_category = c("BP", "Hub features"),
@@ -71,7 +71,7 @@ test_that("plot_modules_h handles mark_features with Hub features", {
         "Hub2" = tail(example_module$Feature, 2)
     )
     expect_s4_class(plot_modules_h(example_module,
-        merged, scale = TRUE,
+        merged, assay = 2, scale = TRUE,
         ylabel = "Z-score of log2 expression",
         enrich_list = example_go$all,
         enrich_category = c("BP", "Hub features"),
@@ -81,35 +81,35 @@ test_that("plot_modules_h handles mark_features with Hub features", {
 
 test_that("plot_modules_h handles per-category enrich_top_n and enrich_rank_by", {
     expect_s4_class(plot_modules_h(example_module,
-        merged, scale = TRUE,
+        merged, assay = 2, scale = TRUE,
         ylabel = "Z-score of log2 expression",
         enrich_list = example_go$all,
         enrich_category = c("BP", "CC"),
         enrich_top_n = 3,
         enrich_rank_by = c("p.adjust", "pvalue"),
-        enrich_p_threshold = NULL,
+        enrich_threshold = NULL,
         heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 })
 
 test_that("plot_modules_h validates enrichment parameters", {
-    expect_error(plot_modules_h(example_module, merged,
+    expect_error(plot_modules_h(example_module, merged, assay = 2,
         enrich_category = 123), "character")
-    expect_error(plot_modules_h(example_module, merged,
+    expect_error(plot_modules_h(example_module, merged, assay = 2,
         enrich_top_n = -1), "positive")
-    expect_error(plot_modules_h(example_module, merged,
+    expect_error(plot_modules_h(example_module, merged, assay = 2,
         fontsize = -1), "positive")
 })
 
 test_that("plot_modules_h runs without enrich_list", {
     expect_s4_class(plot_modules_h(example_module,
-        merged, scale = TRUE,
+        merged, assay = 2, scale = TRUE,
         ylabel = "Z-score of log2 expression",
         heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 })
 
 test_that("plot_modules_h handles NULL mark_features safely", {
     expect_s4_class(plot_modules_h(example_module,
-        merged, scale = TRUE,
+        merged, assay = 2, scale = TRUE,
         ylabel = "Z-score of log2 expression",
         enrich_list = example_go$all,
         enrich_category = "BP",
@@ -117,13 +117,13 @@ test_that("plot_modules_h handles NULL mark_features safely", {
         heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 })
 
-test_that("plot_modules_h handles enrich_p_threshold = NULL and NA", {
+test_that("plot_modules_h handles enrich_threshold = NULL and NA", {
     expect_s4_class(plot_modules_h(example_module,
-        merged, scale = TRUE,
+        merged, assay = 2, scale = TRUE,
         ylabel = "Z-score of log2 expression",
         enrich_list = example_go$all,
         enrich_category = "BP",
-        enrich_p_threshold = NULL,
+        enrich_threshold = NULL,
         heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 })
 
@@ -338,7 +338,7 @@ test_that("plot_modules_h with pre-existing col in enrichment", {
 
     expect_s4_class(
         plot_modules_h(example_module, merged,
-            scale = TRUE, enrich_list = enrich_mock,
+            assay = 2, scale = TRUE, enrich_list = enrich_mock,
             enrich_category = "BP", enrich_top_n = 3,
             heatmap_width = 6, heatmap_height = 4),
         "HeatmapList"
@@ -348,7 +348,7 @@ test_that("plot_modules_h with pre-existing col in enrichment", {
 test_that("plot_modules_h .check_len length mismatch message", {
     expect_message(
         plot_modules_h(example_module, merged,
-            scale = TRUE, enrich_list = example_go$all,
+            assay = 2, scale = TRUE, enrich_list = example_go$all,
             enrich_category = c("BP", "CC"),
             enrich_rank_by = c("p.adjust", "pvalue", "qvalue"),
             enrich_top_n = 3,
@@ -361,7 +361,7 @@ test_that("plot_modules_h mark_features without Hub creates anno_mark", {
     hubs <- utils::head(example_module$Feature, 3)
     expect_s4_class(
         plot_modules_h(example_module, merged,
-            scale = TRUE,
+            assay = 2, scale = TRUE,
             enrich_list = example_go$all,
             enrich_category = "BP",
             mark_features = hubs,
@@ -377,7 +377,7 @@ test_that("plot_modules_h with save writes files", {
 
     expect_s4_class(
         plot_modules_h(example_module, merged,
-            scale = TRUE,
+            assay = 2, scale = TRUE,
             enrich_list = example_go$all,
             enrich_category = "BP",
             save = tmpdir, device = "png",
@@ -406,7 +406,7 @@ test_that("plot_modules_h skips category with no matching terms", {
 
     expect_s4_class(
         plot_modules_h(example_module, merged,
-            scale = TRUE, enrich_list = enrich_mock,
+            assay = 2, scale = TRUE, enrich_list = enrich_mock,
             enrich_category = c("BP", "CC"), enrich_top_n = 3,
             heatmap_width = 6, heatmap_height = 4),
         "HeatmapList"
@@ -438,7 +438,7 @@ test_that("plot_modules_h warns when module has features missing from assay", {
 
     expect_warning(
         plot_modules_h(mod_with_fake, merged,
-            scale = FALSE, heatmap_width = 6, heatmap_height = 4),
+            assay = 2, scale = FALSE, heatmap_width = 6, heatmap_height = 4),
         "feature\\(s\\) in the module are missing from the assay"
     )
 })

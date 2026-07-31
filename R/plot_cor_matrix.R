@@ -3,9 +3,9 @@
 #' @description Plot correlation matrix between samples as a heatmap
 #'
 #' @param se_obj A SummarizedExperiment object created by `create_input()`
-#' @param assay Assay to use: `"orig"` for original data, `"norm"` for
-#' normalised-to-start data. Numeric indices (1, 2) are also accepted.
-#' (default is 1, the original data).
+#' @param assay The assay to use in the SummarizedExperiment object: a numeric
+#'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+#'   for time 0 normalised data. (Default: 1.)
 #' @param use Parameter of `stats::cor()` (default is "pairwise.complete.obs")
 #' @param method Parameter of `stats::cor()` (default is "spearman")
 #' @param label_group Whether to label Group (default is TRUE)
@@ -16,7 +16,7 @@
 #' FALSE)
 #' @param show_colnames Whether to show column names in the heatmap (default is
 #' FALSE)
-#' @param fontsize Font size for the heatmap and annotations (default is 8)
+#' @param fontsize Font size for the plot (default is 8)
 #' @param cellwidth Cell width for the heatmap (default is 1)
 #' @param cellheight Cell height for the heatmap (default is 1)
 #' @param title Title of the heatmap (default is "Correlation between samples")

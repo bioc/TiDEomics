@@ -9,11 +9,11 @@
 #'
 #' @param se_obj A SummarizedExperiment object, produced by `create_input()`
 #' function, containing the abundance data and associated sample information.
-#' @param facet_by (Optional) A character string specifying the variable to
+#' @param facet_by A character string specifying the variable to
 #' facet the plot by. It can be one of "Group", "Time", or "Sample". If NULL,
 #' no faceting will be applied and a single density plot will be generated for
 #' all samples (default is NULL).
-#' @param fontsize (Optional) An integer specifying the font size for the plot
+#' @param fontsize Font size for the plot (default is 8)
 #' (default is 8).
 #'
 #' @import SummarizedExperiment

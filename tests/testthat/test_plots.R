@@ -29,7 +29,7 @@ test_that("plot_trend works with SE, table, errorbar, groups, and title", {
     expect_no_error(plot_trend(tbl$orig, features = feats, errorbar = FALSE))
     # with groups and title
     expect_no_error(plot_trend(tbl$orig, features = utils::head(feats, 2),
-        groups = grp, title = "Test", ylab = "Value"))
+        groups = grp, title = "Test", ylabel = "Value"))
     # SE directly
     expect_no_error(plot_trend(se, assay = "orig",
         features = utils::head(rownames(se), 2)))
@@ -214,7 +214,7 @@ test_that("plot_pca warns on out-of-range morepc", {
 
 test_that("plot_trend errors on invalid inputs", {
     expect_error(plot_trend(list(), features = "Gene1", title = "test",
-        ylab = "Abundance"), "must be a SummarizedExperiment or a data.frame")
+        ylabel = "Abundance"), "must be a SummarizedExperiment or a data.frame")
     expect_error(plot_trend(example_obj, features = character(0),
         title = "test"), "must be non-empty")
     expect_error(plot_trend(structure(list(), class = "x"), features = "Gene1",

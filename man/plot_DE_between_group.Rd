@@ -22,11 +22,11 @@ will be plotted. (default is NULL)}
 
 \item{fontsize}{Font size for the plot (default is 8)}
 
-\item{adjP_thres}{(Optional) Threshold for adjusted p-value to consider a
+\item{adjP_thres}{Threshold for adjusted p-value to consider a
 feature as differentially expressed, for re-filtering
 the DE features. (default is NULL, no re-filtering)}
 
-\item{logFC_thres}{(Optional) Threshold for log2 fold change to consider a
+\item{logFC_thres}{Threshold for log2 fold change to consider a
 feature as differentially expressed, for re-filtering
 the DE features. (default is NULL, no re-filtering)}
 }

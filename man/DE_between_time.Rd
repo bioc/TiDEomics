@@ -17,28 +17,28 @@ DE_between_time(
 \arguments{
 \item{se_obj}{A SummarizedExperiment object created by \code{create_input}}
 
-\item{group}{(Optional) A character vector specifying which groups to
+\item{group}{A character vector specifying which groups to
 analyse. If NULL, all groups in the 'Group' column will be used. (default
 is NULL)}
 
-\item{filter}{(Optional) Minimum number of replicates required in both
+\item{filter}{Minimum number of replicates required in both
 conditions for a feature to be tested. If NULL, the minimum number of
 replicates across all groups and time points will be used. (default is NULL)}
 
-\item{assay}{Assay to use: \code{"orig"} for original data, \code{"norm"} for
-normalised-to-start data. Numeric indices (1, 2) are also accepted.
-No default, must be specified explicitly. The selected assay should
+\item{assay}{The assay to use in the SummarizedExperiment object: a numeric
+index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+for time 0 normalised data. (Required, no default.) The selected assay should
 contain log-transformed, normalised values (e.g. log2-CPM for RNA-seq,
 log2-intensity for proteomics). A warning is issued if the data appears
 to be un-logged raw counts.}
 
-\item{adjP_thres}{(Optional) Threshold for adjusted p-value to consider a
+\item{adjP_thres}{Threshold for adjusted p-value to consider a
 feature as differentially expressed (default is 0.05)}
 
-\item{logFC_thres}{(Optional) Threshold for log2 fold change to consider a
+\item{logFC_thres}{Threshold for log2 fold change to consider a
 feature as differentially expressed (default is 1)}
 
-\item{trend}{(Optional) Logical, passed to \code{limma::eBayes()}.
+\item{trend}{Logical, passed to \code{limma::eBayes()}.
 Set to \code{TRUE} for RNA-seq count-derived data to model the mean-variance
 trend. Leave as \code{FALSE} (default) for microarray, proteomics,
 metabolomics, or other log-intensity data where the mean-variance

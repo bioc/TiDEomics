@@ -14,11 +14,12 @@
 #' the object should contain columns "Sample", "Group", and "Time". The object
 #' can be produced by `split_groups()`, `merge_replicates()` and
 #' `merge_groups()`.
-#' @param assay The assay index in the SummarizedExperiment object to use
-#' (default is 2, time 0 normalised data)
+#' @param assay The assay to use in the SummarizedExperiment object: a numeric
+#'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+#'   for time 0 normalised data. (Required, no default.)
 #' @param scale Whether to scale the data (z-score) across samples for each
 #' feature (default is TRUE)
-#' @param ylabel Y axis label prefix (default is "Abundance")
+#' @param ylabel Y axis label prefix (default is "Log2 abundance")
 #' @param suffix Suffix for the saved image file name (default is an empty
 #' string)
 #' @param device Image file format(s) for saving. Can be a character
@@ -26,7 +27,7 @@
 #'   (default: `"png"`).
 #' @param save Directory to save the plot, no saving if is NULL
 #' (default is NULL)
-#' @param fontsize Font size (default is 8)
+#' @param fontsize Font size for the plot (default is 8)
 #' @param width Width of the saved image (default is 12 (cm))
 #' @param height Height of the saved image (default is 8 (cm))
 #' @param height_ratio Ratio of height of heatmap to the line plot
@@ -52,7 +53,7 @@
 #' example_module <- WGCNA_module(example_net)
 #'
 #' plot_modules_v(example_module |> dplyr::filter(Module != '0'),
-#'     example_obj_merged, scale = TRUE,
+#'     example_obj_merged, assay = 2, scale = TRUE,
 #'     ylabel = "Z-score of log2 (expression)",
 #'     height_ratio = 2,
 #'     fontsize = 6)
@@ -60,8 +61,8 @@ plot_modules_v <- function(
     module,
     se_obj_merged,
     scale = TRUE,
-    assay = 2,
-    ylabel = "Log2 abundance normalised to Time 0",
+    assay,
+    ylabel = "Log2 abundance",
     suffix = "",
     device = "png",
     save = NULL,

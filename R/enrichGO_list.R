@@ -5,33 +5,33 @@
 #'
 #' @param gene_list A named list of gene vectors, or a data.frame
 #'   with `Feature` and `Module` columns from `WGCNA_module()`.
-#' @param keyType (Optional) Available options are
+#' @param keyType Available options are
 #'   `AnnotationDbi::keytypes(OrgDb)` (default is "SYMBOL")
 #' @param OrgDb Organism database, e.g. org.Hs.eg.db, org.Mm.eg.db
 #' @param universe Background genes for all input gene sets,
 #' used if `universe_list` is not provided
 #' @param universe_list Background genes for each input gene set,
 #' a list of gene vectors with the same names as `gene_list`
-#' @param pAdjustMethod (Optional) Parameter of `clusterProfiler::enrichGO()`
+#' @param pAdjustMethod Parameter of `clusterProfiler::enrichGO()`
 #'   (default is "BH")
-#' @param pvalueCutoff (Optional) Parameter of `clusterProfiler::enrichGO()`
+#' @param pvalueCutoff Parameter of `clusterProfiler::enrichGO()`
 #'   (default is 0.05)
-#' @param qvalueCutoff (Optional) Parameter of `clusterProfiler::enrichGO()`
+#' @param qvalueCutoff Parameter of `clusterProfiler::enrichGO()`
 #'   (default is 0.05)
-#' @param category (Optional) GO category to analyze (default is all three of
+#' @param category GO category to analyze (default is all three of
 #'   BP, MF, CC)
-#' @param simplify (Optional) Whether to simplify the GO terms by removing
+#' @param simplify Whether to simplify the GO terms by removing
 #'   redundant terms with `clusterProfiler::simplify()` function.
 #'   (default is FALSE)
-#' @param simplify_cutoff (Optional) Parameter of `clusterProfiler::simplify()`,
+#' @param simplify_cutoff Parameter of `clusterProfiler::simplify()`,
 #'   cutoff for similarity when simplifying GO terms (default is 0.7)
-#' @param simplify_by (Optional) Parameter of `clusterProfiler::simplify()`,
+#' @param simplify_by Parameter of `clusterProfiler::simplify()`,
 #'   method to choose representative term when simplifying GO terms
 #'   (default is "p.adjust")
-#' @param simplify_select_fun (Optional) Parameter of
+#' @param simplify_select_fun Parameter of
 #'   `clusterProfiler::simplify()`, function to select representative term when
 #'   simplifying GO terms (default is `min`)
-#' @param simplify_measure (Optional) Parameter of
+#' @param simplify_measure Parameter of
 #'   `clusterProfiler::simplify()`,
 #'   method to calculate similarity when simplifying GO terms
 #'   (default is "Wang")

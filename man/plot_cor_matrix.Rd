@@ -25,9 +25,9 @@ plot_cor_matrix(
 \arguments{
 \item{se_obj}{A SummarizedExperiment object created by \code{create_input()}}
 
-\item{assay}{Assay to use: \code{"orig"} for original data, \code{"norm"} for
-normalised-to-start data. Numeric indices (1, 2) are also accepted.
-(default is 1, the original data).}
+\item{assay}{The assay to use in the SummarizedExperiment object: a numeric
+index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+for time 0 normalised data. (Default: 1.)}
 
 \item{use}{Parameter of \code{stats::cor()} (default is "pairwise.complete.obs")}
 
@@ -47,7 +47,7 @@ FALSE)}
 \item{show_colnames}{Whether to show column names in the heatmap (default is
 FALSE)}
 
-\item{fontsize}{Font size for the heatmap and annotations (default is 8)}
+\item{fontsize}{Font size for the plot (default is 8)}
 
 \item{cellwidth}{Cell width for the heatmap (default is 1)}
 

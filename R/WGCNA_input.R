@@ -9,8 +9,9 @@
 #' @param se_obj A SummarizedExperiment object. Data
 #' normalised to time point 0 can be in the second assay slot, created by
 #' `normalise_to_start()`.
-#' @param assay Which assay slot of the SummarizedExperiment object to use
-#' for WGCNA input.
+#' @param assay The assay to use in the SummarizedExperiment object: a numeric
+#'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+#'   for time 0 normalised data. (Default: 2.)
 #'
 #' @import SummarizedExperiment
 #'

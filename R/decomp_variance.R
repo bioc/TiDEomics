@@ -26,9 +26,9 @@
 #' @param interaction Logical. If TRUE, adds `(1|Group:Time)` (or
 #'   `(1|Subject:Time)` when Subject present) to the model to capture
 #'   interaction variance. Default: FALSE.
-#' @param assay Assay to use: `"orig"` for original data, `"norm"` for
-#' normalised-to-start data. Numeric indices (1, 2) are also accepted.
-#' No default, must be specified explicitly.
+#' @param assay The assay to use in the SummarizedExperiment object: a numeric
+#'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+#'   for time 0 normalised data. (Required, no default.)
 #' @param core Number of cores for parallel processing (default: 1)
 #'
 #' @import SummarizedExperiment

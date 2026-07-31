@@ -15,7 +15,9 @@
 #' `merge_groups()`.
 #' @param scale Whether to scale the data (z-score) across samples for each
 #' feature
-#' @param assay The assay index in the SummarizedExperiment object to use
+#' @param assay The assay to use in the SummarizedExperiment object: a numeric
+#'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+#'   for time 0 normalised data. (Required, no default.)
 #'
 #' @import SummarizedExperiment
 #'

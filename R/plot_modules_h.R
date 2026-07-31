@@ -123,8 +123,9 @@
 #' the object should contain columns "Sample", "Group", and "Time". The object
 #' can be produced by `split_groups()`, `merge_replicates()` and
 #' `merge_groups()`.
-#' @param assay The assay index in the SummarizedExperiment object to use
-#' (default is 2, time 0 normalised data)
+#' @param assay The assay to use in the SummarizedExperiment object: a numeric
+#'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+#'   for time 0 normalised data. (Required, no default.)
 #' @param scale Whether to scale the data (z-score) across samples for each
 #' feature (default is TRUE)
 #' @param ylabel Y axis label prefix (default is "Log2 abundance")
@@ -144,15 +145,15 @@
 #'   categories (e.g. `c("BP", "CC", "Hub features")`).
 #'   When `"Hub features"` is included, `mark_features` are shown as a column
 #'   in the textbox.
-#' @param enrich_rank_by Column to rank enrichment terms. A single string
-#'   (default: `"p.adjust"`) is recycled for all categories in
-#'   `enrich_category`. Supply a character vector of matching length for
-#'   per-category control. Also used for colour-coding: terms with values
-#'   below `enrich_p_threshold` are shown in black, terms above in grey.
+#' @param enrich_rank_by Numeric column used to rank enrichment terms within
+#'   each module. A single string (default: `"p.adjust"`) is recycled for all
+#'   categories in `enrich_category`. Supply a character vector of matching
+#'   length for per-category control. Also used for colour-coding: terms with
+#'   values below `enrich_threshold` are shown in black, terms above in grey.
 #' @param enrich_top_n Top N enrichment terms per module. A single integer
 #'   (default: 3) is recycled for all categories in `enrich_category`.
 #'   Supply an integer vector of matching length for per-category control.
-#' @param enrich_p_threshold P-value / adjusted p-value threshold for
+#' @param enrich_threshold P-value / adjusted p-value threshold for
 #'   colour-coding enrichment terms. A single value (default: 0.05) is
 #'   recycled for all categories; supply a vector of matching length for
 #'   per-category control. Terms below threshold are drawn in black,
@@ -180,7 +181,8 @@
 #' @param device Image file format(s) for saving. Can be a character
 #'   vector with one or more of `"png"`, `"pdf"`, `"tiff"`, `"jpeg"`
 #'   (default: `"png"`)
-#' @param save Directory to save plot, NULL (default) for no saving.
+#' @param save Directory to save the plot, no saving if is NULL
+#' (default is NULL)
 #' @param suffix Suffix for the saved image file name (default: "")
 #' @import ggplot2
 #' @import SummarizedExperiment
@@ -203,7 +205,7 @@
 #' data(example_go)
 #'
 #' plot_modules_h(example_module |> dplyr::filter(Module != '0'),
-#'     example_obj_merged, scale = TRUE,
+#'     example_obj_merged, assay = 2, scale = TRUE,
 #'     ylabel = "Z-score of log2 expression",
 #'     enrich_list = example_go$all,
 #'     enrich_category = "BP",
@@ -213,7 +215,7 @@ plot_modules_h <- function(
     module,
     se_obj_merged,
     scale = TRUE,
-    assay = 2,
+    assay,
     ylabel = "Log2 abundance",
     profile_width = 3,
     profile_link_width = 1,
@@ -221,7 +223,7 @@ plot_modules_h <- function(
     enrich_category = "BP",
     enrich_rank_by = "p.adjust",
     enrich_top_n = 3,
-    enrich_p_threshold = 0.05,
+    enrich_threshold = 0.05,
     fontsize = 8,
     heatmap_width = 8,
     heatmap_height = 8,
@@ -254,9 +256,9 @@ plot_modules_h <- function(
     assay <- .match_assay(assay, se_obj_merged)
     if (!is.null(enrich_list))
         .check_list(enrich_list, "enrich_list")
-    if (!is.null(enrich_p_threshold)) {
-        valid_vals <- enrich_p_threshold[!is.na(enrich_p_threshold)]
-        for (v in valid_vals) .check_pval(v, "enrich_p_threshold")
+    if (!is.null(enrich_threshold)) {
+        valid_vals <- enrich_threshold[!is.na(enrich_threshold)]
+        for (v in valid_vals) .check_pval(v, "enrich_threshold")
     }
     if (!is.null(mark_features)) {
         if (!is.character(mark_features) && !is.list(mark_features)) {
@@ -415,13 +417,13 @@ plot_modules_h <- function(
         }
         .check_len(enrich_top_n, "enrich_top_n", n_cats)
         .check_len(enrich_rank_by, "enrich_rank_by", n_cats)
-        .check_len(enrich_p_threshold, "enrich_p_threshold", n_cats)
+        .check_len(enrich_threshold, "enrich_threshold", n_cats)
         enrich_top_n <- rep(enrich_top_n, length.out = n_cats)
         enrich_rank_by <- rep(enrich_rank_by, length.out = n_cats)
-        if (is.null(enrich_p_threshold)) {
-            enrich_p_threshold <- rep(NA_real_, n_cats)
+        if (is.null(enrich_threshold)) {
+            enrich_threshold <- rep(NA_real_, n_cats)
         } else {
-            enrich_p_threshold <- rep(enrich_p_threshold,
+            enrich_threshold <- rep(enrich_threshold,
                 length.out = n_cats
             )
         }
@@ -439,7 +441,7 @@ plot_modules_h <- function(
             if (is.null(enrich_list[[cate]])) next
             top_n <- enrich_top_n[ci]
             rank_by <- enrich_rank_by[ci]
-            p_thresh <- enrich_p_threshold[ci]
+            p_thresh <- enrich_threshold[ci]
 
             termanno <- enrich_list[[cate]] |>
                 as.data.frame() |>
@@ -613,10 +615,10 @@ plot_modules_h <- function(
     draw_ht <- function() {
         lgd_list <- list(anno_ggplot2_profile_lgd)
         n_cats <- length(enrich_category)
-        if (is.null(enrich_p_threshold)) {
+        if (is.null(enrich_threshold)) {
             p_thresh <- rep(NA_real_, n_cats)
         } else {
-            p_thresh <- rep(enrich_p_threshold, length.out = n_cats)
+            p_thresh <- rep(enrich_threshold, length.out = n_cats)
         }
         for (ci in seq_len(n_cats)) {
             cate <- enrich_category[ci]

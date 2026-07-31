@@ -12,10 +12,10 @@
 #' as the reference (Cond1) for plotting. If NULL, all groups in the output
 #' will be plotted. (default is NULL)
 #' @param fontsize Font size for the plot (default is 8)
-#' @param adjP_thres (Optional) Threshold for adjusted p-value to consider a
+#' @param adjP_thres Threshold for adjusted p-value to consider a
 #' feature as differentially expressed, for re-filtering
 #' the DE features. (default is NULL, no re-filtering)
-#' @param logFC_thres (Optional) Threshold for log2 fold change to consider a
+#' @param logFC_thres Threshold for log2 fold change to consider a
 #' feature as differentially expressed, for re-filtering
 #' the DE features. (default is NULL, no re-filtering)
 #'

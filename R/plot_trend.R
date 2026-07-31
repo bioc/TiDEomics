@@ -8,13 +8,14 @@
 #'
 #' @param se_obj A SummarizedExperiment object, or a data.frame from
 #'   `calc_mean_sd()` with columns: Feature, Time, Group, Mean, SD.
-#' @param assay Assay index when `se_obj` is a SummarizedExperiment
-#'   (default: 1 = original, 2 = time-0 normalised).
+#' @param assay The assay to use in the SummarizedExperiment object: a numeric
+#'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+#'   for time 0 normalised data. (Default: 1.)
 #' @param groups Groups to be plotted, if NULL, all groups will be used
 #'   (default is NULL)
 #' @param features Features to be plotted, if NULL, an error will be raised
 #' @param title Title of the plot (default is "Feature")
-#' @param ylab Y axis label of the plot (default is "Abundance")
+#' @param ylabel Y axis label of the plot (default is "Log2 abundance")
 #' @param errorbar Whether to plot error bars (default is TRUE)
 #' @param fontsize Font size for the plot (default is 8)
 #'
@@ -26,14 +27,14 @@
 #' plot_trend(example_obj,
 #'     features = sample(rownames(example_obj), 4))
 plot_trend <- function(se_obj, assay = 1, groups = NULL, features,
-    title = "Feature", ylab = "Abundance", errorbar = TRUE, fontsize = 8) {
+    title = "Feature", ylabel = "Log2 abundance", errorbar = TRUE, fontsize = 8) {
 
     if (!inherits(se_obj, "SummarizedExperiment") && !is.data.frame(se_obj)) {
         stop("'se_obj' must be a SummarizedExperiment or a data.frame.")
     }
     .check_character(features, "features")
     .check_character(title, "title")
-    .check_character(ylab, "ylab")
+    .check_character(ylabel, "ylabel")
     .check_logical(errorbar, "errorbar")
     .check_positive(fontsize, "fontsize")
     if (!is.null(groups)) .check_character(groups, "groups")
@@ -79,7 +80,7 @@ plot_trend <- function(se_obj, assay = 1, groups = NULL, features,
         ) +
         ggtitle(paste0(title, " in ", paste(groups, collapse = ", "))) +
         xlab("Time") +
-        ylab(ylab) +
+        ylab(ylabel) +
         facet_wrap(~Feature, scales = "free_y")
 
     if (errorbar) {

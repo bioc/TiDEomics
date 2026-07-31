@@ -21,15 +21,15 @@
 #' First time point for comparison
 #' @param time2 (Required for `DE_between_time()` output)
 #' Second time point for comparison
-#' @param logFC_thres (Optional) Log2 fold change threshold for
+#' @param logFC_thres Log2 fold change threshold for
 #' highlighting DE features, default is NULL (using threshold when
 #' `DE_between_group()` or `DE_between_time()` was run)
-#' @param adjP_thres (Optional) Adjusted p-value threshold for
+#' @param adjP_thres Adjusted p-value threshold for
 #' highlighting DE features, default is NULL (using threshold when
 #' `DE_between_group()` or `DE_between_time()` was run)
-#' @param label (Optional) Whether to label names of DE features on the plot
+#' @param label Whether to label names of DE features on the plot
 #' (default is FALSE)
-#' @param fontsize (Optional) Font size for the plot (default is 8)
+#' @param fontsize Font size for the plot (default is 8)
 #' @param ... Additional arguments for ggrepel::geom_text_repel()
 #' when label = TRUE
 #'

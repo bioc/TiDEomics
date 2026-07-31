@@ -22,8 +22,7 @@ plot_DE_between_time(
 \item{value}{Whether to display the actual number of DE features in each
 heatmap cell (default is TRUE)}
 
-\item{fontsize}{Font size for the heatmap displaying the number of DE
-features between time points (default is 8)}
+\item{fontsize}{Font size for the plot (default is 8)}
 
 \item{nrow}{Number of rows for arranging the heatmaps (default is 1)}
 
@@ -31,11 +30,11 @@ features between time points (default is 8)}
 
 \item{heatmap_unit}{Unit for the heatmap width (default is "cm")}
 
-\item{adjP_thres}{(Optional) Threshold for adjusted p-value to consider a
+\item{adjP_thres}{Threshold for adjusted p-value to consider a
 feature as differentially expressed, for re-filtering
 the DE features. (default is NULL, no re-filtering)}
 
-\item{logFC_thres}{(Optional) Threshold for log2 fold change to consider a
+\item{logFC_thres}{Threshold for log2 fold change to consider a
 feature as differentially expressed, for re-filtering
 the DE features. (default is NULL, no re-filtering)}
 }

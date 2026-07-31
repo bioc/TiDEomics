@@ -22,23 +22,23 @@ normalised to time point 0 can be in the second assay slot, created by
 variance calculated by \code{decomp_variance()}, to remove noisy features
 before running WGCNA.}
 
-\item{assay}{Which assay slot of the SummarizedExperiment object to use
-for WGCNA input (default is 2, which is where the time 0 normalised data is
-stored by \code{normalise_to_start()})}
+\item{assay}{The assay to use in the SummarizedExperiment object: a numeric
+index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+for time 0 normalised data. (Default: 2.)}
 
-\item{networkType}{(Optional) Parameter of \code{WGCNA::pickSoftThreshold()}
+\item{networkType}{Parameter of \code{WGCNA::pickSoftThreshold()}
 (default is "signed")}
 
-\item{RsquaredCut}{(Optional) Parameter of \code{WGCNA::pickSoftThreshold()}
+\item{RsquaredCut}{Parameter of \code{WGCNA::pickSoftThreshold()}
 (default is 0.8)}
 
-\item{MeanConnectivity}{(Optional) Line of mean connectivity
+\item{MeanConnectivity}{Line of mean connectivity
 (default is 100)}
 
-\item{powers}{(Optional) Parameter of \code{WGCNA::pickSoftThreshold()}
+\item{powers}{Parameter of \code{WGCNA::pickSoftThreshold()}
 (default: NULL, auto-assigned as \code{seq(1, 20)})}
 
-\item{fontsize}{Base font size for diagnostic plots (default: 8).}
+\item{fontsize}{Font size for the plot (default is 8)}
 
 \item{...}{Additional parameters to be passed to \code{WGCNA::pickSoftThreshold()}}
 }

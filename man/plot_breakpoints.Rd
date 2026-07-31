@@ -10,10 +10,10 @@ plot_breakpoints(res_list, group = NULL, fontsize = 8, ...)
 \item{res_list}{A list of the Trendy analysis results, output of
 \code{run_Trendy()}}
 
-\item{group}{(Optional) A character vector of group names to be plotted.
+\item{group}{A character vector of group names to be plotted.
 If NULL, all groups in the input list will be used (default is NULL)}
 
-\item{fontsize}{(Optional) Font size for the plot (default is 8)}
+\item{fontsize}{Font size for the plot (default is 8)}
 
 \item{...}{Additional arguments to be passed to \code{Trendy::topTrendy()}}
 }

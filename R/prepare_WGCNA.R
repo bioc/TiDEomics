@@ -10,18 +10,18 @@
 #' `normalise_to_start()`. Features can be pre-filtered, e.g. by residual
 #' variance calculated by `decomp_variance()`, to remove noisy features
 #' before running WGCNA.
-#' @param assay Which assay slot of the SummarizedExperiment object to use
-#' for WGCNA input (default is 2, which is where the time 0 normalised data is
-#' stored by `normalise_to_start()`)
-#' @param networkType (Optional) Parameter of `WGCNA::pickSoftThreshold()`
+#' @param assay The assay to use in the SummarizedExperiment object: a numeric
+#'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+#'   for time 0 normalised data. (Default: 2.)
+#' @param networkType Parameter of `WGCNA::pickSoftThreshold()`
 #' (default is "signed")
-#' @param RsquaredCut (Optional) Parameter of `WGCNA::pickSoftThreshold()`
+#' @param RsquaredCut Parameter of `WGCNA::pickSoftThreshold()`
 #' (default is 0.8)
-#' @param MeanConnectivity (Optional) Line of mean connectivity
+#' @param MeanConnectivity Line of mean connectivity
 #' (default is 100)
-#' @param powers (Optional) Parameter of `WGCNA::pickSoftThreshold()`
+#' @param powers Parameter of `WGCNA::pickSoftThreshold()`
 #' (default: NULL, auto-assigned as `seq(1, 20)`)
-#' @param fontsize Base font size for diagnostic plots (default: 8).
+#' @param fontsize Font size for the plot (default is 8)
 #' @param ... Additional parameters to be passed to `WGCNA::pickSoftThreshold()`
 #'
 #' @returns A list containing results of the scale-free topology

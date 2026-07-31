@@ -10,10 +10,10 @@ plot_ID(se_obj, fontsize = 8, signif = FALSE, ...)
 \item{se_obj}{A SummarizedExperiment object, produced by \code{create_input()}
 function, containing the abundance data and associated sample information.}
 
-\item{fontsize}{(Optional) An integer specifying the font size for the plot
+\item{fontsize}{Font size for the plot (default is 8)
 (default is 8).}
 
-\item{signif}{(Optional) A logical value indicating whether to perform
+\item{signif}{A logical value indicating whether to perform
 significance testing between groups and add significance annotations to
 the plot (default is FALSE).}
 

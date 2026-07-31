@@ -5,9 +5,9 @@
 #'
 #' @param se_obj A SummarizedExperiment object, produced by `create_input()`
 #' function, containing the abundance data and associated sample information.
-#' @param fontsize (Optional) An integer specifying the font size for the plot
+#' @param fontsize Font size for the plot (default is 8)
 #' (default is 8).
-#' @param signif (Optional) A logical value indicating whether to perform
+#' @param signif A logical value indicating whether to perform
 #' significance testing between groups and add significance annotations to
 #' the plot (default is FALSE).
 #' @param ... Additional arguments to be passed to

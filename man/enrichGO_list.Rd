@@ -26,7 +26,7 @@ enrichGO_list(
 \item{gene_list}{A named list of gene vectors, or a data.frame
 with \code{Feature} and \code{Module} columns from \code{WGCNA_module()}.}
 
-\item{keyType}{(Optional) Available options are
+\item{keyType}{Available options are
 \code{AnnotationDbi::keytypes(OrgDb)} (default is "SYMBOL")}
 
 \item{OrgDb}{Organism database, e.g. org.Hs.eg.db, org.Mm.eg.db}
@@ -37,34 +37,34 @@ used if \code{universe_list} is not provided}
 \item{universe_list}{Background genes for each input gene set,
 a list of gene vectors with the same names as \code{gene_list}}
 
-\item{pAdjustMethod}{(Optional) Parameter of \code{clusterProfiler::enrichGO()}
+\item{pAdjustMethod}{Parameter of \code{clusterProfiler::enrichGO()}
 (default is "BH")}
 
-\item{pvalueCutoff}{(Optional) Parameter of \code{clusterProfiler::enrichGO()}
+\item{pvalueCutoff}{Parameter of \code{clusterProfiler::enrichGO()}
 (default is 0.05)}
 
-\item{qvalueCutoff}{(Optional) Parameter of \code{clusterProfiler::enrichGO()}
+\item{qvalueCutoff}{Parameter of \code{clusterProfiler::enrichGO()}
 (default is 0.05)}
 
-\item{category}{(Optional) GO category to analyze (default is all three of
+\item{category}{GO category to analyze (default is all three of
 BP, MF, CC)}
 
-\item{simplify}{(Optional) Whether to simplify the GO terms by removing
+\item{simplify}{Whether to simplify the GO terms by removing
 redundant terms with \code{clusterProfiler::simplify()} function.
 (default is FALSE)}
 
-\item{simplify_cutoff}{(Optional) Parameter of \code{clusterProfiler::simplify()},
+\item{simplify_cutoff}{Parameter of \code{clusterProfiler::simplify()},
 cutoff for similarity when simplifying GO terms (default is 0.7)}
 
-\item{simplify_by}{(Optional) Parameter of \code{clusterProfiler::simplify()},
+\item{simplify_by}{Parameter of \code{clusterProfiler::simplify()},
 method to choose representative term when simplifying GO terms
 (default is "p.adjust")}
 
-\item{simplify_select_fun}{(Optional) Parameter of
+\item{simplify_select_fun}{Parameter of
 \code{clusterProfiler::simplify()}, function to select representative term when
 simplifying GO terms (default is \code{min})}
 
-\item{simplify_measure}{(Optional) Parameter of
+\item{simplify_measure}{Parameter of
 \code{clusterProfiler::simplify()},
 method to calculate similarity when simplifying GO terms
 (default is "Wang")}

@@ -8,7 +8,7 @@ plot_modules_h(
   module,
   se_obj_merged,
   scale = TRUE,
-  assay = 2,
+  assay,
   ylabel = "Log2 abundance",
   profile_width = 3,
   profile_link_width = 1,
@@ -16,7 +16,7 @@ plot_modules_h(
   enrich_category = "BP",
   enrich_rank_by = "p.adjust",
   enrich_top_n = 3,
-  enrich_p_threshold = 0.05,
+  enrich_threshold = 0.05,
   fontsize = 8,
   heatmap_width = 8,
   heatmap_height = 8,
@@ -41,8 +41,9 @@ can be produced by \code{split_groups()}, \code{merge_replicates()} and
 \item{scale}{Whether to scale the data (z-score) across samples for each
 feature (default is TRUE)}
 
-\item{assay}{The assay index in the SummarizedExperiment object to use
-(default is 2, time 0 normalised data)}
+\item{assay}{The assay to use in the SummarizedExperiment object: a numeric
+index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+for time 0 normalised data. (Required, no default.)}
 
 \item{ylabel}{Y axis label prefix (default is "Log2 abundance")}
 
@@ -66,17 +67,17 @@ categories (e.g. \code{c("BP", "CC", "Hub features")}).
 When \code{"Hub features"} is included, \code{mark_features} are shown as a column
 in the textbox.}
 
-\item{enrich_rank_by}{Column to rank enrichment terms. A single string
-(default: \code{"p.adjust"}) is recycled for all categories in
-\code{enrich_category}. Supply a character vector of matching length for
-per-category control. Also used for colour-coding: terms with values
-below \code{enrich_p_threshold} are shown in black, terms above in grey.}
+\item{enrich_rank_by}{Numeric column used to rank enrichment terms within
+each module. A single string (default: \code{"p.adjust"}) is recycled for all
+categories in \code{enrich_category}. Supply a character vector of matching
+length for per-category control. Also used for colour-coding: terms with
+values below \code{enrich_threshold} are shown in black, terms above in grey.}
 
 \item{enrich_top_n}{Top N enrichment terms per module. A single integer
 (default: 3) is recycled for all categories in \code{enrich_category}.
 Supply an integer vector of matching length for per-category control.}
 
-\item{enrich_p_threshold}{P-value / adjusted p-value threshold for
+\item{enrich_threshold}{P-value / adjusted p-value threshold for
 colour-coding enrichment terms. A single value (default: 0.05) is
 recycled for all categories; supply a vector of matching length for
 per-category control. Terms below threshold are drawn in black,
@@ -117,7 +118,8 @@ Set to \code{NULL} (default) to skip marking.
 vector with one or more of \code{"png"}, \code{"pdf"}, \code{"tiff"}, \code{"jpeg"}
 (default: \code{"png"})}
 
-\item{save}{Directory to save plot, NULL (default) for no saving.}
+\item{save}{Directory to save the plot, no saving if is NULL
+(default is NULL)}
 }
 \value{
 A combined plot of heatmap, mean expression profile, and enrichment
@@ -148,7 +150,7 @@ example_module <- WGCNA_module(example_net) |>
 data(example_go)
 
 plot_modules_h(example_module |> dplyr::filter(Module != '0'),
-    example_obj_merged, scale = TRUE,
+    example_obj_merged, assay = 2, scale = TRUE,
     ylabel = "Z-score of log2 expression",
     enrich_list = example_go$all,
     enrich_category = "BP",

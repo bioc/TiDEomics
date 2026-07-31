@@ -11,8 +11,9 @@
 #' @param umap_neighbors UMAP n_neighbors parameter (default: auto-selected
 #'   based on sample count).
 #' @param fontsize Base font size (default: 8).
-#' @param assay Assay index to use, where 1 is the original data and 2 is
-#'   normalised to time 0 (if available) (default: 1).
+#' @param assay The assay to use in the SummarizedExperiment object: a numeric
+#'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+#'   for time 0 normalised data. (Default: 1.)
 #' @param legend_pos Legend position (default: "right").
 #'
 #' @import ggplot2

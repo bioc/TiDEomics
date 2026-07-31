@@ -15,23 +15,23 @@
 #' `stats::p.adjust()`) across combined results if needed.
 #'
 #' @param se_obj A SummarizedExperiment object
-#' @param group (Optional) A character vector specifying which group to be
+#' @param group A character vector specifying which group to be
 #' compared to. If NULL, all groups in the 'Group' column will be compared to.
 #' (default is NULL)
-#' @param filter (Optional) Minimum number of replicates required in both
+#' @param filter Minimum number of replicates required in both
 #' conditions for a feature to be tested. If NULL, the minimum number of
 #' replicates across all groups and time points will be used. (default is NULL)
-#' @param assay Assay to use: `"orig"` for original data, `"norm"` for
-#' normalised-to-start data. Numeric indices (1, 2) are also accepted.
-#' No default, must be specified explicitly. The selected assay should
+#' @param assay The assay to use in the SummarizedExperiment object: a numeric
+#'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
+#'   for time 0 normalised data. (Required, no default.) The selected assay should
 #' contain log-transformed, normalised values (e.g. log2-CPM for RNA-seq,
 #' log2-intensity for proteomics). A warning is issued if the data appears
 #' to be un-logged raw counts.
-#' @param adjP_thres (Optional) Threshold for adjusted p-value to consider a
+#' @param adjP_thres Threshold for adjusted p-value to consider a
 #' feature as differentially expressed (default is 0.05)
-#' @param logFC_thres (Optional) Threshold for log2 fold change to consider a
+#' @param logFC_thres Threshold for log2 fold change to consider a
 #' feature as differentially expressed (default is 1)
-#' @param trend (Optional) Logical, passed to `limma::eBayes()`.
+#' @param trend Logical, passed to `limma::eBayes()`.
 #'   Set to `TRUE` for RNA-seq count-derived data to model the mean-variance
 #'   trend. Leave as `FALSE` (default) for microarray, proteomics,
 #'   metabolomics, or other log-intensity data where the mean-variance

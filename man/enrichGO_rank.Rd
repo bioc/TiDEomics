@@ -26,20 +26,20 @@ e.g. "Time", "Group" in the output of \code{decomp_variance()}}
 
 \item{OrgDb}{Organism database, e.g. org.Hs.eg.db, org.Mm.eg.db}
 
-\item{keyType}{(Optional) Available options are
+\item{keyType}{Available options are
 \code{AnnotationDbi::keytypes(OrgDb)} (default is "SYMBOL")}
 
-\item{go_rank_by}{(Optional) Variable in the GO enrichment result to
+\item{go_rank_by}{Variable in the GO enrichment result to
 rank the GO terms by (default is "p.adjust", other options include
 "pvalue", "qvalue", "NES", "setSize", "enrichmentScore", etc.)}
 
-\item{category}{(Optional) GO category to analyze (default is all three of
+\item{category}{GO category to analyze (default is all three of
 BP, MF, CC)}
 
-\item{pvalueCutoff}{(Optional) Parameter of \code{clusterProfiler::gseGO()}
+\item{pvalueCutoff}{Parameter of \code{clusterProfiler::gseGO()}
 (default is 0.05)}
 
-\item{pAdjustMethod}{(Optional) Parameter of \code{clusterProfiler::gseGO()}
+\item{pAdjustMethod}{Parameter of \code{clusterProfiler::gseGO()}
 (default is "BH")}
 
 \item{...}{additional arguments passed to \code{clusterProfiler::gseGO()}}

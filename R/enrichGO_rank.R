@@ -9,16 +9,16 @@
 #' @param gene_rank_by Variable in `rank_table` to rank the genes by,
 #' e.g. "Time", "Group" in the output of `decomp_variance()`
 #' @param OrgDb Organism database, e.g. org.Hs.eg.db, org.Mm.eg.db
-#' @param keyType (Optional) Available options are
+#' @param keyType Available options are
 #' `AnnotationDbi::keytypes(OrgDb)` (default is "SYMBOL")
-#' @param go_rank_by (Optional) Variable in the GO enrichment result to
+#' @param go_rank_by Variable in the GO enrichment result to
 #' rank the GO terms by (default is "p.adjust", other options include
 #' "pvalue", "qvalue", "NES", "setSize", "enrichmentScore", etc.)
-#' @param category (Optional) GO category to analyze (default is all three of
+#' @param category GO category to analyze (default is all three of
 #' BP, MF, CC)
-#' @param pvalueCutoff  (Optional) Parameter of `clusterProfiler::gseGO()`
+#' @param pvalueCutoff Parameter of `clusterProfiler::gseGO()`
 #' (default is 0.05)
-#' @param pAdjustMethod (Optional) Parameter of `clusterProfiler::gseGO()`
+#' @param pAdjustMethod Parameter of `clusterProfiler::gseGO()`
 #' (default is "BH")
 #' @param ... additional arguments passed to `clusterProfiler::gseGO()`
 #'
