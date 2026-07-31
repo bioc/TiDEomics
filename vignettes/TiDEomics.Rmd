@@ -629,7 +629,7 @@ selected features.
 plot_segments(data_obj_merged_imp_list,
     example_res_list,
     feature = c("Slc25a51", "Aunip"), # example features
-    ylabel = "Log2(CPM + 1)"
+    ylab = "Log2(CPM + 1)"
 )
 ```
 

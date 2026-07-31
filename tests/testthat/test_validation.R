@@ -158,6 +158,25 @@ test_that(".check_se_list accepts named lists", {
     expect_silent(TiDEomics:::.check_se_list(list(A = se_norm), "x"))
 })
 
+test_that(".match_assay resolves a scalar assay", {
+    expect_equal(TiDEomics:::.match_assay(1, se_norm), "orig")
+    expect_equal(TiDEomics:::.match_assay("orig", se_norm), "orig")
+    expect_error(TiDEomics:::.match_assay(NULL, se_norm), "single")
+})
+
+test_that(".match_assay rejects non-scalar or non-numeric/character input", {
+    expect_error(TiDEomics:::.match_assay(c(1, 2), se_norm), "single")
+    expect_error(TiDEomics:::.match_assay(c("a", "b"), se_norm), "single")
+    expect_error(TiDEomics:::.match_assay(numeric(0), se_norm), "single")
+    expect_error(TiDEomics:::.match_assay(TRUE, se_norm), "single")
+    expect_error(TiDEomics:::.match_assay(factor("orig"), se_norm), "single")
+})
+
+test_that(".match_assay validates out-of-range and unknown assays", {
+    expect_error(TiDEomics:::.match_assay(99, se_norm), "out of range")
+    expect_error(TiDEomics:::.match_assay("NotAnAssay", se_norm), "not found")
+})
+
 # ---- .check_se_list_no_na ----
 
 test_that(".check_se_list_no_na detects missing values", {

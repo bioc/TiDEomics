@@ -14,7 +14,7 @@
 #' @param groups Groups to be plotted, if NULL, all groups will be used
 #'   (default is NULL)
 #' @param features Features to be plotted, if NULL, an error will be raised
-#' @param title Title of the plot (default is "Feature")
+#' @param title Title of the plot. "Feature" if NULL (default).
 #' @param ylabel Y axis label of the plot (default is "Log2 abundance")
 #' @param errorbar Whether to plot error bars (default is TRUE)
 #' @param fontsize Font size for the plot (default is 8)
@@ -27,8 +27,9 @@
 #' plot_trend(example_obj,
 #'     features = sample(rownames(example_obj), 4))
 plot_trend <- function(se_obj, assay = 1, groups = NULL, features,
-    title = "Feature", ylabel = "Log2 abundance", errorbar = TRUE, fontsize = 8) {
+    title = NULL, ylabel = "Log2 abundance", errorbar = TRUE, fontsize = 8) {
 
+    if (is.null(title)) title <- "Feature"
     if (!inherits(se_obj, "SummarizedExperiment") && !is.data.frame(se_obj)) {
         stop("'se_obj' must be a SummarizedExperiment or a data.frame.")
     }

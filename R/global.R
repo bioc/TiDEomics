@@ -24,8 +24,8 @@ utils::globalVariables(c(
 #' @return The resolved assay identifier (name if available, otherwise index).
 #' @keywords internal
 .match_assay <- function(assay, se_obj) {
-    if (is.null(assay)) {
-        assay <- "orig"
+    if (length(assay) != 1 || !(is.numeric(assay) || is.character(assay))) {
+        stop("'assay' must be a single numeric index or character name.")
     }
     # Resolve numeric indices to names when names are available
     assay_names <- names(SummarizedExperiment::assays(se_obj))

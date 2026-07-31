@@ -9,7 +9,7 @@ plot_trend(
   assay = 1,
   groups = NULL,
   features,
-  title = "Feature",
+  title = NULL,
   ylabel = "Log2 abundance",
   errorbar = TRUE,
   fontsize = 8
@@ -28,7 +28,7 @@ for time 0 normalised data. (Default: 1.)}
 
 \item{features}{Features to be plotted, if NULL, an error will be raised}
 
-\item{title}{Title of the plot (default is "Feature")}
+\item{title}{Title of the plot. "Feature" if NULL (default).}
 
 \item{ylabel}{Y axis label of the plot (default is "Log2 abundance")}
 

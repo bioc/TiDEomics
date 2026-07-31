@@ -30,6 +30,8 @@ test_that("plot_trend works with SE, table, errorbar, groups, and title", {
     # with groups and title
     expect_no_error(plot_trend(tbl$orig, features = utils::head(feats, 2),
         groups = grp, title = "Test", ylabel = "Value"))
+    # explicit NULL title falls back to the auto-generated default
+    expect_no_error(plot_trend(tbl$orig, features = feats, title = NULL))
     # SE directly
     expect_no_error(plot_trend(se, assay = "orig",
         features = utils::head(rownames(se), 2)))
