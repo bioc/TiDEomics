@@ -18,7 +18,7 @@ plot_cor_matrix(
   fontsize = 8,
   cellwidth = 1,
   cellheight = 1,
-  title = "Correlation between samples",
+  title = NULL,
   ...
 )
 }
@@ -53,7 +53,9 @@ FALSE)}
 
 \item{cellheight}{Cell height for the heatmap (default is 1)}
 
-\item{title}{Title of the heatmap (default is "Correlation between samples")}
+\item{title}{Title of the heatmap. If NULL, auto-generated as
+"Sample correlation (\if{html}{\out{<Method>}})" with the method capitalised
+(e.g. "Sample correlation (Spearman)") (default: NULL)}
 
 \item{...}{Additional arguments to be passed to \code{ComplexHeatmap::Heatmap()}}
 }

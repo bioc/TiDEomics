@@ -12,7 +12,7 @@
     }
 }
 
-#' Check that x is a list of SummarizedExperiment objects
+#' Check that x is a named list of SummarizedExperiment objects
 #' @param x Object to check.
 #' @param arg Name of the argument (for error message).
 #' @keywords internal
@@ -25,6 +25,9 @@
         bad <- which(!is_se)
         stop("'", arg, "[[", bad[1],
             "]]' is not a SummarizedExperiment object.")
+    }
+    if (is.null(names(x)) || any(is.na(names(x)) | names(x) == "")) {
+        stop("'", arg, "' must have names for all elements.")
     }
 }
 

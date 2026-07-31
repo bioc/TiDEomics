@@ -11,6 +11,13 @@ SIGNIFICANT USER-VISIBLE CHANGES
   `"Abundance"` to `"Log2 abundance"`.
 * `plot_modules_v()`: default `ylabel` changed from
   `"Log2 abundance normalised to Time 0"` to `"Log2 abundance"`.
+* `plot_cor_matrix()`: default `title` changed from
+  `"Correlation between samples"` to `NULL`; the title is now auto-generated
+  as `"Sample correlation (<Method>)"` with the method capitalised (e.g.
+  "Sample correlation (Spearman)").
+* `plot_pca()` and `plot_umap()`: when `circle = TRUE`, auto-computed axis
+  limits now use 0.35x padding around the data range (via `coord_cartesian()`)
+  instead of 1.5x the min/max (via `xlim()`/`ylim()`).
 
 # TiDEomics 0.99.4
 

@@ -19,7 +19,9 @@
 #' @param fontsize Font size for the plot (default is 8)
 #' @param cellwidth Cell width for the heatmap (default is 1)
 #' @param cellheight Cell height for the heatmap (default is 1)
-#' @param title Title of the heatmap (default is "Correlation between samples")
+#' @param title Title of the heatmap. If NULL, auto-generated as
+#'   "Sample correlation (<Method>)" with the method capitalised
+#'   (e.g. "Sample correlation (Spearman)") (default: NULL)
 #' @param ... Additional arguments to be passed to `ComplexHeatmap::Heatmap()`
 #'
 #' @import SummarizedExperiment
@@ -38,7 +40,7 @@ plot_cor_matrix <- function(
     label_rep = TRUE, label_batch = TRUE,
     show_rownames = FALSE, show_colnames = FALSE,
     fontsize = 8, cellwidth = 1, cellheight = 1,
-    title = "Correlation between samples",
+    title = NULL,
     ...
 ) {
     .check_se(se_obj)
@@ -53,11 +55,18 @@ plot_cor_matrix <- function(
     .check_positive(cellwidth, "cellwidth")
     .check_positive(cellheight, "cellheight")
     .check_character(use, "use")
-    .check_character(title, "title")
     if (is.null(method) || length(method) != 1) {
         method <- "spearman"
     }
     method <- match.arg(method, c("spearman", "pearson", "kendall"))
+    if (is.null(title)) {
+        method_display <- paste0(
+            toupper(substr(method, 1, 1)),
+            substr(method, 2, nchar(method))
+        )
+        title <- paste0("Sample correlation (", method_display, ")")
+    }
+    .check_character(title, "title")
     cor_table <- stats::cor(assay(se_obj, assay),
         use = use,
         method = method

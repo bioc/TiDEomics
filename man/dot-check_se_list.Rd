@@ -2,7 +2,7 @@
 % Please edit documentation in R/check_inputs.R
 \name{.check_se_list}
 \alias{.check_se_list}
-\title{Check that x is a list of SummarizedExperiment objects}
+\title{Check that x is a named list of SummarizedExperiment objects}
 \usage{
 .check_se_list(x, arg = "se_obj_list")
 }
@@ -12,6 +12,6 @@
 \item{arg}{Name of the argument (for error message).}
 }
 \description{
-Check that x is a list of SummarizedExperiment objects
+Check that x is a named list of SummarizedExperiment objects
 }
 \keyword{internal}

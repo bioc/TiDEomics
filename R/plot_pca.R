@@ -20,13 +20,13 @@
 #' @param circle Logical, whether to draw circles (ellipses) around samples
 #' of each group (default is FALSE)
 #' @param xlim_min Minimum x-axis limit when drawing ellipses
-#' (default: NULL, auto-computed as 1.5×min PC1)
+#' (default: NULL, auto-computed with 0.35x padding around the PC1 range)
 #' @param xlim_max Maximum x-axis limit when drawing ellipses
-#' (default: NULL, auto-computed as 1.5×max PC1)
+#' (default: NULL, auto-computed with 0.35x padding around the PC1 range)
 #' @param ylim_min Minimum y-axis limit when drawing ellipses
-#' (default: NULL, auto-computed as 1.5×min PC2)
+#' (default: NULL, auto-computed with 0.35x padding around the PC2 range)
 #' @param ylim_max Maximum y-axis limit when drawing ellipses
-#' (default: NULL, auto-computed as 1.5×max PC2)
+#' (default: NULL, auto-computed with 0.35x padding around the PC2 range)
 #' @param fontsize Font size for the PCA plot (default is 8)
 #' @param assay The assay to use in the SummarizedExperiment object: a numeric
 #'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
@@ -124,17 +124,25 @@ plot_pca <- function(
         ggtitle(title)
     p_list$p1 <- p1
 
-    if (is.null(xlim_min)) {
-        xlim_min <- 1.5 * min(pc[[pc1_name]])
+    if (is.null(xlim_min) || is.null(xlim_max)) {
+        x_rng <- range(pc[[pc1_name]], na.rm = TRUE)
+        x_pad <- 0.35 * diff(x_rng)
+        if (is.null(xlim_min)) {
+            xlim_min <- x_rng[1] - x_pad
+        }
+        if (is.null(xlim_max)) {
+            xlim_max <- x_rng[2] + x_pad
+        }
     }
-    if (is.null(xlim_max)) {
-        xlim_max <- 1.5 * max(pc[[pc1_name]])
-    }
-    if (is.null(ylim_min)) {
-        ylim_min <- 1.5 * min(pc[[pc2_name]])
-    }
-    if (is.null(ylim_max)) {
-        ylim_max <- 1.5 * max(pc[[pc2_name]])
+    if (is.null(ylim_min) || is.null(ylim_max)) {
+        y_rng <- range(pc[[pc2_name]], na.rm = TRUE)
+        y_pad <- 0.35 * diff(y_rng)
+        if (is.null(ylim_min)) {
+            ylim_min <- y_rng[1] - y_pad
+        }
+        if (is.null(ylim_max)) {
+            ylim_max <- y_rng[2] + y_pad
+        }
     }
 
     if (circle) {
@@ -144,7 +152,10 @@ plot_pca <- function(
             label.buffer = unit(0, "mm")
         )))
         p2 <- p1 +
-            xlim(xlim_min, xlim_max) + ylim(ylim_min, ylim_max)
+            coord_cartesian(
+                xlim = c(xlim_min, xlim_max),
+                ylim = c(ylim_min, ylim_max)
+            )
         p_list$p2 <- p2
     }
 

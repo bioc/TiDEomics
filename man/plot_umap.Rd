@@ -30,16 +30,16 @@ identified features (default is FALSE)}
 each group (default is FALSE)}
 
 \item{xlim_min}{Minimum x-axis limit when drawing ellipses
-(default: NULL, auto-computed as 1.5×min UMAP x)}
+(default: NULL, auto-computed with 0.35x padding around the UMAP x range)}
 
 \item{xlim_max}{Maximum x-axis limit when drawing ellipses
-(default: NULL, auto-computed as 1.5×max UMAP x)}
+(default: NULL, auto-computed with 0.35x padding around the UMAP x range)}
 
 \item{ylim_min}{Minimum y-axis limit when drawing ellipses
-(default: NULL, auto-computed as 1.5×min UMAP y)}
+(default: NULL, auto-computed with 0.35x padding around the UMAP y range)}
 
 \item{ylim_max}{Maximum y-axis limit when drawing ellipses
-(default: NULL, auto-computed as 1.5×max UMAP y)}
+(default: NULL, auto-computed with 0.35x padding around the UMAP y range)}
 
 \item{umap_neighbors}{UMAP n_neighbors parameter (default is selected by
 \code{.umap_n_neighbors()} function based on the number of samples)}

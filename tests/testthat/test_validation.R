@@ -142,6 +142,22 @@ test_that(".check_se_list rejects non-SE elements", {
     expect_error(TiDEomics:::.check_se_list(list(1), "x"), "SummarizedExperiment")
 })
 
+test_that(".check_se_list rejects unnamed lists", {
+    expect_error(TiDEomics:::.check_se_list(list(se_norm), "x"), "names")
+    expect_error(
+        TiDEomics:::.check_se_list(
+            stats::setNames(list(se_norm, se_norm), c("A", "")), "x"),
+        "names")
+    expect_error(
+        TiDEomics:::.check_se_list(
+            stats::setNames(list(se_norm, se_norm), c("A", NA)), "x"),
+        "names")
+})
+
+test_that(".check_se_list accepts named lists", {
+    expect_silent(TiDEomics:::.check_se_list(list(A = se_norm), "x"))
+})
+
 # ---- .check_se_list_no_na ----
 
 test_that(".check_se_list_no_na detects missing values", {
