@@ -65,3 +65,148 @@ test_that("plot_trend multiple datasets: errors", {
         features = feats, ylabel = c("A", "B")),
         "must be a single character")
 })
+
+# ---- Tests for multiple datasets: PCA ----
+
+se_with_extra <- function() {
+    extra <- matrix(stats::rnorm(3 * ncol(se)), nrow = 3,
+        dimnames = list(paste0("extra_", seq_len(3)), colnames(se)))
+    se2 <- se
+    SummarizedExperiment::assay(se2) <- rbind(
+        SummarizedExperiment::assay(se2), extra)
+    se2
+}
+
+test_that("plot_pca multiple datasets: structure, titles, annotation", {
+    res <- plot_pca(list(RNA = se, Protein = se),
+        plot_screeplot = FALSE, plot_loadings = FALSE, plot_morepc = FALSE)
+    expect_equal(names(res), c("p_list", "pca", "plot"))
+    expect_equal(names(res$p_list), c("RNA", "Protein"))
+    expect_equal(names(res$pca), c("RNA", "Protein"))
+    expect_s3_class(res$plot, "patchwork")
+    expect_match(res$plot$labels$title,
+        "PCA across datasets \\(all features without missing values\\)")
+    expect_match(res$p_list$RNA$p1$labels$title, "^RNA \\([0-9]+ features\\)$")
+    expect_match(res$p_list$Protein$p1$labels$title,
+        "^Protein \\([0-9]+ features\\)$")
+})
+
+test_that("plot_pca multiple datasets: shared_only subsets features", {
+    se2 <- se_with_extra()
+    expect_message(res <- plot_pca(list(RNA = se, Protein = se2),
+        shared_only = TRUE,
+        plot_screeplot = FALSE, plot_loadings = FALSE, plot_morepc = FALSE),
+        "Subsetting features: RNA=")
+    expect_match(res$plot$labels$title,
+        "PCA across datasets \\(shared features without missing values\\)")
+    expect_equal(nrow(res$pca$RNA$loadings), nrow(res$pca$Protein$loadings))
+})
+
+test_that("plot_pca multiple datasets: names override", {
+    res <- plot_pca(list(RNA = se, Protein = se), names = c("A", "B"),
+        plot_screeplot = FALSE, plot_loadings = FALSE, plot_morepc = FALSE)
+    expect_equal(names(res$p_list), c("RNA", "Protein"))
+    expect_match(res$p_list$RNA$p1$labels$title, "^A \\([0-9]+ features\\)$")
+    expect_match(res$p_list$Protein$p1$labels$title,
+        "^B \\([0-9]+ features\\)$")
+})
+
+test_that("plot_pca single SE with names: single return, multi-style title", {
+    res <- plot_pca(se, names = "MyData",
+        plot_screeplot = FALSE, plot_loadings = FALSE, plot_morepc = FALSE)
+    expect_equal(names(res), c("p_list", "pca"))
+    expect_match(res$p_list$p1$labels$title, "^MyData \\([0-9]+ features\\)$")
+})
+
+test_that("plot_pca multiple datasets: errors", {
+    expect_error(plot_pca(list(se, se)), "must have names")
+    expect_error(plot_pca(list(RNA = se, Bad = list(1))),
+        "not a SummarizedExperiment")
+    expect_error(plot_pca(list(RNA = se, Protein = se), names = "OnlyOne"),
+        "one entry per dataset")
+    expect_error(plot_pca(list(RNA = se, Protein = se), shared_only = "yes"),
+        "TRUE or FALSE")
+    se_disjoint <- se
+    rownames(se_disjoint) <- paste0("other_", seq_len(nrow(se_disjoint)))
+    expect_error(plot_pca(list(RNA = se, Other = se_disjoint),
+        shared_only = TRUE), "No features are shared by all datasets")
+    expect_error(plot_pca(se, pc1 = 99,
+        plot_screeplot = FALSE, plot_loadings = FALSE, plot_morepc = FALSE),
+        "'pc1' and 'pc2' must be within the available PCs")
+    expect_error(plot_pca(se, pc2 = 99,
+        plot_screeplot = FALSE, plot_loadings = FALSE, plot_morepc = FALSE),
+        "must be within the available PCs")
+})
+
+test_that("plot_pca single SE shared_only: no-op without message", {
+    expect_message(plot_pca(se, shared_only = TRUE,
+        plot_screeplot = FALSE, plot_loadings = FALSE, plot_morepc = FALSE),
+        NA)
+})
+
+# ---- Tests for multiple datasets: UMAP ----
+
+test_that("plot_umap multiple datasets: structure, titles, annotation", {
+    res <- plot_umap(list(RNA = se, Protein = se), seed = 42)
+    expect_equal(names(res), c("p_list", "umap_layout", "plot"))
+    expect_equal(names(res$umap_layout), c("RNA", "Protein"))
+    expect_s3_class(res$plot, "patchwork")
+    expect_match(res$plot$labels$title,
+        "UMAP across datasets \\(all features without missing values\\)")
+    expect_true(all(c("V1", "V2") %in% colnames(res$umap_layout$RNA)))
+    expect_match(res$p_list$RNA$p1$labels$title, "^RNA \\([0-9]+ features\\)$")
+    expect_match(res$p_list$Protein$p1$labels$title,
+        "^Protein \\([0-9]+ features\\)$")
+})
+
+test_that("plot_umap multiple datasets: shared_only and names override", {
+    se2 <- se_with_extra()
+    expect_message(res <- plot_umap(list(RNA = se, Protein = se2),
+        seed = 42, shared_only = TRUE), "Subsetting features: RNA=")
+    expect_match(res$plot$labels$title,
+        "UMAP across datasets \\(shared features without missing values\\)")
+    res2 <- plot_umap(list(RNA = se, Protein = se), seed = 42,
+        names = c("A", "B"))
+    expect_match(res2$p_list$RNA$p1$labels$title, "^A \\([0-9]+ features\\)$")
+    expect_equal(names(res2$umap_layout), c("RNA", "Protein"))
+})
+
+test_that("plot_umap multiple datasets: errors", {
+    expect_error(plot_umap(list(se, se)), "must have names")
+    expect_error(plot_umap(list(RNA = se, Protein = se), names = "OnlyOne"),
+        "one entry per dataset")
+    se_disjoint <- se
+    rownames(se_disjoint) <- paste0("other_", seq_len(nrow(se_disjoint)))
+    expect_error(plot_umap(list(RNA = se, Other = se_disjoint),
+        shared_only = TRUE), "No features are shared by all datasets")
+})
+
+test_that("plot_pca/plot_umap multi: messages identify the dataset", {
+    se_na <- se
+    SummarizedExperiment::assay(se_na)[1, 1] <- NA
+    expect_message(plot_pca(list(RNA = se_na, Protein = se),
+        plot_screeplot = FALSE, plot_loadings = FALSE, plot_morepc = FALSE),
+        "missing values in 'RNA'")
+    expect_message(plot_umap(list(RNA = se_na, Protein = se), seed = 42),
+        "missing values in 'RNA'")
+    expect_message(plot_umap(list(RNA = se, Protein = se), seed = 42),
+        "RNA: using n_neighbors")
+})
+
+test_that("plot_pca/plot_umap multi: circle panels combined", {
+    res_pca <- plot_pca(list(RNA = se, Protein = se), circle = TRUE,
+        plot_screeplot = FALSE, plot_loadings = FALSE, plot_morepc = FALSE)
+    panels_pca <- res_pca$plot$patches$plots
+    expect_length(panels_pca, 2)
+    expect_equal(length(panels_pca[[1]]$layers),
+        length(res_pca$p_list$RNA$p1$layers) + 1)
+    expect_equal(length(panels_pca[[2]]$layers),
+        length(res_pca$p_list$Protein$p1$layers) + 1)
+
+    res_umap <- plot_umap(list(RNA = se, Protein = se), seed = 42,
+        circle = TRUE)
+    panels_umap <- res_umap$plot$patches$plots
+    expect_length(panels_umap, 2)
+    expect_equal(length(panels_umap[[1]]$layers),
+        length(res_umap$p_list$RNA$p1$layers) + 1)
+})

@@ -15,11 +15,14 @@ plot_umap(
   ylim_max = NULL,
   umap_neighbors = NULL,
   fontsize = 8,
-  assay = 1
+  assay = 1,
+  shared_only = FALSE,
+  names = NULL
 )
 }
 \arguments{
-\item{se_obj}{A SummarizedExperiment object created by \code{create_input()}}
+\item{se_obj}{A SummarizedExperiment object created by \code{create_input()},
+or a named list of SummarizedExperiment objects (one per dataset)}
 
 \item{seed}{Random seed for UMAP (default is 1234)}
 
@@ -49,10 +52,20 @@ each group (default is FALSE)}
 \item{assay}{The assay to use in the SummarizedExperiment object: a numeric
 index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
 for time 0 normalised data. (Default: 1.)}
+
+\item{shared_only}{Logical, whether to subset each dataset to the features
+shared by all datasets before UMAP (default is FALSE; only applies
+when \code{se_obj} is a list of multiple datasets)}
+
+\item{names}{Optional character vector of dataset names for the plot
+titles. Default: NULL, i.e. the names of \code{se_obj} (when a list).}
 }
 \value{
-A list of UMAP plots showing the distribution of samples. And a data
-frame containing UMAP coordinates and sample annotations for custom plotting.
+A list with \code{p_list} (a named list of ggplot objects) and
+\code{umap_layout} (a data frame containing UMAP coordinates and sample
+annotations for custom plotting). When \code{se_obj} is a named list of datasets,
+both are named lists (one per dataset) and the combined UMAP plots are
+returned as \code{plot}.
 }
 \description{
 Plot UMAP of samples, using features without missing values
@@ -64,4 +77,5 @@ values).
 \examples{
 data(example_obj)
 umap_layout <- plot_umap(example_obj)
+umap_multi <- plot_umap(list(RNA = example_obj, Protein = example_obj))
 }

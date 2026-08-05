@@ -31,6 +31,20 @@
     }
 }
 
+#' Convert input to a named list of SummarizedExperiment objects
+#' @param x Object to convert: a SummarizedExperiment or a named list of
+#'   SummarizedExperiment objects.
+#' @param arg Name of the argument (for error message).
+#' @keywords internal
+.as_se_list <- function(x, arg = "se_obj") {
+    if (is.list(x) && !methods::is(x, "SummarizedExperiment")) {
+        .check_se_list(x, arg = arg)
+        return(x)
+    }
+    .check_se(x, arg = arg)
+    stats::setNames(list(x), "Dataset")
+}
+
 #' Check that x is a data.frame
 #' @param x Object to check.
 #' @param arg Name of the argument (for error message).

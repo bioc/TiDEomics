@@ -18,11 +18,14 @@ plot_pca(
   ylim_min = NULL,
   ylim_max = NULL,
   fontsize = 8,
-  assay = 1
+  assay = 1,
+  shared_only = FALSE,
+  names = NULL
 )
 }
 \arguments{
-\item{se_obj}{A SummarizedExperiment object created by \code{create_input()}}
+\item{se_obj}{A SummarizedExperiment object created by \code{create_input()},
+or a named list of SummarizedExperiment objects (one per dataset)}
 
 \item{plot_screeplot}{Logical, whether to plot screeplot with
 \code{PCAtools::screeplot()} (default is TRUE)}
@@ -60,10 +63,19 @@ of each group (default is FALSE)}
 \item{assay}{The assay to use in the SummarizedExperiment object: a numeric
 index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
 for time 0 normalised data. (Default: 1.)}
+
+\item{shared_only}{Logical, whether to subset each dataset to the features
+shared by all datasets before PCA (default is FALSE; only applies
+when \code{se_obj} is a list of multiple datasets)}
+
+\item{names}{Optional character vector of dataset names for the plot
+titles. Default: NULL, i.e. the names of \code{se_obj} (when a list).}
 }
 \value{
-A PCA plot showing the distribution of samples, other plots
-provided by PCAtools package, and PCAtools output object for custom plotting.
+A list with \code{p_list} (a named list of ggplot objects) and \code{pca}
+(a PCAtools output object for custom plotting). When \code{se_obj} is a named
+list of datasets, \code{p_list} and \code{pca} are named lists (one per dataset) and
+the combined PCA scatter plots are returned as \code{plot}.
 }
 \description{
 Plot principal component analysis (PCA), using features
@@ -75,4 +87,5 @@ for each Group.
 \examples{
 data(example_obj)
 PC = plot_pca(example_obj, morepc = seq(1, 3))
+PC_multi = plot_pca(list(RNA = example_obj, Protein = example_obj))
 }
