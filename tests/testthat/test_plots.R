@@ -37,6 +37,19 @@ test_that("plot_trend works with SE, table, errorbar, groups, and title", {
         features = utils::head(rownames(se), 2)))
 })
 
+test_that("plot_trend single input supports ncol and independent_y", {
+    tbl <- calc_mean_sd(se)
+    feats <- utils::head(unique(tbl$orig$Feature), 3)
+    expect_no_error(plot_trend(se, assay = "orig",
+        features = feats, ncol = 2))
+    expect_no_error(plot_trend(se, assay = "orig",
+        features = feats, independent_y = FALSE))
+    expect_no_error(plot_trend(tbl$orig, features = feats,
+        ncol = 1, independent_y = FALSE))
+    # defaults stay verbatim
+    expect_no_error(plot_trend(se, assay = "orig", features = feats))
+})
+
 test_that("plot_cor_matrix runs and validates", {
     expect_no_error(plot_cor_matrix(se, method = "spearman"))
     expect_error(plot_cor_matrix(NULL), "SummarizedExperiment")
@@ -216,14 +229,22 @@ test_that("plot_pca warns on out-of-range morepc", {
 
 test_that("plot_trend errors on invalid inputs", {
     expect_error(plot_trend(list(), features = "Gene1", title = "test",
-        ylabel = "Abundance"), "must be a SummarizedExperiment or a data.frame")
+        ylabel = "Abundance"),
+        "must be one or a list of SummarizedExperiment")
     expect_error(plot_trend(example_obj, features = character(0),
         title = "test"), "must be non-empty")
     expect_error(plot_trend(structure(list(), class = "x"), features = "Gene1",
-        title = "test"), "must be a SummarizedExperiment")
+        title = "test"), "must be one or a list of SummarizedExperiment")
     expect_error(plot_trend(example_obj,
         features = rownames(example_obj)[1:4],
         groups = "nonexistent_group", title = "test"), "not found")
+    expect_error(plot_trend(example_obj,
+        features = rownames(example_obj)[1],
+        ylabel = c("A", "B")), "must be a single character")
+    expect_error(plot_trend(example_obj, features = "NotAFeature",
+        title = "test"), "None of the requested features found")
+    expect_error(plot_trend(data.frame(Feature = "A"), features = "A"),
+        "Missing")
 })
 
 # ---- plot_variance edge branches ----

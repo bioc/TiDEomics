@@ -7,7 +7,7 @@ utils::globalVariables(c(
     "Abundance", "Cluster", "id", "p.adjust",
     "Description", "term", "PC1", "PC2",
     "x_start", "x_end", "y_start", "y_end",
-    "Mean", "SD", "V1", "V2", "ID", "N", "Sample_new",
+    "Mean", "SD", "V1", "V2", "ID", "N", "Dataset", "Sample_new",
     "Exp_ratio", "SYMBOL", "CV", "value", "Missing",
     "Adjusted.P.value", "name", ".", "Breakpoint", "Freq", "Color",
     "Database", "MeanConn", "Power", "SignedR2",

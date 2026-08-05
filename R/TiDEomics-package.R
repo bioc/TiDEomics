@@ -67,7 +67,7 @@
 #' @importFrom dplyr slice_min summarise ungroup
 #' @importFrom enrichplot pairwise_termsim
 #' @importFrom ggforce geom_mark_ellipse
-#' @importFrom ggh4x elem_list_rect facet_grid2 strip_themed
+#' @importFrom ggh4x elem_list_rect facet_grid2 facet_wrap2 strip_nested strip_themed
 #' @importFrom ggplotify as.ggplot
 #' @importFrom ggpubr annotate_figure ggarrange stat_compare_means text_grob
 #' @importFrom ggridges geom_density_ridges

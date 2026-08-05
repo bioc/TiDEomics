@@ -12,12 +12,17 @@ plot_trend(
   title = NULL,
   ylabel = "Log2 abundance",
   errorbar = TRUE,
-  fontsize = 8
+  fontsize = 8,
+  multi_layout = c("wrap", "vertical", "horizontal", "overlay"),
+  ncol = NULL,
+  independent_y = TRUE
 )
 }
 \arguments{
-\item{se_obj}{A SummarizedExperiment object, or a data.frame from
-\code{calc_mean_sd()} with columns: Feature, Time, Group, Mean, SD.}
+\item{se_obj}{A SummarizedExperiment object, a data.frame from
+\code{calc_mean_sd()} with columns: Feature, Time, Group, Mean, SD, or a
+named list of SummarizedExperiment objects (multiple datasets,
+e.g. multiomics).}
 
 \item{assay}{The assay to use in the SummarizedExperiment object: a numeric
 index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
@@ -28,13 +33,30 @@ for time 0 normalised data. (Default: 1.)}
 
 \item{features}{Features to be plotted, if NULL, an error will be raised}
 
-\item{title}{Title of the plot. "Feature" if NULL (default).}
+\item{title}{Title of the plot. "Feature" if NULL (default) for single
+input, "Trends across datasets" if NULL for a named list of
+SummarizedExperiment objects.}
 
-\item{ylabel}{Y axis label of the plot (default is "Log2 abundance")}
+\item{ylabel}{Y axis label of the plot (default is "Log2 abundance").}
 
 \item{errorbar}{Whether to plot error bars (default is TRUE)}
 
 \item{fontsize}{Font size for the plot (default is 8)}
+
+\item{multi_layout}{Facet layout for multiple-datasets input:
+\code{"wrap"} (default): wraps features, datasets nested per feature;
+\code{"vertical"}: datasets as rows, features as columns; \code{"horizontal"}:
+features as rows, datasets as columns; \code{"overlay"}: one panel per
+feature, datasets by linetype.
+Ignored for single input.}
+
+\item{ncol}{Number of feature columns per row for \code{"wrap"} and \code{"overlay"}
+layouts (multiple datasets) or in \code{facet_wrap()} (single input). If NULL
+(default), auto-computed.}
+
+\item{independent_y}{If TRUE (default), each panel gets its own y-axis
+scale. If FALSE, y-axes are shared: within each facet row for
+"vertical" and "horizontal" layouts, fully for "wrap" and "overlay".}
 }
 \value{
 Plot of feature abundances over time by mean and SD
@@ -43,11 +65,17 @@ Plot of feature abundances over time by mean and SD
 Plot trend of feature abundances / expression over time by
 mean and standard deviation (SD) for each group. Accepts either a
 SummarizedExperiment object (computing mean/SD internally via
-\code{calc_mean_sd()}) or a pre-computed table from
-\code{calc_mean_sd()}.
+\code{calc_mean_sd()}), a pre-computed table from \code{calc_mean_sd()}, or a
+named list of SummarizedExperiment objects (multiple datasets,
+e.g. multiomics).
 }
 \examples{
 data(example_obj)
 plot_trend(example_obj,
     features = sample(rownames(example_obj), 4))
+
+# Also accepts a named list of SummarizedExperiment objects
+se_list <- list(RNA = example_obj, Protein = example_obj)
+plot_trend(se_list,
+    features = sample(rownames(example_obj), 2))
 }
