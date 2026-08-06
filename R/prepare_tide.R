@@ -42,12 +42,14 @@
 #' batch information. If provided, the column is renamed to 'Batch'. If NULL
 #' (default), the function looks for a column named 'Batch'; if absent, all
 #' samples are assigned to batch 1.
-#' @param feature_threshold Threshold for `calc_feature_property()`. Feature
-#'   values > feature_threshold are considered expressed (default: 0).
+#' @param feature_threshold Threshold for `calc_feature_property()`: a numeric
+#'   value, features with values > feature_threshold are considered expressed;
+#'   or NULL, any non-NA value is considered expressed. (default: 0)
 #' @param filter_ratio Minimum ratio of time points a feature must be expressed
 #'   in, to be considered expressed in a group (default: 0.5, meaning that a
-#'   feature must be > feature_threshold in >=50% time points in a group to be
-#'   considered expressed). Passed to `group_specific_features()`.
+#'   feature must be > feature_threshold, or non-NA when feature_threshold is
+#'   NULL, in >=50% time points in a group to be considered expressed). Passed
+#'   to `group_specific_features()`.
 #' @param min_groups Minimum number of groups a feature must be expressed in,
 #'   with the above filter_ratio, to pass the cross group filter
 #'   (default: 2). Passed to `group_specific_features()`.
@@ -119,7 +121,9 @@ prepare_tide <- function(
         residual_threshold <- if (keep == "below_quantile") 0.75 else 100
     }
 
-    .check_numeric(feature_threshold, "feature_threshold")
+    if (!is.null(feature_threshold)) {
+        .check_numeric(feature_threshold, "feature_threshold")
+    }
     .check_df(data, "data")
     .check_df(sample_ann, "sample_ann")
     .check_pval(filter_ratio, "filter_ratio")

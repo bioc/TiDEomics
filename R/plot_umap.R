@@ -44,8 +44,11 @@
 #' @export
 #' @examples
 #' data(example_obj)
-#' umap_layout <- plot_umap(example_obj)
-#' umap_multi <- plot_umap(list(RNA = example_obj, Protein = example_obj))
+#' data(example_obj_2)
+#' umap_out <- plot_umap(example_obj)
+#' umap_out$p_list
+#' umap_multi <- plot_umap(list(Exp1 = example_obj, Exp2 = example_obj_2))
+#' umap_multi$plot
 plot_umap <- function(
     se_obj, seed = 1234, plot_ID = FALSE,
     circle = FALSE,

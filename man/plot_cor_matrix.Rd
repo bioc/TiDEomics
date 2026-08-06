@@ -19,9 +19,9 @@ plot_cor_matrix(
   cellwidth = 1,
   cellheight = 1,
   title = NULL,
-  ...,
   shared_only = FALSE,
-  names = NULL
+  names = NULL,
+  ...
 )
 }
 \arguments{
@@ -60,20 +60,20 @@ FALSE)}
 "Sample correlation (\if{html}{\out{<Method>}})" with the method capitalised
 (e.g. "Sample correlation (Spearman)") (default: NULL)}
 
-\item{...}{Additional arguments to be passed to \code{ComplexHeatmap::Heatmap()}}
-
 \item{shared_only}{Logical, whether to subset each dataset to the features
 shared by all datasets before computing correlations (default is FALSE;
 only applies when \code{se_obj} is a list of multiple datasets)}
 
-\item{names}{Optional character vector of dataset names for the heatmap
-column titles. Default: NULL, i.e. the names of \code{se_obj} (when a list).
+\item{names}{Optional character vector of dataset names for the per-heatmap
+titles. Default: NULL, i.e. the names of \code{se_obj} (when a list).
 Only applies when \code{se_obj} is a list of multiple datasets.}
+
+\item{...}{Additional arguments to be passed to \code{ComplexHeatmap::Heatmap()}}
 }
 \value{
 A heatmap showing the correlation between samples. With a named
-list of datasets, all heatmaps are drawn together (shared colour scale,
-per-dataset column titles, cophenetic-correlation subtitle) and returned
+list of datasets, all heatmaps share the same colour scale,
+include cophenetic-correlation subtitle, and are returned
 invisibly as a named list of Heatmap objects.
 }
 \description{
@@ -82,12 +82,11 @@ Plot correlation matrix between samples as a heatmap
 \details{
 With a named list of datasets that share the same samples,
 the per-dataset dendrograms are compared pairwise with the
-cophenetic correlation and the values are reported in a message
-and as a subtitle line on the plot (all pairs for three or more
-datasets, three pairs per line).
+cophenetic correlation.
 }
 \examples{
 data(example_obj)
+data(example_obj_2)
 plot_cor_matrix(example_obj)
-plot_cor_matrix(list(RNA = example_obj, Protein = example_obj))
+plot_cor_matrix(list(Exp1 = example_obj, Exp2 = example_obj_2))
 }

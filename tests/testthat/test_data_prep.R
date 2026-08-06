@@ -177,6 +177,30 @@ test_that("prepare_tide handles keep variants", {
     expect_true("se" %in% names(res))
 })
 
+test_that("prepare_tide accepts feature_threshold = NULL", {
+    res_null <- suppressWarnings(prepare_tide(
+        tutorial_data, tutorial_sample_info,
+        keep = "threshold", residual_threshold = 100,
+        feature_threshold = NULL, min_groups = 2
+    ))
+    expect_type(res_null, "list")
+    expect_true("se" %in% names(res_null))
+
+    res_zero <- suppressWarnings(prepare_tide(
+        tutorial_data, tutorial_sample_info,
+        keep = "threshold", residual_threshold = 100,
+        feature_threshold = 0, min_groups = 2
+    ))
+    expect_true("se" %in% names(res_zero))
+
+    expect_error(
+        prepare_tide(tutorial_data, tutorial_sample_info,
+            keep = "threshold", residual_threshold = 100,
+            feature_threshold = "low"),
+        "must be numeric"
+    )
+})
+
 # ---- create_input edge cases ----
 
 test_that("create_input validates column arguments", {

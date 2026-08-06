@@ -41,12 +41,12 @@
 #' @export
 #' @examples
 #' data(example_obj)
+#' data(example_obj_2)
 #' plot_trend(example_obj,
 #'     features = sample(rownames(example_obj), 4))
 #'
 #' # Also accepts a named list of SummarizedExperiment objects
-#' se_list <- list(RNA = example_obj, Protein = example_obj)
-#' plot_trend(se_list,
+#' plot_trend(list(Exp1 = example_obj, Exp2 = example_obj_2),
 #'     features = sample(rownames(example_obj), 2))
 plot_trend <- function(se_obj, assay = 1, groups = NULL, features,
     title = NULL, ylabel = "Log2 abundance", errorbar = TRUE, fontsize = 8,

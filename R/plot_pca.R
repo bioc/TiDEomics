@@ -48,8 +48,11 @@
 #' @export
 #' @examples
 #' data(example_obj)
+#' data(example_obj_2)
 #' PC = plot_pca(example_obj, morepc = seq(1, 3))
-#' PC_multi = plot_pca(list(RNA = example_obj, Protein = example_obj))
+#' PC$p_list
+#' PC_multi = plot_pca(list(Exp1 = example_obj, Exp2 = example_obj_2))
+#' PC_multi$plot
 plot_pca <- function(
     se_obj,
     plot_screeplot = TRUE,

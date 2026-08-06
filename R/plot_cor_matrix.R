@@ -44,8 +44,9 @@
 #' @export
 #' @examples
 #' data(example_obj)
+#' data(example_obj_2)
 #' plot_cor_matrix(example_obj)
-#' plot_cor_matrix(list(RNA = example_obj, Protein = example_obj))
+#' plot_cor_matrix(list(Exp1 = example_obj, Exp2 = example_obj_2))
 plot_cor_matrix <- function(
     se_obj,
     assay = 1,

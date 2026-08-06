@@ -48,13 +48,15 @@ batch information. If provided, the column is renamed to 'Batch'. If NULL
 (default), the function looks for a column named 'Batch'; if absent, all
 samples are assigned to batch 1.}
 
-\item{feature_threshold}{Threshold for \code{calc_feature_property()}. Feature
-values > feature_threshold are considered expressed (default: 0).}
+\item{feature_threshold}{Threshold for \code{calc_feature_property()}: a numeric
+value, features with values > feature_threshold are considered expressed;
+or NULL, any non-NA value is considered expressed. (default: 0)}
 
 \item{filter_ratio}{Minimum ratio of time points a feature must be expressed
 in, to be considered expressed in a group (default: 0.5, meaning that a
-feature must be > feature_threshold in >=50\% time points in a group to be
-considered expressed). Passed to \code{group_specific_features()}.}
+feature must be > feature_threshold, or non-NA when feature_threshold is
+NULL, in >=50\% time points in a group to be considered expressed). Passed
+to \code{group_specific_features()}.}
 
 \item{min_groups}{Minimum number of groups a feature must be expressed in,
 with the above filter_ratio, to pass the cross group filter
