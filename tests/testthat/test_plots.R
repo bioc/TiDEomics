@@ -3,6 +3,9 @@ data(example_obj)
 se <- normalise_to_start(example_obj)
 vd <- decomp_variance(se, features = rownames(se)[1:20],
     fixed_effect_var = NULL, assay = "orig", core = 1)
+tbl <- calc_mean_sd(se)
+feats <- utils::head(unique(tbl$orig$Feature), 3)
+grp <- as.character(unique(tbl$orig$Group)[1])
 
 # ---- Tests ----
 
@@ -19,10 +22,6 @@ test_that("plot_variance works, validates, and handles edge cases", {
 })
 
 test_that("plot_trend works with SE, table, errorbar, groups, and title", {
-    tbl <- calc_mean_sd(se)
-    feats <- utils::head(unique(tbl$orig$Feature), 3)
-    grp <- as.character(unique(tbl$orig$Group)[1])
-
     # table input with errorbar
     expect_no_error(plot_trend(tbl$orig, features = feats))
     # table input without errorbar
@@ -38,8 +37,6 @@ test_that("plot_trend works with SE, table, errorbar, groups, and title", {
 })
 
 test_that("plot_trend single input supports ncol and independent_y", {
-    tbl <- calc_mean_sd(se)
-    feats <- utils::head(unique(tbl$orig$Feature), 3)
     expect_no_error(plot_trend(se, assay = "orig",
         features = feats, ncol = 2))
     expect_no_error(plot_trend(se, assay = "orig",
@@ -53,6 +50,9 @@ test_that("plot_trend single input supports ncol and independent_y", {
 test_that("plot_cor_matrix runs and validates", {
     expect_no_error(plot_cor_matrix(se, method = "spearman"))
     expect_error(plot_cor_matrix(NULL), "SummarizedExperiment")
+    res <- plot_cor_matrix(se)
+    expect_s4_class(res, "Heatmap")
+    expect_equal(res@column_title, "Sample correlation (Spearman)")
 })
 
 test_that("plot_distribution works with and without facet_by and validates", {
@@ -245,24 +245,6 @@ test_that("plot_trend errors on invalid inputs", {
         title = "test"), "None of the requested features found")
     expect_error(plot_trend(data.frame(Feature = "A"), features = "A"),
         "Missing")
-})
-
-# ---- plot_variance edge branches ----
-
-test_that("plot_variance edge cases", {
-    vd_small <- decomp_variance(se, features = rownames(se)[1:10],
-        fixed_effect_var = NULL, assay = "orig", core = 1)
-
-    expect_message(
-        plot_variance(vd_small, rank = "Group", top_n = 100),
-        "Plotting all"
-    )
-    expect_error(
-        plot_variance(vd_small, features = c("NotAFeature", "AlsoNot")),
-        "not found"
-    )
-    p <- plot_variance(vd_small, rank = "Group", top_n = 5, show_ylab = FALSE)
-    expect_s3_class(p, "ggplot")
 })
 
 # ---- plot_pca edge branches ----

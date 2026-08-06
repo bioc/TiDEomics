@@ -192,7 +192,7 @@ plot_umap <- function(
                 paste0(umap_title, "\n"),
                 face = "bold", size = fontsize + 2))
 
-        p_list$p1 <- umap_layout |>
+        p1 <- umap_layout |>
             dplyr::mutate(Time = Time |> factor()) |>
             ggplot(aes(x = V1, y = V2, fill = Group)) +
             geom_point(aes(size = Time), alpha = 0.8, shape = 21) +
@@ -202,6 +202,7 @@ plot_umap <- function(
             guides(fill = guide_legend(override.aes = list(size = 4))) +
             theme_custom(base_size = fontsize) +
             ggtitle(umap_title)
+        p_list$p1 <- p1
 
         if (is.null(xlim_min) || is.null(xlim_max)) {
             x_rng <- range(umap_layout$V1, na.rm = TRUE)
@@ -225,13 +226,13 @@ plot_umap <- function(
         }
 
         if (circle) {
-            p_list$p1$layers <- c(p_list$p1$layers, list(
+            p1$layers <- c(p1$layers, list(
                 ggforce::geom_mark_ellipse(
                     aes(fill = Group, label = Group),
                     con.cap = 0, alpha = 0.1, label.fontsize = fontsize,
                     label.buffer = unit(0, "mm")
                 )))
-            p_list$p2 <- p_list$p1 +
+            p_list$p2 <- p1 +
                 coord_cartesian(
                     xlim = c(xlim_min, xlim_max),
                     ylim = c(ylim_min, ylim_max)

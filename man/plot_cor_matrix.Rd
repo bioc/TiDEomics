@@ -19,11 +19,14 @@ plot_cor_matrix(
   cellwidth = 1,
   cellheight = 1,
   title = NULL,
-  ...
+  ...,
+  shared_only = FALSE,
+  names = NULL
 )
 }
 \arguments{
-\item{se_obj}{A SummarizedExperiment object created by \code{create_input()}}
+\item{se_obj}{A SummarizedExperiment object created by \code{create_input()},
+or a named list of SummarizedExperiment objects (one per dataset).}
 
 \item{assay}{The assay to use in the SummarizedExperiment object: a numeric
 index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
@@ -58,14 +61,33 @@ FALSE)}
 (e.g. "Sample correlation (Spearman)") (default: NULL)}
 
 \item{...}{Additional arguments to be passed to \code{ComplexHeatmap::Heatmap()}}
+
+\item{shared_only}{Logical, whether to subset each dataset to the features
+shared by all datasets before computing correlations (default is FALSE;
+only applies when \code{se_obj} is a list of multiple datasets)}
+
+\item{names}{Optional character vector of dataset names for the heatmap
+column titles. Default: NULL, i.e. the names of \code{se_obj} (when a list).
+Only applies when \code{se_obj} is a list of multiple datasets.}
 }
 \value{
-A heatmap showing the correlation between samples.
+A heatmap showing the correlation between samples. With a named
+list of datasets, all heatmaps are drawn together (shared colour scale,
+per-dataset column titles, cophenetic-correlation subtitle) and returned
+invisibly as a named list of Heatmap objects.
 }
 \description{
 Plot correlation matrix between samples as a heatmap
 }
+\details{
+With a named list of datasets that share the same samples,
+the per-dataset dendrograms are compared pairwise with the
+cophenetic correlation and the values are reported in a message
+and as a subtitle line on the plot (all pairs for three or more
+datasets, three pairs per line).
+}
 \examples{
 data(example_obj)
 plot_cor_matrix(example_obj)
+plot_cor_matrix(list(RNA = example_obj, Protein = example_obj))
 }

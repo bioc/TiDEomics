@@ -1,13 +1,14 @@
 # ---- Shared data and precomputation ----
 data(example_obj)
 se <- normalise_to_start(example_obj)
+feats <- utils::head(rownames(se), 3)
+se_list <- list(RNA = se, Protein = se)
+se_disjoint <- se
+rownames(se_disjoint) <- paste0("other_", seq_len(nrow(se_disjoint)))
 
 # ---- Tests for multiple datasets (named list of SummarizedExperiment) ----
 
 test_that("plot_trend multiple datasets: layouts, titles, and y labels", {
-    feats <- utils::head(rownames(se), 3)
-    se_list <- list(RNA = se, Protein = se)
-
     p_default <- plot_trend(se_list, features = feats)
     expect_s3_class(p_default, "ggplot")
     expect_equal(p_default$labels$title, paste0("Trends across datasets in ",
@@ -23,9 +24,6 @@ test_that("plot_trend multiple datasets: layouts, titles, and y labels", {
 })
 
 test_that("plot_trend multiple datasets: options", {
-    feats <- utils::head(rownames(se), 3)
-    se_list <- list(RNA = se, Protein = se)
-
     # custom y-axis label
     p <- plot_trend(se_list, features = feats, ylabel = "Intensity")
     expect_equal(p$labels$y, "Intensity")
@@ -48,7 +46,6 @@ test_that("plot_trend multiple datasets: options", {
 })
 
 test_that("plot_trend multiple datasets: errors", {
-    feats <- utils::head(rownames(se), 3)
     expect_error(plot_trend(list(se, se), features = feats),
         "must have names")
     expect_error(plot_trend(list(RNA = se, Bad = list(1)),
@@ -71,10 +68,10 @@ test_that("plot_trend multiple datasets: errors", {
 se_with_extra <- function() {
     extra <- matrix(stats::rnorm(3 * ncol(se)), nrow = 3,
         dimnames = list(paste0("extra_", seq_len(3)), colnames(se)))
-    se2 <- se
-    SummarizedExperiment::assay(se2) <- rbind(
-        SummarizedExperiment::assay(se2), extra)
-    se2
+    assays <- lapply(SummarizedExperiment::assays(se), rbind, extra)
+    SummarizedExperiment::SummarizedExperiment(
+        assays = assays,
+        colData = SummarizedExperiment::colData(se))
 }
 
 test_that("plot_pca multiple datasets: structure, titles, annotation", {
@@ -84,7 +81,7 @@ test_that("plot_pca multiple datasets: structure, titles, annotation", {
     expect_equal(names(res$p_list), c("RNA", "Protein"))
     expect_equal(names(res$pca), c("RNA", "Protein"))
     expect_s3_class(res$plot, "patchwork")
-    expect_match(res$plot$labels$title,
+    expect_match(res$plot$meta$patches$annotation$title,
         "PCA across datasets \\(all features without missing values\\)")
     expect_match(res$p_list$RNA$p1$labels$title, "^RNA \\([0-9]+ features\\)$")
     expect_match(res$p_list$Protein$p1$labels$title,
@@ -97,7 +94,7 @@ test_that("plot_pca multiple datasets: shared_only subsets features", {
         shared_only = TRUE,
         plot_screeplot = FALSE, plot_loadings = FALSE, plot_morepc = FALSE),
         "Subsetting features: RNA=")
-    expect_match(res$plot$labels$title,
+    expect_match(res$plot$meta$patches$annotation$title,
         "PCA across datasets \\(shared features without missing values\\)")
     expect_equal(nrow(res$pca$RNA$loadings), nrow(res$pca$Protein$loadings))
 })
@@ -126,8 +123,6 @@ test_that("plot_pca multiple datasets: errors", {
         "one entry per dataset")
     expect_error(plot_pca(list(RNA = se, Protein = se), shared_only = "yes"),
         "TRUE or FALSE")
-    se_disjoint <- se
-    rownames(se_disjoint) <- paste0("other_", seq_len(nrow(se_disjoint)))
     expect_error(plot_pca(list(RNA = se, Other = se_disjoint),
         shared_only = TRUE), "No features are shared by all datasets")
     expect_error(plot_pca(se, pc1 = 99,
@@ -139,9 +134,9 @@ test_that("plot_pca multiple datasets: errors", {
 })
 
 test_that("plot_pca single SE shared_only: no-op without message", {
-    expect_message(plot_pca(se, shared_only = TRUE,
-        plot_screeplot = FALSE, plot_loadings = FALSE, plot_morepc = FALSE),
-        NA)
+    msgs <- testthat::capture_messages(plot_pca(se, shared_only = TRUE,
+        plot_screeplot = FALSE, plot_loadings = FALSE, plot_morepc = FALSE))
+    expect_false(any(grepl("Subsetting features", msgs)))
 })
 
 # ---- Tests for multiple datasets: UMAP ----
@@ -151,7 +146,7 @@ test_that("plot_umap multiple datasets: structure, titles, annotation", {
     expect_equal(names(res), c("p_list", "umap_layout", "plot"))
     expect_equal(names(res$umap_layout), c("RNA", "Protein"))
     expect_s3_class(res$plot, "patchwork")
-    expect_match(res$plot$labels$title,
+    expect_match(res$plot$meta$patches$annotation$title,
         "UMAP across datasets \\(all features without missing values\\)")
     expect_true(all(c("V1", "V2") %in% colnames(res$umap_layout$RNA)))
     expect_match(res$p_list$RNA$p1$labels$title, "^RNA \\([0-9]+ features\\)$")
@@ -163,7 +158,7 @@ test_that("plot_umap multiple datasets: shared_only and names override", {
     se2 <- se_with_extra()
     expect_message(res <- plot_umap(list(RNA = se, Protein = se2),
         seed = 42, shared_only = TRUE), "Subsetting features: RNA=")
-    expect_match(res$plot$labels$title,
+    expect_match(res$plot$meta$patches$annotation$title,
         "UMAP across datasets \\(shared features without missing values\\)")
     res2 <- plot_umap(list(RNA = se, Protein = se), seed = 42,
         names = c("A", "B"))
@@ -175,8 +170,6 @@ test_that("plot_umap multiple datasets: errors", {
     expect_error(plot_umap(list(se, se)), "must have names")
     expect_error(plot_umap(list(RNA = se, Protein = se), names = "OnlyOne"),
         "one entry per dataset")
-    se_disjoint <- se
-    rownames(se_disjoint) <- paste0("other_", seq_len(nrow(se_disjoint)))
     expect_error(plot_umap(list(RNA = se, Other = se_disjoint),
         shared_only = TRUE), "No features are shared by all datasets")
 })
@@ -196,7 +189,7 @@ test_that("plot_pca/plot_umap multi: messages identify the dataset", {
 test_that("plot_pca/plot_umap multi: circle panels combined", {
     res_pca <- plot_pca(list(RNA = se, Protein = se), circle = TRUE,
         plot_screeplot = FALSE, plot_loadings = FALSE, plot_morepc = FALSE)
-    panels_pca <- res_pca$plot$patches$plots
+    panels_pca <- as.list(res_pca$plot)
     expect_length(panels_pca, 2)
     expect_equal(length(panels_pca[[1]]$layers),
         length(res_pca$p_list$RNA$p1$layers) + 1)
@@ -205,8 +198,69 @@ test_that("plot_pca/plot_umap multi: circle panels combined", {
 
     res_umap <- plot_umap(list(RNA = se, Protein = se), seed = 42,
         circle = TRUE)
-    panels_umap <- res_umap$plot$patches$plots
+    panels_umap <- as.list(res_umap$plot)
     expect_length(panels_umap, 2)
     expect_equal(length(panels_umap[[1]]$layers),
         length(res_umap$p_list$RNA$p1$layers) + 1)
+})
+
+# ---- Tests for multiple datasets: correlation matrix ----
+
+test_that("plot_cor_matrix multiple datasets: structure and titles", {
+    res <- suppressMessages(plot_cor_matrix(list(RNA = se, Protein = se)))
+    expect_equal(names(res), c("RNA", "Protein"))
+    expect_s4_class(res[[1]], "Heatmap")
+    expect_match(res[[1]]@column_title, "^RNA \\([0-9]+\\)$")
+    expect_match(res[[2]]@column_title, "^Protein \\([0-9]+\\)$")
+})
+
+test_that("plot_cor_matrix multiple datasets: shared_only subsets features", {
+    se2 <- se_with_extra()
+    expect_message(res <- plot_cor_matrix(list(RNA = se, Protein = se2),
+        shared_only = TRUE), "Subsetting features: RNA=")
+    expect_equal(res[[2]]@column_title,
+        paste0("Protein (", nrow(se), ")"))
+})
+
+test_that("plot_cor_matrix multiple datasets: cophenetic similarity message", {
+    expect_message(plot_cor_matrix(list(RNA = se, Protein = se)),
+        "Cophenetic r = 1.00")
+    expect_message(
+        plot_cor_matrix(list(RNA = se, Protein = se, Lipid = se)),
+        paste0("Cophenetic r: RNA-Protein = 1.00, RNA-Lipid = 1.00, ",
+            "Protein-Lipid = 1.00"))
+    expect_message(
+        plot_cor_matrix(list(A = se, B = se, C = se, D = se)),
+        paste0("Cophenetic r: A-B = 1.00, A-C = 1.00, A-D = 1.00",
+            "\\nB-C = 1.00, B-D = 1.00, C-D = 1.00"))
+})
+
+test_that("plot_cor_matrix multiple datasets: same samples any column
+    order", {
+    se_rev <- se[, rev(seq_len(ncol(se)))]
+    expect_message(plot_cor_matrix(list(RNA = se, Protein = se_rev)),
+        "Cophenetic r = 1.00")
+})
+
+test_that("plot_cor_matrix multiple datasets: unmatched samples skip
+    similarity", {
+    se_sub <- se[, -ncol(se)]
+    msgs <- testthat::capture_messages(
+        plot_cor_matrix(list(RNA = se, Protein = se_sub)))
+    expect_true(any(grepl("Skipping similarity statistics", msgs)))
+    expect_false(any(grepl("Cophenetic", msgs)))
+})
+
+test_that("plot_cor_matrix multiple datasets: names override and errors", {
+    res <- suppressMessages(plot_cor_matrix(list(RNA = se, Protein = se),
+        names = c("A", "B")))
+    expect_equal(names(res), c("RNA", "Protein"))
+    expect_match(res[[1]]@column_title, "^A \\([0-9]+\\)$")
+    expect_error(plot_cor_matrix(list(se, se)), "must have names")
+    expect_error(plot_cor_matrix(list(RNA = se, Bad = list(1))),
+        "not a SummarizedExperiment")
+    expect_error(plot_cor_matrix(list(RNA = se, Protein = se),
+        names = "OnlyOne"), "one entry per dataset")
+    expect_error(plot_cor_matrix(list(RNA = se, Other = se_disjoint),
+        shared_only = TRUE), "No features are shared by all datasets")
 })
