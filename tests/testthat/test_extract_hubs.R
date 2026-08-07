@@ -84,3 +84,30 @@ test_that("extract_hubs handles unsigned networks", {
     expect_type(hubs, "character")
     expect_equal(length(hubs), 4)  # 2 modules x top_n=2
 })
+
+test_that("extract_hubs errors on missing kME column", {
+    # Build a minimal network mock whose signedKME output lacks the
+    # kME column for one module.
+    set.seed(42)
+    n_genes <- 20
+    n_samples <- 5
+    expr <- as.data.frame(
+        matrix(rnorm(n_samples * n_genes), nrow = n_samples,
+               dimnames = list(NULL, paste0("Gene", seq_len(n_genes)))))
+    colors <- stats::setNames(
+        c(rep("1", 10), rep("2", 10)),
+        colnames(expr))
+    MEs <- WGCNA::moduleEigengenes(expr, colors,
+        excludeGrey = TRUE)$eigengenes
+    net <- list(
+        input_data = expr,
+        colors = colors,
+        MEs = MEs,
+        parameters = list(networkType = "unsigned")
+    )
+
+    net_missing <- net
+    net_missing$colors[1] <- "99"
+    expect_error(extract_hubs(net_missing, top_n = 2),
+        "Cannot find kME99 in signedKME output")
+})

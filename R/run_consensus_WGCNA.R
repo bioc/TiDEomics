@@ -12,7 +12,7 @@
 #' @param consensusQuantile Quantile at which consensus is to be defined.
 #'   (default: 0). See `WGCNA::blockwiseConsensusModules()` for details.
 #' @param numericLabels Whether to use numeric labels for modules in the output
-#'   (default is TRUE)
+#'   (default is TRUE).
 #' @param plot Logical. If TRUE (default), plot consensus dendrogram
 #'   with module colours for each feature block via
 #'   `WGCNA::plotDendroAndColors()`.
@@ -136,6 +136,22 @@ run_consensus_WGCNA <- function(
     # Intersection of features across all datasets
     common_features <- Reduce(intersect, feature_lists)
 
+    feature_sets_differ <- any(vapply(
+        feature_lists,
+        function(features) !setequal(features, common_features),
+        logical(1)
+    ))
+    if (feature_sets_differ) {
+        warning(
+            "Feature sets differ across datasets. Consensus WGCNA will use ",
+            "the shared feature set. The power values may therefore not ",
+            "match this feature space; for best comparability, rerun ",
+            "prepare_WGCNA() after restricting each dataset to the shared ",
+            "features.",
+            call. = FALSE
+        )
+    }
+
     message(
         "Common features across ", n_datasets, " datasets: ",
         length(common_features)
@@ -201,7 +217,11 @@ run_consensus_WGCNA <- function(
     message("Consensus WGCNA complete.")
 
     if (plot) {
-        module_colors <- WGCNA::labels2colors(result$network$colors)
+        module_colors <- if (numericLabels) {
+            WGCNA::labels2colors(result$network$colors)
+        } else {
+            result$network$colors
+        }
         n_mods <- length(unique(module_colors))
         n_blocks <- length(result$network$dendrograms)
         for (block in seq_len(n_blocks)) {

@@ -68,8 +68,7 @@ extract_hubs <- function(
         kme.col <- paste0("kME", mod)
 
         if (!kme.col %in% colnames(kME.full)) {
-            message("Cannot find ", kme.col, " in signedKME output; skipping.")
-            next
+            stop("Cannot find ", kme.col, " in signedKME output.")
         }
 
         assigned.kME[features] <-

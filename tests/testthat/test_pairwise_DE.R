@@ -1,6 +1,5 @@
 # ---- Shared data and DE precomputation ----
 data("example_obj")
-example_obj <- normalise_to_start(example_obj)
 
 DE_between_group_out <- DE_between_group(example_obj, assay = 2,
     adjP_thres = 0.05, logFC_thres = 1)

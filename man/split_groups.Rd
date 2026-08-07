@@ -18,6 +18,5 @@ Split SummarizedExperiment object by groups
 }
 \examples{
 data(example_obj)
-example_obj <- normalise_to_start(example_obj)
 example_obj_list <- split_groups(example_obj)
 }

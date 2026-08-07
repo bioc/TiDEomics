@@ -87,9 +87,9 @@ test_that("extract_consensus_hubs handles edge-case networks", {
 data(example_obj)
 data(example_obj_2)
 nets <- list(
-    Exp1 = prepare_WGCNA(normalise_to_start(example_obj),
+    Exp1 = prepare_WGCNA(example_obj,
         powers = seq(1, 20), assay = 2, networkType = "signed"),
-    Exp2 = prepare_WGCNA(normalise_to_start(example_obj_2),
+    Exp2 = prepare_WGCNA(example_obj_2,
         powers = seq(1, 20), assay = 2, networkType = "signed")
 )
 
@@ -202,4 +202,25 @@ test_that("run_consensus_WGCNA runs and returns consensus network", {
     hubs <- extract_consensus_hubs(cons, top_n = 2)
     expect_named(hubs, c("Consensus", "Exp1", "Exp2"))
     expect_true(all(hubs$Consensus %in% cons$common_features))
+})
+
+test_that("run_consensus_WGCNA warns when feature sets differ", {
+    nets_bad <- nets
+    cn <- colnames(nets_bad$Exp2$data)
+    colnames(nets_bad$Exp2$data) <- paste0("x_", cn)
+
+    expect_warning(
+        expect_error(run_consensus_WGCNA(nets_bad,
+            powers = c(Exp1 = 8, Exp2 = 8), minModuleSize = 100),
+            "Too few common features"),
+        "Feature sets differ across datasets"
+    )
+})
+
+test_that("run_consensus_WGCNA plots with numericLabels = FALSE", {
+    expect_no_error(run_consensus_WGCNA(
+        nets = nets,
+        powers = c(Exp1 = 8, Exp2 = 8),
+        minModuleSize = 10, plot = TRUE, numericLabels = FALSE,
+        useDiskCache = FALSE))
 })

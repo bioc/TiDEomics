@@ -5,11 +5,12 @@ data("example_go")
 
 test_that("enrichGO_rank works and validates parameters", {
     data("example_obj")
-    se <- normalise_to_start(example_obj)
 
-    vd_20 <- decomp_variance(se, features = rownames(se)[1:20],
+    vd_20 <- decomp_variance(example_obj,
+        features = rownames(example_obj)[1:20],
         fixed_effect_var = NULL, assay = "orig", core = 1)
-    vd_10 <- decomp_variance(se, features = rownames(se)[1:10],
+    vd_10 <- decomp_variance(example_obj,
+        features = rownames(example_obj)[1:10],
         fixed_effect_var = NULL, assay = "orig", core = 1)
     rank_table_10 <- as.data.frame(vd_10)
 
@@ -59,11 +60,12 @@ test_that("enrichGO_rank messages on invalid go_rank_by and returns NULL on stri
     library(org.Mm.eg.db)
 
     data("example_obj")
-    se <- normalise_to_start(example_obj)
 
-    vd <- decomp_variance(se, features = rownames(se)[1:100],
+    vd <- decomp_variance(example_obj,
+        features = rownames(example_obj)[1:100],
         fixed_effect_var = NULL, assay = "orig", core = 1)
-    vd_small <- decomp_variance(se, features = rownames(se)[1:10],
+    vd_small <- decomp_variance(example_obj,
+        features = rownames(example_obj)[1:10],
         fixed_effect_var = NULL, assay = "orig", core = 1)
 
     # go_rank_by not found in result

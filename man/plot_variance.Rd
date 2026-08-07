@@ -39,7 +39,6 @@ Based on \code{PALMO::variancefeaturePlot()} function
 }
 \examples{
 data(example_obj)
-example_obj <- normalise_to_start(example_obj)
 
 var_decomp <- decomp_variance(example_obj, assay = 1)
 plot_variance(var_decomp, rank = "Time", top_n = 20)

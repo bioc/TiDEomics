@@ -1,8 +1,7 @@
 # Tests for argument validation
 
 data("example_obj")
-se_norm <- normalise_to_start(example_obj)
-DE_res <- DE_between_group(se_norm, assay = 2)
+DE_res <- DE_between_group(example_obj, assay = 2)
 
 test_that(".check_numeric accepts numeric", {
     expect_silent(.check_numeric(1, "x"))
@@ -24,9 +23,9 @@ test_that("DE_between_group validates se_obj", {
 })
 
 test_that("DE_between_group validates pval thresholds", {
-    expect_error(DE_between_group(se_norm, assay = 2, adjP_thres = -0.1), "between 0 and 1")
-    expect_error(DE_between_group(se_norm, assay = 2, adjP_thres = 1.5), "between 0 and 1")
-    expect_error(DE_between_group(se_norm, assay = 2, logFC_thres = -1), "non-negative")
+    expect_error(DE_between_group(example_obj, assay = 2, adjP_thres = -0.1), "between 0 and 1")
+    expect_error(DE_between_group(example_obj, assay = 2, adjP_thres = 1.5), "between 0 and 1")
+    expect_error(DE_between_group(example_obj, assay = 2, logFC_thres = -1), "non-negative")
 })
 
 test_that("DE_between_group returns ref_groups and all_groups", {
@@ -78,7 +77,6 @@ test_that("create_input validates data and sample_ann", {
 # impute_groups validation
 test_that("impute_groups validates fun argument", {
     data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
     se_list <- split_groups(example_obj)
 
     expect_error(
@@ -93,7 +91,6 @@ test_that("enrichGO_rank validates pAdjustMethod", {
     library(org.Mm.eg.db)
 
     data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
     # Create a dummy rank table
     rank_table <- data.frame(
         Feature = rownames(example_obj)[1:50],
@@ -143,45 +140,44 @@ test_that(".check_se_list rejects non-SE elements", {
 })
 
 test_that(".check_se_list rejects unnamed lists", {
-    expect_error(TiDEomics:::.check_se_list(list(se_norm), "x"), "names")
+    expect_error(TiDEomics:::.check_se_list(list(example_obj), "x"), "names")
     expect_error(
         TiDEomics:::.check_se_list(
-            stats::setNames(list(se_norm, se_norm), c("A", "")), "x"),
+            stats::setNames(list(example_obj, example_obj), c("A", "")), "x"),
         "names")
     expect_error(
         TiDEomics:::.check_se_list(
-            stats::setNames(list(se_norm, se_norm), c("A", NA)), "x"),
+            stats::setNames(list(example_obj, example_obj), c("A", NA)), "x"),
         "names")
 })
 
 test_that(".check_se_list accepts named lists", {
-    expect_silent(TiDEomics:::.check_se_list(list(A = se_norm), "x"))
+    expect_silent(TiDEomics:::.check_se_list(list(A = example_obj), "x"))
 })
 
 test_that(".match_assay resolves a scalar assay", {
-    expect_equal(TiDEomics:::.match_assay(1, se_norm), "orig")
-    expect_equal(TiDEomics:::.match_assay("orig", se_norm), "orig")
-    expect_error(TiDEomics:::.match_assay(NULL, se_norm), "single")
+    expect_equal(TiDEomics:::.match_assay(1, example_obj), "orig")
+    expect_equal(TiDEomics:::.match_assay("orig", example_obj), "orig")
+    expect_error(TiDEomics:::.match_assay(NULL, example_obj), "single")
 })
 
 test_that(".match_assay rejects non-scalar or non-numeric/character input", {
-    expect_error(TiDEomics:::.match_assay(c(1, 2), se_norm), "single")
-    expect_error(TiDEomics:::.match_assay(c("a", "b"), se_norm), "single")
-    expect_error(TiDEomics:::.match_assay(numeric(0), se_norm), "single")
-    expect_error(TiDEomics:::.match_assay(TRUE, se_norm), "single")
-    expect_error(TiDEomics:::.match_assay(factor("orig"), se_norm), "single")
+    expect_error(TiDEomics:::.match_assay(c(1, 2), example_obj), "single")
+    expect_error(TiDEomics:::.match_assay(c("a", "b"), example_obj), "single")
+    expect_error(TiDEomics:::.match_assay(numeric(0), example_obj), "single")
+    expect_error(TiDEomics:::.match_assay(TRUE, example_obj), "single")
+    expect_error(TiDEomics:::.match_assay(factor("orig"), example_obj), "single")
 })
 
 test_that(".match_assay validates out-of-range and unknown assays", {
-    expect_error(TiDEomics:::.match_assay(99, se_norm), "out of range")
-    expect_error(TiDEomics:::.match_assay("NotAnAssay", se_norm), "not found")
+    expect_error(TiDEomics:::.match_assay(99, example_obj), "out of range")
+    expect_error(TiDEomics:::.match_assay("NotAnAssay", example_obj), "not found")
 })
 
 # ---- .check_se_list_no_na ----
 
 test_that(".check_se_list_no_na detects missing values", {
     data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
     example_obj_merged_list <- merge_replicates(example_obj_list)
     assay(example_obj_merged_list[[1]])[1, 1] <- NA

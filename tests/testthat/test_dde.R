@@ -64,7 +64,6 @@ test_that("flatten_DE handles DE_between_time naming without double T prefix", {
 
 test_that("flatten_DE handles nested DE structure", {
     data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
 
     make_de_df <- function(feats) {
         data.frame(

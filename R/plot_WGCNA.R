@@ -12,9 +12,6 @@
 #' module-trait correlation heatmap
 #' @export
 #' @examples
-#' data(example_obj)
-#' example_obj <- normalise_to_start(example_obj)
-#'
 #' data("example_net")
 #' plot_WGCNA(example_net, fontsize = 8)
 #' @references https://github.com/edo98811/WGCNA_official_documentation/blob/main/FemaleLiver-03-relateModsToExt.R
@@ -32,12 +29,19 @@ plot_WGCNA <- function(net, fontsize = 8) {
     } else {
         moduleColors <- net$colors
     }
-    WGCNA::plotDendroAndColors(net$dendrograms[[1]],
-        moduleColors[net$blockGenes[[1]]],
-        main = "Feature dendrogram and module colors",
-        dendroLabels = FALSE, hang = 0.03,
-        addGuide = TRUE, guideHang = 0.05
-    )
+    n_blocks <- length(net$dendrograms)
+    for (block in seq_len(n_blocks)) {
+        WGCNA::plotDendroAndColors(
+            net$dendrograms[[block]],
+            moduleColors[net$blockGenes[[block]]],
+            main = paste0(
+                "Feature dendrogram and module colors (block ",
+                block, "/", n_blocks, ")"
+            ),
+            dendroLabels = FALSE, hang = 0.03,
+            addGuide = TRUE, guideHang = 0.05
+        )
+    }
 
     ## plot eigengenes
     # Module eigengene is defined as the first principal component of

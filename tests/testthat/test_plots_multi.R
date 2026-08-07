@@ -1,6 +1,6 @@
 # ---- Shared data and precomputation ----
 data(example_obj)
-se <- normalise_to_start(example_obj)
+se <- example_obj
 feats <- utils::head(rownames(se), 3)
 se_list <- list(RNA = se, Protein = se)
 se_disjoint <- se

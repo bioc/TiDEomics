@@ -1,6 +1,6 @@
 # ---- Shared data and precomputation ----
 data(example_obj)
-se <- normalise_to_start(example_obj)
+se <- example_obj
 vd <- decomp_variance(se, features = rownames(se)[1:20],
     fixed_effect_var = NULL, assay = "orig", core = 1)
 tbl <- calc_mean_sd(se)

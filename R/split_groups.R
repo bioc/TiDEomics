@@ -10,7 +10,6 @@
 #' @export
 #' @examples
 #' data(example_obj)
-#' example_obj <- normalise_to_start(example_obj)
 #' example_obj_list <- split_groups(example_obj)
 split_groups <- function(se_obj) {
     .check_se(se_obj)

@@ -21,9 +21,6 @@ Plot WGCNA module eigengenes and module-group/time correlations
 based on output of \code{run_WGCNA()}
 }
 \examples{
-data(example_obj)
-example_obj <- normalise_to_start(example_obj)
-
 data("example_net")
 plot_WGCNA(example_net, fontsize = 8)
 }

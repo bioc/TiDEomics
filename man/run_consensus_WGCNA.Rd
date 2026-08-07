@@ -26,7 +26,7 @@ Names must match names of \code{nets}.}
 (default: 0). See \code{WGCNA::blockwiseConsensusModules()} for details.}
 
 \item{numericLabels}{Whether to use numeric labels for modules in the output
-(default is TRUE)}
+(default is TRUE).}
 
 \item{plot}{Logical. If TRUE (default), plot consensus dendrogram
 with module colours for each feature block via

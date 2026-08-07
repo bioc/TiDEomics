@@ -209,7 +209,6 @@ test_that("impute_groups with impute_by = 'subject' works", {
 
 test_that("impute_groups with impute_by = 'group' works", {
     data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
     assay(example_obj)[1:5, 1:3] <- NA
     example_obj_list <- split_groups(example_obj)
     example_obj_merged_list <- merge_replicates(example_obj_list)

@@ -1,10 +1,9 @@
 # ---- Shared data ----
 data("example_obj")
-example_obj <- normalise_to_start(example_obj)
 
 # ---- Tests ----
 
-test_that("WGCNA works", {
+test_that("WGCNA works and validates inputs", {
     wgcna_input <- prepare_WGCNA(example_obj, assay = 2, powers = seq(1, 30),
         networkType = "signed", RsquaredCut = 0.8)
 
@@ -27,6 +26,12 @@ test_that("WGCNA works", {
 
     if (inherits(example_net$dendrograms[[1]], "dendrogram"))
         expect_no_error(plot_WGCNA(example_net, fontsize = 8))
+
+    expect_error(run_WGCNA(NULL, power = 6), "must be a list")
+    expect_error(run_WGCNA("bad", power = 6), "prepare_WGCNA")
+    expect_error(run_WGCNA(wgcna_input, power = 0), "positive")
+    expect_error(run_WGCNA(wgcna_input, power = 6, numericLabels = "yes"),
+        "TRUE or FALSE")
 })
 
 # ---- WGCNA_module ----
@@ -64,14 +69,17 @@ test_that("prepare_WGCNA validates assay index", {
     )
 })
 
-test_that("run_WGCNA validates arguments", {
-    expect_error(run_WGCNA(NULL, power = 6), "must be a list")
-    expect_error(run_WGCNA("bad", power = 6), "prepare_WGCNA")
-    wgcna_input <- prepare_WGCNA(example_obj, assay = 2, powers = seq(1, 10),
-        RsquaredCut = 0.8)
-    expect_error(run_WGCNA(wgcna_input, power = 0), "positive")
-    expect_error(run_WGCNA(wgcna_input, power = 6, numericLabels = "yes"),
-        "TRUE or FALSE")
+test_that("run_WGCNA validates networkType and minModuleSize", {
+    mock <- list(
+        data = as.data.frame(matrix(rnorm(200), nrow = 10, ncol = 20)),
+        networkType = "signed"
+    )
+    expect_error(run_WGCNA(mock, power = 6, networkType = "unsigned"),
+        "does not match the networkType stored")
+    expect_error(run_WGCNA(mock, power = 6, minModuleSize = 1.5),
+        "positive integer")
+    expect_error(run_WGCNA(mock, power = 6, minModuleSize = 1e6),
+        "Too few features")
 })
 
 # ---- plot_WGCNA ----

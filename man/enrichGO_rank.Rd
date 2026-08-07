@@ -55,7 +55,6 @@ with clusterProfiler. Genes can be ranked by variance decomposition results.
 if (requireNamespace("org.Mm.eg.db", quietly = TRUE)) {
     library(org.Mm.eg.db)
     data(example_obj)
-    example_obj <- normalise_to_start(example_obj)
 
     var_decomp <- decomp_variance(example_obj,
         features = rownames(example_obj)[1:100], assay = 1)

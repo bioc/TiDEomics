@@ -29,11 +29,10 @@ identify co-expression modules of features with \code{WGCNA::blockwiseModules()}
 }
 \examples{
 data(example_obj)
-example_obj <- normalise_to_start(example_obj)
 
 wgcna_input <- prepare_WGCNA(example_obj, assay = 2, powers = seq(1, 30),
     networkType = "signed", RsquaredCut = 0.8)
-wgcna_input$fitIndices
+wgcna_input$plot
 picked_power <- wgcna_input$powerEstimate
 example_net <- run_WGCNA(wgcna_input,
     power = picked_power,

@@ -92,7 +92,6 @@ test_that("impute_groups works", {
 
 test_that("calc_mean_sd returns correct structure", {
     data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
     res <- calc_mean_sd(example_obj)
     expect_type(res, "list")
     expect_true("norm" %in% names(res) || length(res) > 0)

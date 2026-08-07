@@ -17,11 +17,10 @@
 #' @export
 #' @examples
 #' data(example_obj)
-#' example_obj <- normalise_to_start(example_obj)
 #'
 #' wgcna_input <- prepare_WGCNA(example_obj, assay = 2, powers = seq(1, 30),
 #'     networkType = "signed", RsquaredCut = 0.8)
-#' wgcna_input$fitIndices
+#' wgcna_input$plot
 #' picked_power <- wgcna_input$powerEstimate
 #' example_net <- run_WGCNA(wgcna_input,
 #'     power = picked_power,
@@ -32,26 +31,56 @@ run_WGCNA <- function(wgcna_input, power, numericLabels = TRUE, ...) {
     .check_list(wgcna_input, "wgcna_input", "prepare_WGCNA")
     .check_logical(numericLabels, "numericLabels")
     .check_positive_int(power, "power")
+
+    dots <- list(...)
+    network_type <- wgcna_input$networkType
+    if ("networkType" %in% names(dots)) {
+        if (!identical(dots$networkType, network_type)) {
+            stop("'networkType' does not match the networkType stored in ",
+                "'wgcna_input'.")
+        }
+        dots$networkType <- NULL
+    }
+
+    # Check minModuleSize
+    minModuleSize <- dots$minModuleSize
+    if (is.null(minModuleSize)) {
+        minModuleSize <- formals(WGCNA::blockwiseModules)$minModuleSize
+    }
+    .check_positive_int(minModuleSize, "minModuleSize")
+
+    if (ncol(wgcna_input$data) < minModuleSize) {
+        stop(
+            "Too few features (", ncol(wgcna_input$data),
+            ") for WGCNA analysis (need >= ", minModuleSize, ")."
+        )
+    }
+
     WGCNA::allowWGCNAThreads()
 
     .cor_orig <- cor
     cor <- WGCNA::cor
     on.exit(cor <- .cor_orig)
-    net <- WGCNA::blockwiseModules(wgcna_input$data,
-        power = power,
-        networkType = wgcna_input$networkType,
-        numericLabels = numericLabels,
-        ...
-    )
+    net <- do.call(WGCNA::blockwiseModules, c(
+        list(
+            datExpr = wgcna_input$data,
+            power = power,
+            networkType = network_type,
+            numericLabels = numericLabels
+        ),
+        dots
+    ))
 
     net$input_data <- wgcna_input$data
     net$sample_info <- wgcna_input$sample_info # colData(se_obj)
 
-    net$parameters <- list(
-        power = power,
-        networkType = wgcna_input$networkType,
-        numericLabels = numericLabels,
-        ...
+    net$parameters <- c(
+        list(
+            power = power,
+            networkType = network_type,
+            numericLabels = numericLabels
+        ),
+        dots
     )
 
     return(net)

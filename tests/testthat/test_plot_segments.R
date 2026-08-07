@@ -5,7 +5,6 @@ test_that("plot_segments validates feature argument", {
     trendy_summary <- summarise_Trendy(example_res_list)
 
     data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
     se_list <- split_groups(example_obj)
 
     expect_error(
@@ -32,7 +31,6 @@ test_that("plot_segments validates se_obj_imp_list", {
 
 test_that("plot_segments validates res_list", {
     data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
     se_list <- split_groups(example_obj)
 
     expect_error(
@@ -46,7 +44,6 @@ test_that("plot_segments returns ggplot for valid feature", {
     trendy_summary <- summarise_Trendy(example_res_list)
 
     data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
     se_list <- split_groups(example_obj)
     se_list <- merge_replicates(se_list)
 
@@ -65,7 +62,6 @@ test_that("plot_segments returns ggplot for valid feature", {
 test_that("plot_segments runs with specify_range", {
     data("example_res_list")
     data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
     se_list <- split_groups(example_obj)
     se_list <- merge_replicates(se_list)
 
@@ -85,7 +81,6 @@ test_that("plot_segments runs with specify_range", {
 
 test_that("plot_segments handles multiple features", {
     data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
     example_obj_list <- split_groups(example_obj)
     example_obj_merged_list <- merge_replicates(example_obj_list)
     example_obj_merged_imp_list <- impute_groups(example_obj_merged_list)
@@ -102,7 +97,6 @@ test_that("plot_segments handles multiple features", {
 
 test_that("plot_segments errors on invalid group", {
     data("example_obj")
-    example_obj <- normalise_to_start(example_obj)
     se_list <- split_groups(example_obj)
     se_list <- merge_replicates(se_list)
     data("example_res_list")

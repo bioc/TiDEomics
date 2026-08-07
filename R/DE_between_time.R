@@ -36,8 +36,6 @@
 #' @export
 #' @examples
 #' data(example_obj)
-#' example_obj <- normalise_to_start(example_obj)
-#'
 #' DE_between_time_out <- DE_between_time(example_obj, assay = 1)
 DE_between_time <- function(se_obj, group = NULL, filter = NULL,
     assay, adjP_thres = 0.05, logFC_thres = 1,
