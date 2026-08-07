@@ -525,8 +525,8 @@ plot_volcano(DE_between_group_out,
 
 - `Exp_threshold`: user-set value threshold for a feature to be considered
     expressed in a sample. This can be used to filter features based on
-    expression level, e.g. setting `threshold = 0` means that only 
-    values > 0 (log2(CPM + 1) > 0, i.e. CPM > 0 in the tutorial dataset) are 
+    expression level, e.g. setting `threshold = 0` means that only
+    values > 0 (log2(CPM + 1) > 0, i.e. CPM > 0 in the tutorial dataset) are
     considered expressed. The default is NULL, which means all non-NA
     values are considered expressed.
 
@@ -703,7 +703,7 @@ plot_variance(var_decomp, rank = "Group", top_n = 20)
 
 Detailed tutorials of weighted gene correlation network analysis
 ([WGCNA](https://cran.r-project.org/web/packages/WGCNA/index.html))
-[@WGCNA_1; @WGCNA_2] can be found
+[@WGCNA_0; @WGCNA_1; @WGCNA_2] can be found
 [online](https://github.com/edo98811/WGCNA_official_documentation/).
 The following is a brief demonstration of how to prepare input and run WGCNA
 with TiDEomics functions.
@@ -733,7 +733,14 @@ data_obj_wgcna <- data_obj[filter_wgcna, ]
 
 `prepare_WGCNA()` prepares the input for WGCNA and helps to choose the
 soft-thresholding power. Check the scale-free topology fit indices to confirm
-that the chosen power is appropriate.
+that the chosen power is appropriate. The returned `custom_powerEstimate` is
+the lowest power at which the signed scale-free fit (signed R^2) exceeds
+`RsquaredCut`, consistent with the "Scale independence" panel of the
+diagnostic plot. WGCNA's default `powerEstimate` uses the unsigned R^2 and may
+therefore be the same as, or differ from, `custom_powerEstimate`.
+`custom_powerEstimate` is
+preferred in this workflow because it accounts for the direction
+of the connectivity distribution.
 
 Reasonable powers are less than 15 for unsigned or signed hybrid networks, and
 less than 30 for signed networks, to reach scale-free topology fit index > 0.8,
@@ -747,8 +754,9 @@ wgcna_input <- prepare_WGCNA(data_obj_wgcna, assay = 2,
     networkType = "signed", RsquaredCut = 0.8
 )
 wgcna_input$plot
-picked_power <- wgcna_input$powerEstimate
+picked_power <- wgcna_input$custom_powerEstimate # using signed R^2
 picked_power
+wgcna_input$powerEstimate # using unsigned R^2
 ```
 
 **Run WGCNA**:

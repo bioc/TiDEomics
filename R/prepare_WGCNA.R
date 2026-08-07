@@ -25,17 +25,21 @@
 #' @param ... Additional parameters to be passed to `WGCNA::pickSoftThreshold()`
 #'
 #' @returns A list containing results of the scale-free topology
-#' fit indices with different powers, suggested power, network type and prepared
-#' input data used for reuse in `run_WGCNA()`
+#' fit indices with different powers, WGCNA's `powerEstimate`, a custom
+#' `custom_powerEstimate` based on the signed scale-free topology fit,
+#' network type, and prepared input data used for reuse in `run_WGCNA()`.
+#'
+#' The custom estimate selects the lowest power whose signed scale-free
+#' topology fit exceeds `RsquaredCut`, consistent with the signed-R-squared
+#' panel in the diagnostic plot.
 #' @export
 #' @examples
 #' data(example_obj)
-#' example_obj <- normalise_to_start(example_obj)
 #'
 #' wgcna_input <- prepare_WGCNA(example_obj, assay = 2, powers = seq(1, 30),
 #'     networkType = "signed", RsquaredCut = 0.8)
-#' wgcna_input$fitIndices
-#' picked_power <- wgcna_input$powerEstimate
+#' wgcna_input$plot
+#' picked_power <- wgcna_input$custom_powerEstimate
 #' @references https://github.com/edo98811/WGCNA_official_documentation/
 prepare_WGCNA <- function(
     se_obj, assay,
@@ -74,6 +78,28 @@ prepare_WGCNA <- function(
         networkType = networkType,
         RsquaredCut = RsquaredCut,
         ...
+    )
+
+    signed_r2 <- -sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2]
+    valid_power <- is.finite(signed_r2) &
+        signed_r2 > RsquaredCut
+    if (any(valid_power)) {
+        sft$custom_powerEstimate <- min(
+            sft$fitIndices$Power[valid_power]
+        )
+    } else {
+        sft$custom_powerEstimate <- NA_real_
+        warning(
+            "No power met the custom signed-R-squared criterion.",
+            call. = FALSE
+        )
+    }
+
+    message(
+        "WGCNA powerEstimate: ", sft$powerEstimate,
+        " (unsigned SFT.R.sq > ", RsquaredCut, "); ",
+        "custom_powerEstimate: ", sft$custom_powerEstimate,
+        " (signed R-squared > ", RsquaredCut, ")."
     )
 
     # for reuse in `run_WGCNA()`

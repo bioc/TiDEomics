@@ -44,8 +44,13 @@ for time 0 normalised data. (Required, no default.)}
 }
 \value{
 A list containing results of the scale-free topology
-fit indices with different powers, suggested power, network type and prepared
-input data used for reuse in \code{run_WGCNA()}
+fit indices with different powers, WGCNA's \code{powerEstimate}, a custom
+\code{custom_powerEstimate} based on the signed scale-free topology fit,
+network type, and prepared input data used for reuse in \code{run_WGCNA()}.
+
+The custom estimate selects the lowest power whose signed scale-free
+topology fit exceeds \code{RsquaredCut}, consistent with the signed-R-squared
+panel in the diagnostic plot.
 }
 \description{
 Prepare input data for WGCNA (format, QC),
@@ -55,12 +60,11 @@ with different soft thresholding powers.
 }
 \examples{
 data(example_obj)
-example_obj <- normalise_to_start(example_obj)
 
 wgcna_input <- prepare_WGCNA(example_obj, assay = 2, powers = seq(1, 30),
     networkType = "signed", RsquaredCut = 0.8)
-wgcna_input$fitIndices
-picked_power <- wgcna_input$powerEstimate
+wgcna_input$plot
+picked_power <- wgcna_input$custom_powerEstimate
 }
 \references{
 https://github.com/edo98811/WGCNA_official_documentation/
