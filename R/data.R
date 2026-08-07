@@ -98,3 +98,43 @@
 #' @source GSE263759
 #' @usage data(example_res_list)
 "example_res_list"
+
+#' SummarizedExperiment object for the simulated second dataset (Exp2)
+#'
+#' Exp2 is a noise-perturbed copy of `example_obj` (Exp1): each
+#' gene's expression receives independent Gaussian noise scaled to
+#' 0.5x its standard deviation.
+#'
+#' Code for producing the data is in
+#' `inst/script/generate_example_multi.R`
+#'
+#' @format A SummarizedExperiment object matching the structure of
+#' `example_obj` (100 rows, 40 columns)
+#' @source GSE263759
+#' @usage data(example_obj_2)
+"example_obj_2"
+
+#' `run_WGCNA()` output object for the simulated second dataset (Exp2)
+#'
+#' Code for producing the data is in
+#' `inst/script/generate_example_multi.R`
+#'
+#' @format A list including WGCNA module assignments, module eigengenes,
+#' dendrogram, input data, sample information, and parameters used
+#' @source GSE263759
+#' @usage data(example_net_2)
+"example_net_2"
+
+#' `run_consensus_WGCNA()` output object for runnable examples
+#'
+#' Consensus WGCNA of Exp1 (`example_obj`, real) and Exp2
+#' (`example_obj_2`, simulated).
+#'
+#' Code for producing the data is in
+#' `inst/script/generate_example_multi.R`
+#'
+#' @format A list with elements: `network`, `multiExpr`,
+#' `common_features`, `names` and `parameters`
+#' @source GSE263759
+#' @usage data(example_cons)
+"example_cons"
