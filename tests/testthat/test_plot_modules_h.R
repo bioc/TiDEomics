@@ -33,7 +33,7 @@ test_that("plot_modules_h runs without scale", {
     expect_s4_class(pq, "HeatmapList")
 })
 
-test_that("plot_modules_h handles single module", {
+test_that("plot_modules_h handles single module without enrichment", {
     mod_one <- example_module |>
         dplyr::filter(Module == levels(Module)[1])
 
@@ -42,12 +42,14 @@ test_that("plot_modules_h handles single module", {
     expect_s4_class(pq, "HeatmapList")
 })
 
-test_that("plot_modules_h supports multi-category enrichment", {
+test_that("plot_modules_h supports multi-category enrichment and parameters", {
     expect_s4_class(plot_modules_h(example_module,
         merged, assay = 2, scale = TRUE,
         ylabel = "Z-score of log2 expression",
         enrich_list = example_go$all,
         enrich_category = c("BP", "CC"),
+        enrich_top_n = 3,
+        enrich_rank_by = c("p.adjust", "pvalue"),
         enrich_threshold = NULL,
         heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 })
@@ -78,18 +80,6 @@ test_that("plot_modules_h handles mark_features with Hub features", {
         heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 })
 
-test_that("plot_modules_h handles per-category enrich_top_n and enrich_rank_by", {
-    expect_s4_class(plot_modules_h(example_module,
-        merged, assay = 2, scale = TRUE,
-        ylabel = "Z-score of log2 expression",
-        enrich_list = example_go$all,
-        enrich_category = c("BP", "CC"),
-        enrich_top_n = 3,
-        enrich_rank_by = c("p.adjust", "pvalue"),
-        enrich_threshold = NULL,
-        heatmap_width = 6, heatmap_height = 4), "HeatmapList")
-})
-
 test_that("plot_modules_h validates enrichment parameters", {
     expect_error(plot_modules_h(example_module, merged, assay = 2,
         enrich_category = 123), "character")
@@ -97,33 +87,6 @@ test_that("plot_modules_h validates enrichment parameters", {
         enrich_top_n = -1), "positive")
     expect_error(plot_modules_h(example_module, merged, assay = 2,
         fontsize = -1), "positive")
-})
-
-test_that("plot_modules_h runs without enrich_list", {
-    expect_s4_class(plot_modules_h(example_module,
-        merged, assay = 2, scale = TRUE,
-        ylabel = "Z-score of log2 expression",
-        heatmap_width = 6, heatmap_height = 4), "HeatmapList")
-})
-
-test_that("plot_modules_h handles NULL mark_features safely", {
-    expect_s4_class(plot_modules_h(example_module,
-        merged, assay = 2, scale = TRUE,
-        ylabel = "Z-score of log2 expression",
-        enrich_list = example_go$all,
-        enrich_category = "BP",
-        mark_features = NULL,
-        heatmap_width = 6, heatmap_height = 4), "HeatmapList")
-})
-
-test_that("plot_modules_h handles enrich_threshold = NULL and NA", {
-    expect_s4_class(plot_modules_h(example_module,
-        merged, assay = 2, scale = TRUE,
-        ylabel = "Z-score of log2 expression",
-        enrich_list = example_go$all,
-        enrich_category = "BP",
-        enrich_threshold = NULL,
-        heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 })
 
 test_that(".reformat_cat_terms pivots category to module", {
@@ -412,23 +375,7 @@ test_that("plot_modules_h skips category with no matching terms", {
     )
 })
 
-test_that(".plot_modules_input warns on features missing from assay", {
-    mod_with_fake <- rbind(
-        example_module,
-        data.frame(Feature = "FAKE_NOT_IN_ASSAY", Module = "1",
-                   stringsAsFactors = FALSE)
-    )
-
-    expect_warning(
-        TiDEomics:::.plot_modules_input(
-            mod_with_fake, merged,
-            assay = 2, scale = FALSE
-        ),
-        "feature\\(s\\) in the module are missing from the assay"
-    )
-})
-
-test_that("plot_modules_h warns when module has features missing from assay", {
+test_that("plot_modules_h warns on features missing from assay", {
     mod_with_fake <- rbind(
         example_module,
         data.frame(Feature = "FAKE_NOT_IN_ASSAY", Module = "1",
@@ -439,5 +386,16 @@ test_that("plot_modules_h warns when module has features missing from assay", {
         plot_modules_h(mod_with_fake, merged,
             assay = 2, scale = FALSE, heatmap_width = 6, heatmap_height = 4),
         "feature\\(s\\) in the module are missing from the assay"
+    )
+})
+
+test_that("plot_modules_h stops when no module features are in the SE", {
+    mod_wrong <- data.frame(Feature = "NOT_IN_SE", Module = "1",
+        stringsAsFactors = FALSE)
+
+    expect_error(
+        plot_modules_h(mod_wrong, merged,
+            assay = 2, scale = FALSE, heatmap_width = 6, heatmap_height = 4),
+        "derived from the same data"
     )
 })

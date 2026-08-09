@@ -9,7 +9,7 @@ plot_modules_h(
   se_obj_merged,
   scale = TRUE,
   assay,
-  ylabel = "Log2 abundance",
+  ylabel = NULL,
   profile_width = 3,
   profile_link_width = 1,
   enrich_list = NULL,
@@ -26,17 +26,18 @@ plot_modules_h(
   res = 300,
   suffix = "",
   device = "png",
-  save = NULL
+  save = NULL,
+  names = NULL
 )
 }
 \arguments{
 \item{module}{A data frame with columns "Feature" and "Module"}
 
 \item{se_obj_merged}{A SummarizedExperiment object, with one value for each
-feature at each time point in each group (replicates merged). The colData of
-the object should contain columns "Sample", "Group", and "Time". The object
-can be produced by \code{split_groups()}, \code{merge_replicates()} and
-\code{merge_groups()}.}
+feature at each time point in each group (replicates merged), or a named list
+of such objects (one per dataset). The colData of each object should contain
+columns "Sample", "Group", and "Time". The object can be produced by
+\code{split_groups()}, \code{merge_replicates()} and \code{merge_groups()}.}
 
 \item{scale}{Whether to scale the data (z-score) across samples for each
 feature (default is TRUE)}
@@ -45,7 +46,10 @@ feature (default is TRUE)}
 index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
 for time 0 normalised data. (Required, no default.)}
 
-\item{ylabel}{Y axis label prefix (default is "Log2 abundance")}
+\item{ylabel}{Y axis label. A single character string shared by all
+datasets, or a character vector with one entry per dataset
+(multi-input only). Default: NULL, i.e. "Z-score of log2 abundance"
+when scale = TRUE, "Log2 abundance" otherwise.}
 
 \item{profile_width}{Width of the mean expression profile panels in cm
 (default: 3)}
@@ -77,12 +81,12 @@ values below \code{enrich_threshold} are shown in black, terms above in grey.}
 (default: 3) is recycled for all categories in \code{enrich_category}.
 Supply an integer vector of matching length for per-category control.}
 
-\item{enrich_threshold}{P-value / adjusted p-value threshold for
-colour-coding enrichment terms. A single value (default: 0.05) is
-recycled for all categories; supply a vector of matching length for
-per-category control. Terms below threshold are drawn in black,
-terms above in grey70. Set to \code{NULL} to skip colour-coding (all
-terms black). Set to \code{NA} for \code{"Hub features"}.}
+\item{enrich_threshold}{Threshold for colour-coding enrichment terms
+(default: 0.05). Terms where \code{enrich_rank_by} column value falls
+below this threshold are drawn in black, terms above in grey.
+Supply a vector matching \code{enrich_category} for per-category control,
+or set to \code{NULL} to skip colour-coding (all terms black).
+Set to \code{NA} for \code{"Hub features"}.}
 
 \item{fontsize}{Base font size (default: 8)}
 
@@ -120,6 +124,10 @@ vector with one or more of \code{"png"}, \code{"pdf"}, \code{"tiff"}, \code{"jpe
 
 \item{save}{Directory to save the plot, no saving if is NULL
 (default is NULL)}
+
+\item{names}{Optional character vector of dataset names for the plot
+subtitles when multi-dataset. Default: NULL, i.e.
+the names of \code{se_obj_merged}.}
 }
 \value{
 A combined plot of heatmap, mean expression profile, and enrichment
@@ -152,6 +160,13 @@ data(example_go)
 plot_modules_h(example_module |> dplyr::filter(Module != '0'),
     example_obj_merged, assay = 2, scale = TRUE,
     ylabel = "Z-score of log2 expression",
+    enrich_list = example_go$all,
+    enrich_category = "BP",
+    heatmap_width = 6, heatmap_height = 4)
+
+plot_modules_h(example_module |> dplyr::filter(Module != '0'),
+    list(Exp1 = example_obj_merged, Exp2 = example_obj_merged),
+    assay = 2, scale = TRUE,
     enrich_list = example_go$all,
     enrich_category = "BP",
     heatmap_width = 6, heatmap_height = 4)

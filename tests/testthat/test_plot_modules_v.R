@@ -14,16 +14,17 @@ example_module <- WGCNA_module(example_net)
 test_that("plot_modules_v works, handles variants, and saves", {
     pq <- plot_modules_v(example_module |> dplyr::filter(Module != '0'),
         example_obj_merged, assay = 2, scale = TRUE,
-        ylabel = "Z-score of log2 (expression)",
         height_ratio = 2,
         fontsize = 6)
 
     expect_true("patchwork" %in% class(pq))
     expect_true("gg" %in% class(pq))
+    expect_equal(as.list(pq)[[1]]$labels$y, "Z-score of log2 abundance")
 
     pq <- plot_modules_v(example_module |> dplyr::filter(Module != '0'),
         example_obj_merged, assay = 2, scale = FALSE, height_ratio = 2, fontsize = 6)
     expect_true("patchwork" %in% class(pq))
+    expect_equal(as.list(pq)[[1]]$labels$y, "Log2 abundance")
 
     mod_one <- example_module |>
         dplyr::filter(Module == levels(Module)[1])
@@ -46,4 +47,14 @@ test_that("plot_modules_v works, handles variants, and saves", {
 test_that("plot_modules_v validates module argument", {
     expect_error(plot_modules_v(NULL, data.frame()), "data.frame")
     expect_error(plot_modules_v(data.frame(), data.frame()), "at least 1 row")
+})
+
+test_that("plot_modules_v stops when no module features are in the SE", {
+    mod_wrong <- data.frame(Feature = "NOT_IN_SE", Module = "1",
+        stringsAsFactors = FALSE)
+
+    expect_error(
+        plot_modules_v(mod_wrong, example_obj_merged, assay = 2),
+        "derived from the same data"
+    )
 })

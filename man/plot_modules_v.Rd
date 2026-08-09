@@ -9,7 +9,7 @@ plot_modules_v(
   se_obj_merged,
   scale = TRUE,
   assay,
-  ylabel = "Log2 abundance",
+  ylabel = NULL,
   suffix = "",
   device = "png",
   save = NULL,
@@ -17,14 +17,16 @@ plot_modules_v(
   height = 8,
   height_ratio = 2,
   fontsize = 8,
-  res = 300
+  res = 300,
+  names = NULL
 )
 }
 \arguments{
 \item{module}{A data frame with columns "Feature" and "Module"}
 
 \item{se_obj_merged}{A SummarizedExperiment object, with one value for each
-feature at each time point in each group (replicates merged). The colData of
+feature at each time point in each group (replicates merged), or a named
+list of such objects (one per dataset). The colData of
 the object should contain columns "Sample", "Group", and "Time". The object
 can be produced by \code{split_groups()}, \code{merge_replicates()} and
 \code{merge_groups()}.}
@@ -36,7 +38,10 @@ feature (default is TRUE)}
 index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
 for time 0 normalised data. (Required, no default.)}
 
-\item{ylabel}{Y axis label prefix (default is "Log2 abundance")}
+\item{ylabel}{Y axis label. A single character string shared by all
+datasets, or a character vector with one entry per dataset
+(multi-input only). Default: NULL, i.e. "Z-score of log2 abundance"
+when scale = TRUE, "Log2 abundance" otherwise.}
 
 \item{suffix}{Suffix for the saved image file name (default is an empty
 string)}
@@ -59,11 +64,18 @@ vector, e.g. \code{c("png", "pdf")}, to save in multiple formats
 
 \item{res}{Resolution of the saved image (except pdf format)
 (default is 300 (ppi))}
+
+\item{names}{Optional character vector of dataset names for the plot
+subtitles when multi-dataset. Default: NULL, i.e.
+the names of \code{se_obj_merged}.}
 }
 \value{
-Two plots aligned vertically by groups: the top one is a line plot
-of module feature mean expression profiles, the bottom one is a heatmap of
-feature expression across time points.
+For a single SummarizedExperiment, two plots aligned vertically by
+groups: the top one is a line plot of module feature mean expression
+profiles, the bottom one is a heatmap of feature expression across time
+points. For a named list of datasets, the per-dataset plot pairs are
+stacked vertically, with each dataset's line plot annotated with its name
+as a subtitle and an overall title "Module profiles: ...".
 }
 \description{
 Plot WGCNA modules' mean expression profiles and heatmaps,
@@ -90,4 +102,8 @@ plot_modules_v(example_module |> dplyr::filter(Module != '0'),
     ylabel = "Z-score of log2 (expression)",
     height_ratio = 2,
     fontsize = 6)
+
+plot_modules_v(example_module |> dplyr::filter(Module != '0'),
+    list(Exp1 = example_obj_merged, Exp2 = example_obj_merged),
+    assay = 2, scale = TRUE, height_ratio = 2, fontsize = 6)
 }

@@ -119,16 +119,19 @@
 #'
 #' @param module A data frame with columns "Feature" and "Module"
 #' @param se_obj_merged A SummarizedExperiment object, with one value for each
-#' feature at each time point in each group (replicates merged). The colData of
-#' the object should contain columns "Sample", "Group", and "Time". The object
-#' can be produced by `split_groups()`, `merge_replicates()` and
-#' `merge_groups()`.
+#' feature at each time point in each group (replicates merged), or a named list
+#' of such objects (one per dataset). The colData of each object should contain
+#' columns "Sample", "Group", and "Time". The object can be produced by
+#' `split_groups()`, `merge_replicates()` and `merge_groups()`.
 #' @param assay The assay to use in the SummarizedExperiment object: a numeric
 #'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
 #'   for time 0 normalised data. (Required, no default.)
 #' @param scale Whether to scale the data (z-score) across samples for each
 #' feature (default is TRUE)
-#' @param ylabel Y axis label prefix (default is "Log2 abundance")
+#' @param ylabel Y axis label. A single character string shared by all
+#'   datasets, or a character vector with one entry per dataset
+#'   (multi-input only). Default: NULL, i.e. "Z-score of log2 abundance"
+#'   when scale = TRUE, "Log2 abundance" otherwise.
 #' @param profile_width Width of the mean expression profile panels in cm
 #' (default: 3)
 #' @param profile_link_width Width of the link between heatmap
@@ -153,12 +156,12 @@
 #' @param enrich_top_n Top N enrichment terms per module. A single integer
 #'   (default: 3) is recycled for all categories in `enrich_category`.
 #'   Supply an integer vector of matching length for per-category control.
-#' @param enrich_threshold P-value / adjusted p-value threshold for
-#'   colour-coding enrichment terms. A single value (default: 0.05) is
-#'   recycled for all categories; supply a vector of matching length for
-#'   per-category control. Terms below threshold are drawn in black,
-#'   terms above in grey70. Set to `NULL` to skip colour-coding (all
-#'   terms black). Set to `NA` for `"Hub features"`.
+#' @param enrich_threshold Threshold for colour-coding enrichment terms
+#'   (default: 0.05). Terms where `enrich_rank_by` column value falls
+#'   below this threshold are drawn in black, terms above in grey.
+#'   Supply a vector matching `enrich_category` for per-category control,
+#'   or set to `NULL` to skip colour-coding (all terms black).
+#'   Set to `NA` for `"Hub features"`.
 #' @param fontsize Base font size (default: 8)
 #' @param heatmap_width Width of the heatmap body in cm (default: 8)
 #' @param heatmap_height Height of the heatmap body in cm (default: 8).
@@ -184,6 +187,9 @@
 #' @param save Directory to save the plot, no saving if is NULL
 #' (default is NULL)
 #' @param suffix Suffix for the saved image file name (default: "")
+#' @param names Optional character vector of dataset names for the plot
+#'   subtitles when multi-dataset. Default: NULL, i.e.
+#'   the names of `se_obj_merged`.
 #' @import ggplot2
 #' @import SummarizedExperiment
 #'
@@ -210,13 +216,20 @@
 #'     enrich_list = example_go$all,
 #'     enrich_category = "BP",
 #'     heatmap_width = 6, heatmap_height = 4)
+#'
+#' plot_modules_h(example_module |> dplyr::filter(Module != '0'),
+#'     list(Exp1 = example_obj_merged, Exp2 = example_obj_merged),
+#'     assay = 2, scale = TRUE,
+#'     enrich_list = example_go$all,
+#'     enrich_category = "BP",
+#'     heatmap_width = 6, heatmap_height = 4)
 #' @references https://github.com/junjunlab/ClusterGVis
 plot_modules_h <- function(
     module,
     se_obj_merged,
     scale = TRUE,
     assay,
-    ylabel = "Log2 abundance",
+    ylabel = NULL,
     profile_width = 3,
     profile_link_width = 1,
     enrich_list = NULL,
@@ -233,7 +246,8 @@ plot_modules_h <- function(
     res = 300,
     suffix = "",
     device = "png",
-    save = NULL
+    save = NULL,
+    names = NULL
 ) {
     .check_df(module, "module")
     .check_character(enrich_category, "enrich_category")
@@ -248,12 +262,13 @@ plot_modules_h <- function(
     .check_positive(width, "width")
     .check_positive(height, "height")
     .check_positive_int(res, "res")
+    if (is.null(ylabel)) {
+        ylabel <- if (scale) "Z-score of log2 abundance" else "Log2 abundance"
+    }
     .check_character(ylabel, "ylabel")
     .check_character(enrich_rank_by, "enrich_rank_by")
     .check_character(suffix, "suffix")
     .check_character(device, "device")
-    .check_se_merged(se_obj_merged, "se_obj_merged")
-    assay <- .match_assay(assay, se_obj_merged)
     if (!is.null(enrich_list))
         .check_list(enrich_list, "enrich_list")
     if (!is.null(enrich_threshold)) {
@@ -264,47 +279,87 @@ plot_modules_h <- function(
         if (!is.character(mark_features) && !is.list(mark_features)) {
             stop("'mark_features' must be a character vector or named list.")
         }
-        if (is.list(mark_features) && is.null(names(mark_features))) {
+        if (is.list(mark_features) && length(mark_features) > 0 &&
+                is.null(base::names(mark_features))) {
             stop("'mark_features' list must have names.")
         }
     }
     if (!is.null(save)) .check_character(save, "save")
+
+    se_obj_list <- .as_se_list(se_obj_merged, arg = "se_obj_merged")
+    n_datasets <- length(se_obj_list)
+    nms <- base::names(se_obj_list)
+    for (nm in nms) {
+        .check_se_merged(se_obj_list[[nm]], arg = nm)
+    }
+    if (length(ylabel) != 1L &&
+            length(ylabel) != n_datasets) {
+        stop("The 'ylabel' must be length 1 or length equal to the ",
+            "number of datasets (", n_datasets, ").")
+    }
+    if (!is.null(names)) {
+        .check_character(names, "names")
+        if (length(names) != n_datasets) {
+            stop("'names' must have one entry per dataset.")
+        }
+    }
+    disp <- if (n_datasets > 1L) {
+        if (is.null(names)) nms else names
+    } else {
+        NULL
+    }
+    resolved <- vapply(nms, function(nm) {
+        .match_assay(assay, se_obj_list[[nm]])
+    }, character(1))
+    if (!all(resolved == resolved[1])) {
+        stop("The 'assay' must be the same across all datasets.")
+    }
+    assay <- unname(resolved[1])
 
     module$Module <- .module_labels(module$Module)
     # Exclude grey module (M0)
     module <- module[!module$Module %in% c(
         "M0", "grey", "gray"
     ), , drop = FALSE]
+    if (n_datasets > 1L) {
+        module <- .warn_unshared_features(module, se_obj_list, assay, disp)
+    }
     # Reorder modules by size (largest first)
     mod_sizes <- table(module$Module)
     module$Module <- factor(module$Module,
-        levels = names(sort(mod_sizes, decreasing = TRUE))
+        levels = base::names(sort(mod_sizes, decreasing = TRUE))
     )
     stopifnot(nrow(module) > 0)
-    data_module_long <- .plot_modules_input(module = module,
-        se_obj_merged = se_obj_merged, scale = scale, assay = assay)
 
-    n_modules <- length(unique(data_module_long$Module))
+    data_module_longs <- list()
+    groups <- list()
+    sp_infos <- list()
+    mats <- list()
+    mods <- list()
+    for (i in seq_len(n_datasets)) {
+        data_module_longs[[i]] <-
+            .plot_modules_input(module = module,
+            se_obj_merged = se_obj_list[[i]], scale = scale, assay = assay)
+        groups[[i]] <- data_module_longs[[i]]$Group |> levels()
+        sp_infos[[i]] <-
+            data_module_longs[[i]] |>
+                dplyr::select(Group, Time) |>
+                dplyr::distinct()
+        data_module_wider <- data_module_longs[[i]] |>
+            tidyr::pivot_wider(id_cols = c(Feature, Module),
+                names_from = c(Group, Time),
+                values_from = Abundance) |>
+            dplyr::arrange(Module) |>
+            tibble::column_to_rownames("Feature")
+        mats[[i]] <- data_module_wider |>
+            dplyr::select(-Module) |>
+            as.matrix()
+        mods[[i]] <- data_module_wider$Module
+    }
 
-    stopifnot(n_modules == length(levels(data_module_long$Module)))
-
-    groups <- data_module_long$Group |> levels()
-
-    sp_info <- data_module_long |>
-        dplyr::select(Group, Time) |>
-        dplyr::distinct()
-
-    data_module_wider <- data_module_long |>
-        tidyr::pivot_wider(id_cols = c(Feature, Module),
-            names_from = c(Group, Time), values_from = Abundance) |>
-        dplyr::arrange(Module) |>
-        tibble::column_to_rownames("Feature")
-    mat <- data_module_wider |>
-        dplyr::select(-Module) |>
-        as.matrix()
-
-    min_val <- min(mat, na.rm = TRUE)
-    max_val <- max(mat, na.rm = TRUE)
+    all_vals <- unlist(lapply(mats, function(m) as.vector(m)))
+    min_val <- min(all_vals, na.rm = TRUE)
+    max_val <- max(all_vals, na.rm = TRUE)
     col_fun <- circlize::colorRamp2(
         c(min_val, 0, max_val),
         c("#3C5488FF", "white", "#E64B35FF")
@@ -313,17 +368,17 @@ plot_modules_h <- function(
     # Pre-process mark_features
     mark_state <- list(feat_col = character(0), lgd = NULL)
     if (!is.null(mark_features) && length(mark_features) > 0) {
-        if (is.list(mark_features) && !is.null(names(mark_features))) {
-            cats <- names(mark_features)
+        if (is.list(mark_features) && !is.null(base::names(mark_features))) {
+            cats <- base::names(mark_features)
             n_cats <- length(cats)
             cat_cols <- stats::setNames(
                 ggsci::pal_jco()(max(n_cats, 2))[seq_len(n_cats)], cats
             )
             all_feats <- unlist(mark_features, use.names = FALSE)
             feat_col <- rep(unname(cat_cols), times = lengths(mark_features))
-            names(feat_col) <- unlist(mark_features, use.names = FALSE)
+            base::names(feat_col) <- unlist(mark_features, use.names = FALSE)
             # De-duplicate: first category wins if a feature appears in multiple
-            feat_col <- feat_col[!duplicated(names(feat_col))]
+            feat_col <- feat_col[!duplicated(base::names(feat_col))]
             mark_state$feat_col <- feat_col
             mark_state$lgd <- ComplexHeatmap::Legend(
                 title = "Hub type", labels = cats,
@@ -339,71 +394,7 @@ plot_modules_h <- function(
         }
     }
 
-    # Pretty time breaks for profile x-axis
-    time_vals <- as.numeric(levels(data_module_long$Time))
-    t_range <- range(time_vals)
-    time_breaks <- pretty(t_range, n = 4)
-    time_breaks <- time_breaks[time_breaks >= t_range[1] &
-        time_breaks <= t_range[2]]
-    t_range_exp <- t_range + c(-1, 1) * 0.05 * diff(t_range)
-    time_breaks_norm <- (time_breaks - t_range_exp[1]) / diff(t_range_exp)
-    last_mod <- utils::tail(levels(data_module_long$Module), 1)
-
-    ggplot2_profile_list <- list()
-    for (i in levels(data_module_long$Module)) {
-        ggplot2_profile_list[[i]] <- data_module_long |>
-            dplyr::filter(Module == i) |>
-            dplyr::mutate(Time = as.numeric(as.character(Time))) |>
-            ggplot(aes(x = Time, y = Abundance, group = Feature)) +
-            stat_summary(aes(group = Group, color = Group),
-                fun = mean, geom = "line", linewidth = 1
-            ) +
-            scale_x_continuous(expand = c(0.05, 0)) + # default
-            scale_color_manual(values = get_custom_palette(groups)) +
-            labs(x = NULL, y = NULL, title = NULL) +
-            theme_custom(panel_border = TRUE) +
-            theme(
-                text = element_text(size = fontsize),
-                axis.text = element_blank(),
-                axis.title = element_blank(),
-                axis.ticks = element_blank(),
-                legend.position = "none", # duplicated legends for each module
-                plot.margin = margin(0, 0, 0, 0, unit = "cm")
-            )
-    }
-
-    anno_ggplot2_profile <- ComplexHeatmap::anno_zoom(
-        align_to = data_module_wider$Module,
-        which = "row",
-        panel_fun = function(index, nm) {
-            g <- ggplot2_profile_list[[nm]]
-            g <- grid::grid.grabExpr(grid::grid.draw(g))
-            grid::pushViewport(grid::viewport())
-            grid::grid.rect()
-            grid::grid.draw(g)
-            grid::popViewport()
-            if (nm == last_mod) {
-                grid::grid.xaxis(at = time_breaks_norm,
-                    label = as.character(time_breaks),
-                    gp = grid::gpar(fontsize = fontsize))
-                grid::grid.text("Time",
-                    x = unit(0.5, "npc"),
-                    y = unit(0, "npc") - unit(6, "mm"),
-                    just = c("center", "top"),
-                    gp = grid::gpar(fontsize = fontsize))
-            }
-        },
-        size = 1 / n_modules,
-        gap = unit(0, "cm"),
-        width = unit(profile_width, "cm"),
-        side = "right",
-        link_gp = grid::gpar(fill = "grey95", col = "grey50"),
-        link_width = unit(profile_link_width, "cm")
-    )
-
-    right_ann <- ComplexHeatmap::rowAnnotation(profile = anno_ggplot2_profile)
-
-    # ---- Multi-category annotation ----
+    # Enrichment parameters validation and recycling
     if (!is.null(enrich_list)) {
         n_cats <- length(enrich_category)
         .check_len <- function(val, name, n) {
@@ -424,193 +415,296 @@ plot_modules_h <- function(
             enrich_threshold <- rep(NA_real_, n_cats)
         } else {
             enrich_threshold <- rep(enrich_threshold,
-                length.out = n_cats
-            )
+                length.out = n_cats)
         }
-        mod_levels <- levels(data_module_long$Module)
-        mat_nrow <- nrow(mat)
+        enrich_threshold[enrich_category == "Hub features"] <- NA_real_
+    }
 
-        # Build combined multi-column textbox from all enrichment categories
-        enr_cats <- setdiff(enrich_category, "Hub features")
-        n_enr <- length(enr_cats)
+    # Use a shared mapping so the same group has the same colour across
+    # datasets, including when group sets or their ordering differ.
+    all_groups <- unique(unlist(groups, use.names = FALSE))
+    group_colours <- get_custom_palette(all_groups) |>
+        stats::setNames(all_groups)
 
-        # First pass: collect per-category per-module term data
-        cat_terms <- list() # cate -> list of module data.frames
-        for (ci in seq_len(n_enr)) {
-            cate <- enr_cats[ci]
-            if (is.null(enrich_list[[cate]])) next
-            top_n <- enrich_top_n[ci]
-            rank_by <- enrich_rank_by[ci]
-            p_thresh <- enrich_threshold[ci]
+    heatmaps <- lapply(seq_len(n_datasets), function(i) {
+        # Pretty time breaks for profile x-axis
+        time_vals <- as.numeric(levels(data_module_longs[[i]]$Time))
+        t_range <- range(time_vals)
+        time_breaks <- pretty(t_range, n = 4)
+        time_breaks <- time_breaks[time_breaks >= t_range[1] &
+            time_breaks <= t_range[2]]
+        t_range_exp <- t_range + c(-1, 1) * 0.05 * diff(t_range)
+        time_breaks_norm <- (time_breaks - t_range_exp[1]) / diff(t_range_exp)
+        last_mod <- utils::tail(levels(data_module_longs[[i]]$Module), 1)
+        ggplot2_profile_list <- list()
+        for (m in levels(data_module_longs[[i]]$Module)) {
+            ggplot2_profile_list[[m]] <- data_module_longs[[i]] |>
+                dplyr::filter(Module == m) |>
+                dplyr::mutate(Time = as.numeric(as.character(Time))) |>
+                ggplot(aes(x = Time, y = Abundance, group = Feature)) +
+                stat_summary(aes(group = Group, color = Group),
+                    fun = mean, geom = "line", linewidth = 1
+                ) +
+                scale_x_continuous(expand = c(0.05, 0)) + # default
+                scale_color_manual(values = group_colours[groups[[i]]]) +
+                labs(x = NULL, y = NULL, title = NULL) +
+                theme_custom(panel_border = TRUE) +
+                theme(
+                    text = element_text(size = fontsize),
+                    axis.text = element_blank(),
+                    axis.title = element_blank(),
+                    axis.ticks = element_blank(),
+                    legend.position = "none",
+                    plot.margin = margin(0, 0, 0, 0, unit = "cm")
+                )
+        }
 
-            termanno <- enrich_list[[cate]] |>
-                as.data.frame() |>
-                dplyr::mutate(
-                    id = as.character(.module_labels(Cluster))
-                ) |>
-                dplyr::filter(id %in% mod_levels) |>
-                dplyr::group_by(id) |>
-                dplyr::slice_min(
-                    order_by = !!sym(rank_by),
-                    n = top_n, with_ties = FALSE
-                ) |>
-                dplyr::mutate(term = Description) |>
-                dplyr::ungroup()
-
-            # Colour-coding
-            if ("col" %in% colnames(termanno)) {
-                termanno$col <- termanno[["col"]]
-            } else if (!is.na(p_thresh) && !is.null(p_thresh) &&
-                rank_by %in% colnames(termanno)) {
-                termanno$col <- ifelse(
-                    termanno[[rank_by]] < p_thresh, "black", "grey70")
-            } else {
-                termanno$col <- "black"
-            }
-            termanno$fontsize <- fontsize
-            termanno <- termanno |>
-                dplyr::select(id, term, col, fontsize)
-
-            if (nrow(termanno) == 0) next
-
-            term_list <- lapply(mod_levels, function(mod) {
-                tmp <- termanno[termanno$id == mod, ]
-                if (nrow(tmp) == 0) {
-                    data.frame(
-                        text = character(0), col = character(0),
-                        fontsize = numeric(0),
-                        stringsAsFactors = FALSE
-                    )
-                } else {
-                    data.frame(
-                        text = tmp$term, col = tmp$col,
-                        fontsize = tmp$fontsize,
-                        stringsAsFactors = FALSE
-                    )
+        anno_ggplot2_profile <- ComplexHeatmap::anno_zoom(
+            align_to = mods[[i]],
+            which = "row",
+            panel_fun = function(index, nm) {
+                g <- ggplot2_profile_list[[nm]]
+                g <- grid::grid.grabExpr(grid::grid.draw(g))
+                grid::pushViewport(grid::viewport())
+                grid::grid.rect()
+                grid::grid.draw(g)
+                grid::popViewport()
+                if (nm == last_mod) {
+                    grid::grid.xaxis(at = time_breaks_norm,
+                        label = as.character(time_breaks),
+                        gp = grid::gpar(fontsize = fontsize))
+                    grid::grid.text("Time",
+                        x = unit(0.5, "npc"),
+                        y = unit(0, "npc") - unit(6, "mm"),
+                        just = c("center", "top"),
+                        gp = grid::gpar(fontsize = fontsize))
                 }
-            })
-            names(term_list) <- mod_levels
-            cat_terms[[cate]] <- term_list
-        }
+            },
+            size = 1 / length(unique(mods[[i]])),
+            gap = unit(0, "cm"),
+            width = unit(profile_width, "cm"),
+            side = "right",
+            link_gp = grid::gpar(fill = "grey95", col = "grey50"),
+            link_width = unit(profile_link_width, "cm")
+        )
 
-        # Hub features as a column in the multi-column textbox
-        if ("Hub features" %in% enrich_category &&
-            !is.null(mark_features) && length(mark_features) > 0) {
-            hres <- .build_marked_features_anno(
-                mark_features, module, mark_state,
-                fontsize, mod_levels
-            )
-            if (!is.null(hres)) {
-                cat_terms[["Hub features"]] <- hres
-            } else {
-                message("Hub features: no marked features found in module data")
+        right_ann <- ComplexHeatmap::rowAnnotation(profile =
+            anno_ggplot2_profile)
+
+        # ---- Multi-category annotation (rightmost dataset only) ----
+        if (i == n_datasets && !is.null(enrich_list)) {
+            mod_levels <- levels(data_module_longs[[i]]$Module)
+            mat_nrow <- nrow(mats[[i]])
+
+            # Build combined multi-column textbox from all enrichment categories
+            enr_cats <- setdiff(enrich_category, "Hub features")
+            n_enr <- length(enr_cats)
+
+            # First pass: collect per-category per-module term data
+            cat_terms <- list() # cate -> list of module data.frames
+            for (ci in seq_len(n_enr)) {
+                cate <- enr_cats[ci]
+                if (is.null(enrich_list[[cate]])) next
+                top_n <- enrich_top_n[ci]
+                rank_by <- enrich_rank_by[ci]
+                p_thresh <- enrich_threshold[ci]
+
+                termanno <- enrich_list[[cate]] |>
+                    as.data.frame() |>
+                    dplyr::mutate(
+                        id = as.character(.module_labels(Cluster))
+                    ) |>
+                    dplyr::filter(id %in% mod_levels) |>
+                    dplyr::group_by(id) |>
+                    dplyr::slice_min(
+                        order_by = !!sym(rank_by),
+                        n = top_n, with_ties = FALSE
+                    ) |>
+                    dplyr::mutate(term = Description) |>
+                    dplyr::ungroup()
+
+                # Colour-coding
+                if ("col" %in% colnames(termanno)) {
+                    termanno$col <- termanno[["col"]]
+                } else if (!is.na(p_thresh) && !is.null(p_thresh) &&
+                    rank_by %in% colnames(termanno)) {
+                    termanno$col <- ifelse(
+                        termanno[[rank_by]] < p_thresh, "black", "grey70")
+                } else {
+                    termanno$col <- "black"
+                }
+                termanno$fontsize <- fontsize
+                termanno <- termanno |>
+                    dplyr::select(id, term, col, fontsize)
+
+                if (nrow(termanno) == 0) next
+
+                term_list <- lapply(mod_levels, function(mod) {
+                    tmp <- termanno[termanno$id == mod, ]
+                    if (nrow(tmp) == 0) {
+                        data.frame(
+                            text = character(0), col = character(0),
+                            fontsize = numeric(0),
+                            stringsAsFactors = FALSE
+                        )
+                    } else {
+                        data.frame(
+                            text = tmp$term, col = tmp$col,
+                            fontsize = tmp$fontsize,
+                            stringsAsFactors = FALSE
+                        )
+                    }
+                })
+                base::names(term_list) <- mod_levels
+                cat_terms[[cate]] <- term_list
+            }
+
+            # Hub features as a column in the multi-column textbox
+            if ("Hub features" %in% enrich_category &&
+                !is.null(mark_features) && length(mark_features) > 0) {
+                hres <- .build_marked_features_anno(
+                    mark_features, module, mark_state,
+                    fontsize, mod_levels
+                )
+                if (!is.null(hres)) {
+                    cat_terms[["Hub features"]] <- hres
+                } else {
+                    message("Hub features: no marked features found ",
+                        "in module data")
+                }
+            }
+
+            # Drop modules with no terms in any category
+            has_terms <- vapply(mod_levels, function(mod) {
+                any(vapply(cat_terms, function(ct) {
+                    mod %in% base::names(ct) && nrow(ct[[mod]]) > 0
+                }, logical(1)))
+            }, logical(1))
+            if (any(has_terms)) {
+                cat_terms <- lapply(cat_terms, function(ct)
+                    ct[mod_levels[has_terms]])
+            }
+
+            # Build a single multi-column textbox from all categories
+            if (length(cat_terms) > 0) {
+                align_to <- factor(
+                    rep(mod_levels,
+                        each = round(mat_nrow / length(mod_levels))
+                    ),
+                    levels = mod_levels
+                )
+                text <- .reformat_cat_terms(cat_terms)
+
+                combined_anno <- .anno_multicol_textbox(
+                    align_to = align_to, text = text,
+                    background_gp = grid::gpar(
+                        fill = "grey95", col = "grey50"
+                    ),
+                    by = "anno_link", side = "right",
+                    show_headers = TRUE,
+                    header_gp = grid::gpar(
+                        fontsize = fontsize
+                    )
+                )
+
+                right_ann <- ComplexHeatmap::rowAnnotation(
+                    profile = anno_ggplot2_profile,
+                    Enrichment = combined_anno
+                )
             }
         }
 
-        # Drop modules with no terms in any category
-        has_terms <- vapply(mod_levels, function(mod) {
-            any(vapply(cat_terms, function(ct) {
-                mod %in% names(ct) && nrow(ct[[mod]]) > 0
-            }, logical(1)))
-        }, logical(1))
-        if (any(has_terms)) {
-            cat_terms <- lapply(cat_terms, function(ct)
-                ct[mod_levels[has_terms]])
-        }
-
-        # Build a single multi-column textbox from all categories
-        if (length(cat_terms) > 0) {
-            align_to <- factor(
-                rep(mod_levels,
-                    each = round(mat_nrow / length(mod_levels))
-                ),
-                levels = mod_levels
+        # ---- anno_mark for key features (leftmost dataset only) ----
+        # Skip anno_mark if Hub features is already shown as textbox
+        has_hub_text <- "Hub features" %in% enrich_category
+        left_ann <- NULL
+        if (i == 1 && length(mark_state$feat_col) > 0 && !has_hub_text) {
+            feats_present <- intersect(
+                base::names(mark_state$feat_col), rownames(mats[[i]])
             )
-            text <- .reformat_cat_terms(cat_terms)
-
-            combined_anno <- .anno_multicol_textbox(
-                align_to = align_to, text = text,
-                background_gp = grid::gpar(
-                    fill = "grey95", col = "grey50"
-                ),
-                by = "anno_link", side = "right",
-                show_headers = TRUE,
-                header_gp = grid::gpar(
-                    fontsize = fontsize, fontface = "bold"
+            if (length(feats_present) > 0) {
+                at_idx <- match(feats_present, rownames(mats[[i]]))
+                cols <- mark_state$feat_col[feats_present]
+                left_ann <- ComplexHeatmap::rowAnnotation(
+                    mark = ComplexHeatmap::anno_mark(
+                        at = at_idx,
+                        labels = feats_present,
+                        side = "left",
+                        labels_gp = grid::gpar(
+                            col = cols,
+                            fontsize = fontsize
+                        ),
+                        link_gp = grid::gpar(col = "grey40", lwd = 0.5),
+                        padding = unit(2, "mm")
+                    )
                 )
-            )
-
-            right_ann <- ComplexHeatmap::rowAnnotation(
-                profile = anno_ggplot2_profile,
-                Enrichment = combined_anno
-            )
+            }
         }
-    }
 
-    # ---- anno_mark for key features ----
-    # Skip anno_mark if Hub features is already shown as textbox
-    has_hub_text <- "Hub features" %in% enrich_category
-    left_ann <- NULL
-    if (length(mark_state$feat_col) > 0 && !has_hub_text) {
-        feats_present <- intersect(
-            names(mark_state$feat_col), rownames(mat)
-        )
-        if (length(feats_present) > 0) {
-            at_idx <- match(feats_present, rownames(mat))
-            cols <- mark_state$feat_col[feats_present]
-            left_ann <- ComplexHeatmap::rowAnnotation(
-                mark = ComplexHeatmap::anno_mark(
-                    at = at_idx,
-                    labels = feats_present,
-                    side = "left",
-                    labels_gp = grid::gpar(
-                        col = cols,
-                        fontsize = fontsize
+        ht_args <- list(
+            mats[[i]],
+            name = disp[i], col = col_fun,
+            cluster_rows = FALSE, cluster_columns = FALSE,
+            show_row_names = FALSE, show_column_names = FALSE,
+            row_split = mods[[i]],
+            row_gap = unit(0, "mm"), row_title_rot = 0,
+            row_title_gp = grid::gpar(fontsize = fontsize),
+            layer_fun = function(j, i, x, y, w, h, fill, slice_r, slice_c) {
+                grid::grid.rect(gp = grid::gpar(
+                    fill = "transparent", col = "grey50"
+                ))
+            }, # draw frames around the modules
+            column_split = sp_infos[[i]]$Group,
+            column_title = if (n_datasets > 1) disp[i] else character(0),
+            column_title_gp =
+                grid::gpar(fontsize =
+                    if (n_datasets > 1) (fontsize + 2) else fontsize,
+                    fontface = if (n_datasets > 1) "bold" else "plain"),
+            column_title_side = "top",
+            column_names_gp = grid::gpar(fontsize = fontsize),
+            top_annotation = if (n_datasets > 1) {
+                ComplexHeatmap::HeatmapAnnotation(
+                    Group = ComplexHeatmap::anno_block(
+                        labels = groups[[i]],
+                        labels_gp = grid::gpar(fontsize = fontsize),
+                        gp = grid::gpar(fill = NA, col = NA),
+                        height = grid::unit(6, "mm")
                     ),
-                    link_gp = grid::gpar(col = "grey40", lwd = 0.5),
-                    padding = unit(2, "mm")
+                    show_annotation_name = FALSE
                 )
-            )
-        }
-    }
-
-    ht_args <- list(
-        mat,
-        name = "heatmap", col = col_fun,
-        cluster_rows = FALSE, cluster_columns = FALSE,
-        show_row_names = FALSE, show_column_names = FALSE,
-        row_split = data_module_wider$Module,
-        row_gap = unit(0, "mm"), row_title_rot = 0,
-        row_title_gp = grid::gpar(fontsize = fontsize),
-        layer_fun = function(j, i, x, y, w, h, fill, slice_r, slice_c) {
-            grid::grid.rect(gp = grid::gpar(
-                fill = "transparent", col = "grey50"
-            ))
-        }, # draw frames around the modules
-        column_split = sp_info$Group,
-        column_title_gp = grid::gpar(fontsize = fontsize),
-        right_annotation = right_ann,
-        use_raster = FALSE,
-        heatmap_legend_param = list(
-            title = ylabel,
-            title_gp = grid::gpar(fontsize = fontsize, fontface = "bold"),
-            labels_gp = grid::gpar(fontsize = fontsize)
-        ),
-        width = grid::unit(heatmap_width, "cm"),
-        height = if (is.null(heatmap_height)) NULL
-            else grid::unit(heatmap_height, "cm")
-    )
-    if (!is.null(left_ann)) ht_args$left_annotation <- left_ann
-    heatmap <- do.call(ComplexHeatmap::Heatmap, ht_args)
+            } else {
+                NULL
+            },
+            right_annotation = right_ann,
+            use_raster = FALSE,
+            heatmap_legend_param = list(
+                title = if (length(ylabel) == 1L) ylabel else ylabel[i],
+                title_gp = grid::gpar(fontsize = fontsize),
+                labels_gp = grid::gpar(fontsize = fontsize)
+            ),
+            width = grid::unit(heatmap_width, "cm"),
+            height = if (is.null(heatmap_height)) NULL
+                else grid::unit(heatmap_height, "cm")
+        )
+        if (!is.null(left_ann)) ht_args$left_annotation <- left_ann
+        do.call(ComplexHeatmap::Heatmap, ht_args)
+    })
 
     anno_ggplot2_profile_lgd <- ComplexHeatmap::Legend(
-        title = "Group", labels = groups,
+        title = "Group", labels = all_groups,
         legend_gp = grid::gpar(
-            fill = get_custom_palette(groups)
+            fill = unname(group_colours)
         ),
         labels_gp = grid::gpar(fontsize = fontsize),
         title_gp = grid::gpar(fontsize = fontsize)
     )
+
+    ht_list <- heatmaps[[1]]
+    if (n_datasets > 1) {
+        for (i in 2:n_datasets) {
+            ht_list <- ht_list + heatmaps[[i]]
+        }
+    }
 
     draw_ht <- function() {
         lgd_list <- list(anno_ggplot2_profile_lgd)
@@ -631,7 +725,7 @@ plot_modules_h <- function(
                             ggsci::pal_jco()(max(n_hub, 2))[seq_len(n_hub)]
                         hub_lgd <- ComplexHeatmap::Legend(
                             title = "Hub features",
-                            labels = names(mark_features),
+                            labels = base::names(mark_features),
                             type = "lines",
                             legend_gp = grid::gpar(col = unname(hub_cols),
                                 lwd = 2),
@@ -657,11 +751,12 @@ plot_modules_h <- function(
                 go_lgd <- ComplexHeatmap::Legend(
                     title = cate,
                     labels = c(
-                        sprintf("p.adj < %.2f", pt),
-                        sprintf("p.adj >= %.2f", pt)
+                        sprintf("%s < %.2f", enrich_rank_by[ci], pt),
+                        sprintf("%s >= %.2f", enrich_rank_by[ci], pt)
                     ),
                     type = "lines",
-                    legend_gp = grid::gpar(col = c("black", "grey70"), lwd = 2),
+                    legend_gp = grid::gpar(col = c("black", "grey70"),
+                        lwd = 2),
                     labels_gp = grid::gpar(fontsize = fontsize),
                     title_gp = grid::gpar(fontsize = fontsize)
                 )
@@ -674,7 +769,7 @@ plot_modules_h <- function(
         }
 
         pad_bottom <- 10
-        ComplexHeatmap::draw(heatmap,
+        ComplexHeatmap::draw(ht_list,
             heatmap_legend_list = lgd_list,
             heatmap_legend_side = "right", merge_legends = TRUE,
             # top, right, bottom, left
@@ -687,26 +782,27 @@ plot_modules_h <- function(
             suffix <- paste0(suffix, "_")
         }
 
+        prefix <- if (n_datasets > 1L) "WGCNA_h_multi_" else "WGCNA_h_"
         for (ext in device) {
             if (ext == "pdf") {
                 grDevices::pdf(
-                    file = file.path(save, paste0("WGCNA_h_", suffix,
+                    file = file.path(save, paste0(prefix, suffix,
                         Sys.Date(), ".", ext)),
                     width = width / 2.54,
                     height = height / 2.54
                 )
             } else if (ext == "png") {
-                grDevices::png(file.path(save, paste0("WGCNA_h_",
+                grDevices::png(file.path(save, paste0(prefix,
                     suffix, Sys.Date(), ".", ext)),
                     width = width, height = height,
                     units = "cm", res = res)
             } else if (ext == "tiff") {
-                grDevices::tiff(file.path(save, paste0("WGCNA_h_",
+                grDevices::tiff(file.path(save, paste0(prefix,
                     suffix, Sys.Date(), ".", ext)),
                     width = width, height = height,
                     units = "cm", res = res)
             } else if (ext == "jpeg") {
-                grDevices::jpeg(file.path(save, paste0("WGCNA_h_",
+                grDevices::jpeg(file.path(save, paste0(prefix,
                     suffix, Sys.Date(), ".", ext)),
                     width = width, height = height,
                     units = "cm", res = res)

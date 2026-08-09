@@ -45,7 +45,9 @@ run_WGCNA <- function(wgcna_input, power, numericLabels = TRUE, ...) {
     # Check minModuleSize
     minModuleSize <- dots$minModuleSize
     if (is.null(minModuleSize)) {
-        minModuleSize <- formals(WGCNA::blockwiseModules)$minModuleSize
+        # Default is min(20, ncol(datExpr)/2)
+        minModuleSize <- eval(formals(WGCNA::blockwiseModules)$minModuleSize,
+            envir = list(datExpr = wgcna_input$data))
     }
     .check_positive_int(minModuleSize, "minModuleSize")
 
