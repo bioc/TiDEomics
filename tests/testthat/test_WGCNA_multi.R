@@ -86,10 +86,13 @@ test_that("extract_consensus_hubs handles edge-case networks", {
 
 data(example_obj)
 data(example_obj_2)
+shared_features <- intersect(
+    rownames(example_obj), rownames(example_obj_2)
+)
 nets <- list(
-    Exp1 = prepare_WGCNA(example_obj,
+    Exp1 = prepare_WGCNA(example_obj[shared_features, , drop = FALSE],
         powers = seq(1, 20), assay = 2, networkType = "signed"),
-    Exp2 = prepare_WGCNA(example_obj_2,
+    Exp2 = prepare_WGCNA(example_obj_2[shared_features, , drop = FALSE],
         powers = seq(1, 20), assay = 2, networkType = "signed")
 )
 

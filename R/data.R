@@ -103,7 +103,9 @@
 #'
 #' Exp2 is a noise-perturbed copy of `example_obj` (Exp1): each
 #' gene's expression receives independent Gaussian noise scaled to
-#' 0.5x its standard deviation.
+#' 0.5x its standard deviation. The first 5 feature names have the
+#' suffix `_Exp2` to introduce difference in features; the
+#' remaining 95 features are shared with Exp1.
 #'
 #' Code for producing the data is in
 #' `inst/script/generate_example_multi.R`
@@ -128,7 +130,8 @@
 #' `run_consensus_WGCNA()` output object for runnable examples
 #'
 #' Consensus WGCNA of Exp1 (`example_obj`, real) and Exp2
-#' (`example_obj_2`, simulated).
+#' (`example_obj_2`, simulated), run on the 95 features shared by
+#' both datasets.
 #'
 #' Code for producing the data is in
 #' `inst/script/generate_example_multi.R`

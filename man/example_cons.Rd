@@ -16,7 +16,8 @@ data(example_cons)
 }
 \description{
 Consensus WGCNA of Exp1 (\code{example_obj}, real) and Exp2
-(\code{example_obj_2}, simulated).
+(\code{example_obj_2}, simulated), run on the 95 features shared by
+both datasets.
 }
 \details{
 Code for producing the data is in

@@ -5,6 +5,8 @@
 # Dataset 2 (Exp2) is a perturbed copy of Exp1:
 # each gene's assay 1 values receive independent
 # Gaussian noise scaled to 0.5x its standard deviation.
+# The first 5 feature names of Exp2 then receive the suffix
+# "_Exp2" to introduce difference.
 #
 # Saves:
 #   example_obj_2: SummarizedExperiment for the simulated Exp2
@@ -23,24 +25,35 @@ exp2_mat <- exp1_mat + noise * 0.5 * gene_sd
 
 exp2_df <- data.frame(Feature = rownames(exp1_mat), exp2_mat,
     stringsAsFactors = FALSE, check.names = FALSE)
+
+# The first 5 feature names of Exp2 get the suffix "_Exp2".
+# The remaining features stay identical to Exp1.
+exp2_df$Feature[seq_len(5)] <- paste0(
+    exp2_df$Feature[seq_len(5)], "_Exp2"
+)
+
 example_obj_2 <- normalise_to_start(create_input(exp2_df,
     as.data.frame(SummarizedExperiment::colData(example_obj))))
 
 # WGCNA
-inp1 <- prepare_WGCNA(example_obj, assay = 2, powers = seq(1, 30),
-    networkType = "signed", RsquaredCut = 0.8)
 inp2 <- prepare_WGCNA(example_obj_2, assay = 2, powers = seq(1, 30),
     networkType = "signed", RsquaredCut = 0.8)
 
-example_cons <- run_consensus_WGCNA(
-    nets = list(Exp1 = inp1, Exp2 = inp2),
-    powers = c(Exp1 = 8, Exp2 = 8),
-    minModuleSize = 10,
-    useDiskCache = FALSE
-)
-
 example_net_2 <- run_WGCNA(inp2, power = 8, minModuleSize = 10,
-    numericLabels = TRUE, saveTOMs = FALSE)
+    numericLabels = TRUE)
+
+# Consensus WGCNA is run on the shared features only
+shared_features <- intersect(rownames(example_obj), rownames(example_obj_2))
+inp1_cons <- prepare_WGCNA(example_obj[shared_features, , drop = FALSE],
+    assay = 2, powers = seq(1, 30), networkType = "signed", RsquaredCut = 0.8)
+inp2_cons <- prepare_WGCNA(example_obj_2[shared_features, , drop = FALSE],
+    assay = 2, powers = seq(1, 30), networkType = "signed", RsquaredCut = 0.8)
+
+example_cons <- run_consensus_WGCNA(
+    nets = list(Exp1 = inp1_cons, Exp2 = inp2_cons),
+    powers = c(Exp1 = 8, Exp2 = 8),
+    minModuleSize = 10
+)
 
 # Save
 usethis::use_data(example_obj_2, overwrite = TRUE)

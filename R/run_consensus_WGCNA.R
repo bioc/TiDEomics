@@ -31,9 +31,12 @@
 #' @examples
 #' data(example_obj)
 #' data(example_obj_2)
-#' inp1 <- prepare_WGCNA(example_obj,
+#' shared_features <- intersect(
+#'     rownames(example_obj), rownames(example_obj_2)
+#' )
+#' inp1 <- prepare_WGCNA(example_obj[shared_features, , drop = FALSE],
 #'     powers = seq(1, 20), assay = 2, networkType = "signed")
-#' inp2 <- prepare_WGCNA(example_obj_2,
+#' inp2 <- prepare_WGCNA(example_obj_2[shared_features, , drop = FALSE],
 #'     powers = seq(1, 20), assay = 2, networkType = "signed")
 #' cons <- run_consensus_WGCNA(
 #'     nets = list(Exp1 = inp1, Exp2 = inp2),

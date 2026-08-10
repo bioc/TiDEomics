@@ -17,7 +17,9 @@ data(example_obj_2)
 \description{
 Exp2 is a noise-perturbed copy of \code{example_obj} (Exp1): each
 gene's expression receives independent Gaussian noise scaled to
-0.5x its standard deviation.
+0.5x its standard deviation. The first 5 feature names have the
+suffix \verb{_Exp2} to introduce difference in features; the
+remaining 95 features are shared with Exp1.
 }
 \details{
 Code for producing the data is in
