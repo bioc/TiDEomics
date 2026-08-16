@@ -92,7 +92,7 @@
 #'   9. `filter_summary` (per-stage filtering statistics);
 #'   10. `group_specific_filter` (a vector of group-specific features,
 #'     removed by the cross-group filter);
-#'   11-13. `DE`, `enrichment`, `WGCNA` (empty on initialization).
+#'   11. , 12. , 13. `DE`, `enrichment`, `WGCNA` (empty on initialization).
 #'
 #' @export
 #' @examples
@@ -254,6 +254,8 @@ prepare_tide <- function(
             round(100 * n_cross_pass / n_total, 1),
             round(100 * res_orig$n_resid_pass / n_total, 1),
             round(100 * res_norm$n_resid_pass / n_total, 1)),
+        residual_cutoff = c(NA_real_, NA_real_,
+            res_orig$residual_cutoff, res_norm$residual_cutoff),
         threshold = c(NA_character_,
             paste0("Exp_ratio >= ", filter_ratio,
                 " in >= ", min_groups, " groups"),

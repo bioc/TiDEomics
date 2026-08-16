@@ -120,6 +120,15 @@ test_that(".check_positive_int rejects non-integer", {
 
 test_that(".check_df validates data.frame with no rows", {
     expect_error(TiDEomics:::.check_df(data.frame(), "x"), "at least 1 row")
+    expect_error(TiDEomics:::.check_df(matrix(1:2, nrow = 2), "x"),
+        "must be a data.frame")
+})
+
+test_that(".recycle_enrich_param reports single-category lengths clearly", {
+    expect_error(
+        TiDEomics:::.recycle_enrich_param(c(1, 2), "x", 1),
+        "one value for one enrichment category"
+    )
 })
 
 test_that(".check_character validates length-0 input", {

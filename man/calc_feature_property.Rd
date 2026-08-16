@@ -29,7 +29,8 @@ with time; positive = up trend), Peak_ratio (number of local maxima
 / T_total; 0 = no peaks detected),
 Log2_CV (log2(1 + CV) of expression across time points),
 AUC (area under the time-0-normalised curve from assay 2; NA if assay 2
-is not available).
+is not available), Net_FC (fold change of latest-earliest time points;
+NA if only one time point is available).
 }
 \description{
 Calculate per-feature temporal properties for each group

@@ -14,6 +14,7 @@ test_that("calc_feature_property works on merged data", {
         rd <- rowData(se_list_prop[[nm]])
         expect_true("P_trend" %in% colnames(rd))
         expect_true("Max_FC" %in% colnames(rd))
+        expect_true("Net_FC" %in% colnames(rd))
         expect_true("Exp_ratio" %in% colnames(rd))
         expect_s4_class(se_list_prop[[nm]], "SummarizedExperiment")
     }
@@ -30,6 +31,7 @@ test_that("summarise_feature_property works", {
     expect_true("Exp_ratio" %in% colnames(prop_tb))
     expect_true("P_trend" %in% colnames(prop_tb))
     expect_true("Max_FC" %in% colnames(prop_tb))
+    expect_true("Net_FC" %in% colnames(prop_tb))
     expect_true("Group" %in% colnames(prop_tb))
 })
 
@@ -37,6 +39,24 @@ test_that("summarise_feature_property has expected columns", {
     expect_true("T_total" %in% colnames(prop_tb))
     expect_true("T_exp" %in% colnames(prop_tb))
     expect_true("Max_FC_time" %in% colnames(prop_tb))
+})
+
+test_that("calc_feature_property ignores NA values in threshold counts", {
+    input <- example_obj_merged_list[[1]]
+    values <- SummarizedExperiment::assay(input, 1)
+    values[1, 1] <- NA_real_
+    SummarizedExperiment::assay(input, 1) <- values
+
+    result <- calc_feature_property(
+        list(test = input), threshold = 0
+    )[[1]]
+    feature <- rownames(values)[1]
+    actual <- rowData(result)$T_exp[
+        match(feature, rowData(result)$Feature)
+    ]
+    expected <- sum(values[1, ] > 0, na.rm = TRUE)
+
+    expect_equal(actual, expected)
 })
 
 test_that("group_specific_features filters correctly", {

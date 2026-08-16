@@ -8,7 +8,7 @@
 #' resulting data frame represents a feature, and the columns contain the
 #' properties of that feature for each group, including the feature name,
 #' group name, proportion of NA values for that feature in that group,
-#' randomness p-value, and maximum fold change over time.
+#' randomness p-value, and maximum and net fold change over time.
 #'
 #' @param se_obj_merged_list A list of merged `SummarizedExperiment` objects,
 #' output of `calc_feature_property()` function
@@ -17,8 +17,8 @@
 #' @returns A data frame summarizing the feature properties across all groups,
 #' with each row representing a feature and columns containing the properties
 #' including the feature name, group name, and the proportion of NA values for
-#' that feature in that group, randomness p-value, and maximum fold change
-#' over time.
+#' that feature in that group, randomness p-value, and maximum and net fold
+#' change over time.
 #' @export
 #' @examples
 #' data(example_obj)

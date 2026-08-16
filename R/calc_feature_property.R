@@ -24,7 +24,8 @@
 #' / T_total; 0 = no peaks detected),
 #' Log2_CV (log2(1 + CV) of expression across time points),
 #' AUC (area under the time-0-normalised curve from assay 2; NA if assay 2
-#' is not available).
+#' is not available), Net_FC (fold change of latest-earliest time points;
+#' NA if only one time point is available).
 #' @export
 #' @examples
 #' data(example_obj)
@@ -58,7 +59,7 @@ calc_feature_property <- function(se_obj_merged_list, threshold = NULL) {
         if (is.null(threshold)) {
             return(sum(!is.na(row)))
         } else {
-            return(sum(row > threshold))
+            return(sum(row > threshold, na.rm = TRUE))
         }
     }
 
@@ -76,8 +77,25 @@ calc_feature_property <- function(se_obj_merged_list, threshold = NULL) {
             Three = apply(d_mean, 1, function(row) (filter_func(row) >= 3))
         )
 
-        d_mean_1 <- d_mean[property_tb$One, ]
-        d_mean_n <- d_mean[property_tb$Three, ]
+        if (ncol(d_mean) < 2L) {
+            property_tb$P_trend <- NA_real_
+            property_tb$Max_FC <- 0
+            property_tb$Net_FC <- NA_real_
+            property_tb$Max_FC_time <- NA_real_
+            property_tb$Rho_time <- NA_real_
+            property_tb$Peak_ratio <- NA_real_
+            property_tb$Log2_CV <- NA_real_
+            property_tb$AUC <- NA_real_
+            property_tb <- property_tb |>
+                dplyr::select(-One, -Three)
+            property_tb$Exp_ratio <- property_tb$T_exp /
+                property_tb$T_total
+            rowData(se_obj_merged_list[[i]]) <- property_tb
+            next
+        }
+
+        d_mean_1 <- d_mean[property_tb$One, , drop = FALSE]
+        d_mean_n <- d_mean[property_tb$Three, , drop = FALSE]
         time_vals <- as.numeric(colnames(d_mean_1))
 
         random_pv <- apply(
@@ -93,6 +111,22 @@ calc_feature_property <- function(se_obj_merged_list, threshold = NULL) {
         max_fc <- .prop_to_df(d_mean_1, function(x) {
             max(stats::na.omit(x)) - min(stats::na.omit(x))
         }, "Max_FC")
+
+        start_idx <- which.min(time_vals)
+        end_idx <- which.max(time_vals)
+        if (length(unique(time_vals)) < 2L || start_idx == end_idx) {
+            net_fc <- data.frame(
+                row.names = rownames(d_mean_1),
+                Net_FC = rep(NA_real_, nrow(d_mean_1))
+            )
+        } else {
+            net_fc <- .prop_to_df(d_mean_1, function(x) {
+                if (is.na(x[start_idx]) || is.na(x[end_idx])) {
+                    return(NA_real_)
+                }
+                x[end_idx] - x[start_idx]
+            }, "Net_FC")
+        }
 
         max_fc_day <- .prop_to_df(d_mean_1, function(x) {
             time_vals[which.max(x)] - time_vals[which.min(x)]
@@ -148,7 +182,7 @@ calc_feature_property <- function(se_obj_merged_list, threshold = NULL) {
                 AUC = rep(NA_real_, nrow(d_mean_1)))
         }
 
-        prop_cols <- list(random_pv, max_fc, max_fc_day, rho_time,
+        prop_cols <- list(random_pv, max_fc, max_fc_day, net_fc, rho_time,
             peak_ratio, temporal_cv, auc_val)
         for (col_df in prop_cols) {
             property_tb <- merge(property_tb, col_df,

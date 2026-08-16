@@ -107,7 +107,7 @@ computed from \code{orig} / \code{norm} assay);
 \item \code{filter_summary} (per-stage filtering statistics);
 \item \code{group_specific_filter} (a vector of group-specific features,
 removed by the cross-group filter);
-11-13. \code{DE}, \code{enrichment}, \code{WGCNA} (empty on initialization).
+\item , 12. , 13. \code{DE}, \code{enrichment}, \code{WGCNA} (empty on initialization).
 }
 }
 \description{

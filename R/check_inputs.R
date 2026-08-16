@@ -50,12 +50,29 @@
 #' @param arg Name of the argument (for error message).
 #' @keywords internal
 .check_df <- function(x, arg = "data") {
-    if (!is.data.frame(x) && !is.matrix(x)) {
-        stop("'", arg, "' must be a data.frame or matrix.")
+    if (!is.data.frame(x)) {
+        stop("'", arg, "' must be a data.frame.")
     }
     if (nrow(x) == 0L) {
         stop("'", arg, "' must have at least 1 row.")
     }
+}
+
+#' Recycle an enrichment parameter across categories
+#' @param x Parameter value.
+#' @param arg Name of the argument.
+#' @param n Number of enrichment categories.
+#' @keywords internal
+.recycle_enrich_param <- function(x, arg, n) {
+    if (length(x) == 0L || !length(x) %in% c(1L, n)) {
+        if (n == 1L) {
+            stop("'", arg,
+                "' must contain one value for one enrichment category.")
+        }
+        stop("'", arg, "' must have length 1 or length ", n,
+            " to match 'enrich_category'.")
+    }
+    rep(x, length.out = n)
 }
 
 #' Check that x is a character vector
