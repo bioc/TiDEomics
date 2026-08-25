@@ -1,15 +1,9 @@
 #' Extract hub features from consensus WGCNA network
 #'
 #' Identifies hub features within each consensus module using module
-#' membership (kME). Consensus hubs are ranked using consensus kME
-#' calculated across datasets according to the consensus quantile used
-#' during network construction. Dataset-specific hubs are ranked using
-#' dataset-specific assigned-module kME and exclude features selected
-#' as consensus hubs from the same module.
-#'
-#' For unsigned networks, absolute kME values are used to reproduce the
-#' behaviour of `WGCNA::blockwiseConsensusModules()`. For signed and
-#' signed hybrid networks, signed kME values are retained.
+#' membership (kME). Consensus hubs are ranked using `WGCNA::consensusKME()`
+#' for signed and signed-hybrid networks, and absolute kME for unsigned
+#' networks.
 #'
 #' @param consensus An output object from `run_consensus_WGCNA()`.
 #' @param top_n Number of hub features to return per module, for each
@@ -22,18 +16,15 @@
 #' which augments the raw `WGCNA::blockwiseConsensusModules()` output
 #' with `multiExpr` and `parameters`.
 #'
-#' @returns A named list.
-#'     - `Consensus`: consensus hub features.
-#'     - One element per dataset containing dataset-specific hub
-#'       features.
-#' Each element is a character vector containing the top `top_n`
-#' features from each module concatenated together.
+#' @returns A data frame with columns `Feature`, `Module`, `Set`, `Rank`,
+#'   `Score`, and `ScoreType`. `Set` identifies the consensus hub or a
+#'   dataset-specific hub set, for example `"Consensus hub"` or
+#'   `"RNA hub"`. Duplicate features across sets are allowed.
 #'
 #' @examples
 #' data(example_cons)
 #' hubs <- extract_consensus_hubs(example_cons, top_n = 1)
-#' names(hubs)
-#' hubs$Consensus
+#' head(hubs)
 #'
 #' @export
 extract_consensus_hubs <- function(
@@ -73,113 +64,134 @@ extract_consensus_hubs <- function(
         modules <- setdiff(modules, c("grey", "0", 0))
     }
 
+    empty_output <- function() {
+        data.frame(
+            Feature = character(0), Module = character(0),
+            Set = character(0), Rank = integer(0),
+            Score = numeric(0), ScoreType = character(0),
+            stringsAsFactors = FALSE
+        )
+    }
+
+
     if (length(modules) == 0) {
         message("No modules to extract hubs from.")
-        empty <- stats::setNames(rep(list(character(0)),
-            length(multiExpr)), names(multiExpr))
-        return(c(list(Consensus = character(0)), empty))
+        return(empty_output())
     }
 
     feature_names <- names(colors)
+    dataset_names <- names(multiExpr)
+
+    consensus_kme <- WGCNA::consensusKME(
+        multiExpr = multiExpr,
+        moduleLabels = colors,
+        multiEigengenes = network$multiMEs,
+        consensusQuantile = parameters$consensusQuantile,
+        signed = parameters$networkType != "unsigned",
+        setNames = dataset_names,
+        excludeGrey = exclude_grey,
+        useRankPvalue = FALSE
+    )
 
     # Dataset-specific assigned-module kME
-    kME.list <- lapply(seq_along(multiExpr), function(set_idx) {
-        if (!is.list(multiExpr[[set_idx]]) ||
-                !is.data.frame(multiExpr[[set_idx]]$data) &&
-                !is.matrix(multiExpr[[set_idx]]$data)) {
-            stop("'consensus$multiExpr[[", set_idx,"]]$data' must be a ",
-                "data.frame or matrix.")
-        }
-        datExpr <- multiExpr[[set_idx]]$data
-        datExpr <- datExpr[, feature_names, drop = FALSE]
-
-        kME.full <- WGCNA::signedKME(
-            datExpr = datExpr,
-            datME = network$multiMEs[[set_idx]]$data,
-            outputColumnName = "kME"
-        )
-
-        # If the network is unsigned, take the absolute value of kME
-        if (parameters$networkType == "unsigned") {
-            kME.full <- abs(kME.full)
-        }
-
+    kME.list <- lapply(dataset_names, function(dataset) {
         assigned.kME <- rep(NA_real_, length(feature_names))
         names(assigned.kME) <- feature_names
 
         for (mod in modules) {
             features <- feature_names[colors == mod]
+            kme.col <- paste0("kME", mod, ".", dataset)
 
-            kme.col <- paste0("kME", mod)
-
-            if (!kme.col %in% colnames(kME.full)) {
+            if (!kme.col %in% colnames(consensus_kme)) {
                 stop("Cannot find ", kme.col,
-                    " in signedKME output for dataset ", set_idx, ".")
+                    " in consensusKME output.")
             }
 
+            feature_idx <- match(features, consensus_kme$ID)
             assigned.kME[features] <-
-                kME.full[features, kme.col, drop = TRUE]
+                consensus_kme[[kme.col]][feature_idx]
         }
 
         assigned.kME
     })
+    names(kME.list) <- dataset_names
 
-    # Consensus kME
-    consensus.kME <- apply(
-        do.call(cbind, kME.list),
-        1,
-        stats::quantile,
-        probs = parameters$consensusQuantile,
-        na.rm = TRUE,
-        names = FALSE
-    )
-
-    names(consensus.kME) <- feature_names
-
-    out <- list()
-
-    # Consensus hubs
-    consensus.features <- unlist(
-        lapply(modules, function(mod) {
-            features <- feature_names[colors == mod]
-
-            scores <- consensus.kME[features]
-
-            features[order(scores, decreasing = TRUE)][
-                seq_len(min(top_n, length(features)))
-            ]
-        }),
-        use.names = FALSE
-    )
-
-    out[["Consensus"]] <- consensus.features
-
-    # Dataset-specific hubs (excluding consensus hubs)
-    dataset.names <- names(multiExpr)
-
-    for (set_idx in seq_along(kME.list)) {
-        dataset.hubs <- unlist(
-            lapply(modules, function(mod) {
-                features <- feature_names[colors == mod]
-
-                scores <- kME.list[[set_idx]][features]
-
-                ranked <- features[order(scores, decreasing = TRUE)]
-
-                # Exclude consensus hubs for the module
-                consensus.mod.features <- consensus.features[
-                    colors[consensus.features] == mod
-                ]
-
-                ranked <- setdiff(ranked, consensus.mod.features)
-
-                utils::head(ranked, top_n)
-            }),
-            use.names = FALSE
+    if (parameters$networkType == "unsigned") {
+        # consensusKME() retains signed correlations when signed = FALSE.
+        # For unsigned networks, use absolute kME to include anti-correlated
+        # features
+        score_sets <- lapply(kME.list, abs)
+        consensus_scores <- apply(
+            do.call(cbind, score_sets),
+            1,
+            function(scores) {
+                scores <- scores[is.finite(scores)]
+                if (length(scores) == 0L) return(NA_real_)
+                stats::quantile(
+                    scores,
+                    probs = parameters$consensusQuantile,
+                    names = FALSE
+                )
+            }
         )
-
-        out[[dataset.names[set_idx]]] <- dataset.hubs
+        consensus_type <- "quantile(abs(kME))"
+        dataset_type <- "abs(kME)"
+    } else {
+        score_sets <- kME.list
+        consensus_scores <- rep(NA_real_, length(feature_names))
+        names(consensus_scores) <- feature_names
+        for (mod in modules) {
+            kme.col <- paste0("consensus.kME", mod)
+            if (!kme.col %in% colnames(consensus_kme)) {
+                stop("Cannot find ", kme.col,
+                    " in consensusKME output.")
+            }
+            features <- feature_names[colors == mod]
+            feature_idx <- match(features, consensus_kme$ID)
+            consensus_scores[features] <-
+                consensus_kme[[kme.col]][feature_idx]
+        }
+        consensus_type <- "consensus.kME"
+        dataset_type <- "kME"
     }
 
-    out
+    hub_set_names <- paste0(dataset_names, " hub")
+    score_sets <- c(
+        list("Consensus hub" = consensus_scores),
+        stats::setNames(score_sets, hub_set_names)
+    )
+    score_types <- c(
+        "Consensus hub" = consensus_type,
+        stats::setNames(rep(dataset_type, length(dataset_names)),
+            hub_set_names)
+    )
+    rows <- lapply(names(score_sets), function(set_name) {
+        scores <- score_sets[[set_name]]
+        module_rows <- lapply(modules, function(mod) {
+            features <- feature_names[colors == mod]
+            module_scores <- scores[features]
+            keep <- is.finite(module_scores)
+            if (!any(keep)) return(NULL)
+
+            features <- features[keep]
+            module_scores <- module_scores[keep]
+            selected <- utils::head(
+                order(module_scores, decreasing = TRUE), top_n
+            )
+
+            data.frame(
+                Feature = features[selected],
+                Module = as.character(mod),
+                Set = set_name,
+                Rank = seq_along(selected),
+                Score = unname(module_scores[selected]),
+                ScoreType = unname(score_types[set_name]),
+                stringsAsFactors = FALSE
+            )
+        })
+        module_rows[!vapply(module_rows, is.null, logical(1))]
+    })
+    rows <- do.call(c, rows)
+
+    if (length(rows) == 0L) empty_output() else do.call(rbind, rows)
 }

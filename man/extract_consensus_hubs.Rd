@@ -16,25 +16,16 @@ dataset and consensus. Default: 1.}
 module. Default: \code{TRUE}.}
 }
 \value{
-A named list.
-- \code{Consensus}: consensus hub features.
-- One element per dataset containing dataset-specific hub
-features.
-Each element is a character vector containing the top \code{top_n}
-features from each module concatenated together.
+A data frame with columns \code{Feature}, \code{Module}, \code{Set}, \code{Rank},
+\code{Score}, and \code{ScoreType}. \code{Set} identifies the consensus hub or a
+dataset-specific hub set, for example \code{"Consensus hub"} or
+\code{"RNA hub"}. Duplicate features across sets are allowed.
 }
 \description{
 Identifies hub features within each consensus module using module
-membership (kME). Consensus hubs are ranked using consensus kME
-calculated across datasets according to the consensus quantile used
-during network construction. Dataset-specific hubs are ranked using
-dataset-specific assigned-module kME and exclude features selected
-as consensus hubs from the same module.
-}
-\details{
-For unsigned networks, absolute kME values are used to reproduce the
-behaviour of \code{WGCNA::blockwiseConsensusModules()}. For signed and
-signed hybrid networks, signed kME values are retained.
+membership (kME). Consensus hubs are ranked using \code{WGCNA::consensusKME()}
+for signed and signed-hybrid networks, and absolute kME for unsigned
+networks.
 }
 \section{Requirements}{
 
@@ -46,7 +37,6 @@ with \code{multiExpr} and \code{parameters}.
 \examples{
 data(example_cons)
 hubs <- extract_consensus_hubs(example_cons, top_n = 1)
-names(hubs)
-hubs$Consensus
+head(hubs)
 
 }

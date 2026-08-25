@@ -18,14 +18,6 @@ test_that("plot_modules_h works", {
         fontsize = 6)
 
     expect_s4_class(pq, "HeatmapList")
-})
-
-test_that("plot_modules_h validates module argument", {
-    expect_error(plot_modules_h(NULL, data.frame(), assay = 2), "data.frame")
-    expect_error(plot_modules_h(data.frame(), data.frame(), assay = 2), "at least 1 row")
-})
-
-test_that("plot_modules_h runs without scale", {
     pq <- plot_modules_h(example_module |> dplyr::filter(Module != '0'),
         merged, assay = 2, scale = FALSE,
         enrich_list = example_go$all, enrich_category = "BP",
@@ -33,13 +25,39 @@ test_that("plot_modules_h runs without scale", {
     expect_s4_class(pq, "HeatmapList")
 })
 
+test_that("plot_modules_h validates module argument", {
+    expect_error(plot_modules_h(NULL, data.frame(), assay = 2), "data.frame")
+    expect_error(plot_modules_h(data.frame(), data.frame(), assay = 2), "at least 1 row")
+})
+
 test_that("plot_modules_h handles single module without enrichment", {
     mod_one <- example_module |>
         dplyr::filter(Module == levels(Module)[1])
 
     pq <- plot_modules_h(mod_one, merged,
-        assay = 2, scale = TRUE, fontsize = 6)
+        assay = 2, scale = TRUE, enrich_category = NULL, fontsize = 6)
     expect_s4_class(pq, "HeatmapList")
+})
+
+test_that("plot_modules_h handles Features without enrichment", {
+    hubs <- utils::head(example_module$Feature, 3)
+
+    expect_s4_class(plot_modules_h(example_module, merged,
+        assay = 2, enrich_list = NULL,
+        enrich_category = "Features", mark_features = hubs,
+        heatmap_width = 6, heatmap_height = 4), "HeatmapList")
+})
+
+test_that("plot_modules_h excludes Features from enrichment parameters", {
+    hubs <- utils::head(example_module$Feature, 3)
+
+    expect_s4_class(plot_modules_h(example_module, merged,
+        assay = 2, enrich_list = example_go$all,
+        enrich_category = c("BP", "Features", "CC"),
+        enrich_rank_by = c("p.adjust", "pvalue"),
+        enrich_top_n = c(3, 2),
+        enrich_threshold = c(0.05, 0.1), mark_features = hubs,
+        heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 })
 
 test_that("plot_modules_h supports multi-category enrichment and parameters", {
@@ -48,13 +66,13 @@ test_that("plot_modules_h supports multi-category enrichment and parameters", {
         ylabel = "Z-score of log2 expression",
         enrich_list = example_go$all,
         enrich_category = c("BP", "CC"),
-        enrich_top_n = 3,
+        enrich_top_n = c(3, 2),
         enrich_rank_by = c("p.adjust", "pvalue"),
         enrich_threshold = NULL,
         heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 })
 
-test_that("plot_modules_h handles mark_features with Hub features", {
+test_that("plot_modules_h handles mark_features with Features", {
     hubs <- utils::head(example_module$Feature, 3)
 
     # Character vector mark_features
@@ -62,7 +80,7 @@ test_that("plot_modules_h handles mark_features with Hub features", {
         merged, assay = 2, scale = TRUE,
         ylabel = "Z-score of log2 expression",
         enrich_list = example_go$all,
-        enrich_category = c("BP", "Hub features"),
+        enrich_category = c("BP", "Features"),
         mark_features = hubs,
         heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 
@@ -75,16 +93,63 @@ test_that("plot_modules_h handles mark_features with Hub features", {
         merged, assay = 2, scale = TRUE,
         ylabel = "Z-score of log2 expression",
         enrich_list = example_go$all,
-        enrich_category = c("BP", "Hub features"),
+        enrich_category = c("BP", "Features"),
         mark_features = hub_list,
         heatmap_width = 6, heatmap_height = 4), "HeatmapList")
 })
 
+test_that("plot_modules_h accepts feature annotation tables", {
+    feature_table <- data.frame(
+        Feature = utils::head(example_module$Feature, 3),
+        Set = c("Consensus", "Exp1", "Consensus"),
+        stringsAsFactors = FALSE
+    )
+
+    expect_s4_class(plot_modules_h(example_module,
+        merged, assay = 2, scale = TRUE,
+        enrich_list = example_go$all,
+        enrich_category = c("BP", "Features"),
+        mark_features = feature_table,
+        heatmap_width = 6, heatmap_height = 4), "HeatmapList")
+})
+
+test_that("plot_modules_h rejects categories absent from enrich_list", {
+    expect_error(plot_modules_h(example_module, merged, assay = 2,
+        enrich_category = "Hub features", mark_features =
+            utils::head(example_module$Feature, 3)),
+        "not present in 'enrich_list'")
+    expect_error(plot_modules_h(example_module, merged, assay = 2,
+        enrich_list = example_go$all, enrich_category = "Not a category"),
+        "not present in 'enrich_list'")
+})
+
 test_that("plot_modules_h validates enrichment parameters", {
     expect_error(plot_modules_h(example_module, merged, assay = 2,
-        enrich_category = 123), "character")
+        enrich_list = example_go$all, enrich_category = 123), "character")
     expect_error(plot_modules_h(example_module, merged, assay = 2,
-        enrich_top_n = -1), "positive")
+        enrich_list = example_go$all, enrich_category = NA_character_),
+        "missing or empty")
+    expect_error(plot_modules_h(example_module, merged, assay = 2,
+        enrich_list = example_go$all,
+        enrich_category = c("BP", "BP")), "must be unique")
+    expect_error(plot_modules_h(example_module, merged, assay = 2,
+        enrich_list = example_go$all, enrich_top_n = -1), "positive")
+    expect_error(plot_modules_h(example_module, merged, assay = 2,
+        enrich_list = example_go$all, enrich_rank_by = NA_character_),
+        "missing or empty")
+    expect_error(plot_modules_h(example_module, merged, assay = 2,
+        enrich_list = example_go$all, enrich_rank_by = ""),
+        "missing or empty")
+    expect_error(plot_modules_h(example_module, merged, assay = 2,
+        enrich_list = example_go$all, enrich_rank_by = "not_a_column"),
+        "not found")
+    enrich_non_numeric <- example_go$all
+    enrich_non_numeric$BP <- as.data.frame(enrich_non_numeric$BP)
+    enrich_non_numeric$BP$p.adjust <-
+        as.character(enrich_non_numeric$BP$p.adjust)
+    expect_error(plot_modules_h(example_module, merged, assay = 2,
+        enrich_list = enrich_non_numeric, enrich_rank_by = "p.adjust"),
+        "must be numeric")
     expect_error(plot_modules_h(example_module, merged, assay = 2,
         fontsize = -1), "positive")
 })
@@ -105,7 +170,7 @@ test_that(".reformat_cat_terms pivots category to module", {
     expect_equal(nrow(res$M2$MF), 0)
 })
 
-test_that(".textbox_grob handles word_wrap = TRUE, first_text_from = 'top'", {
+test_that(".textbox_grob handles supported text layout options", {
     pdf(file = NULL)
     on.exit(dev.off())
 
@@ -116,32 +181,28 @@ test_that(".textbox_grob handles word_wrap = TRUE, first_text_from = 'top'", {
     )
     expect_s3_class(res, "gTree")
     expect_true("textbox" %in% class(res))
-})
-
-test_that(".textbox_grob handles word_wrap = TRUE, first_text_from = 'bottom'", {
-    pdf(file = NULL)
-    on.exit(dev.off())
-
-    res <- TiDEomics:::.textbox_grob(
+    res_bottom <- TiDEomics:::.textbox_grob(
         text = c("hello world", "foo bar baz"),
         word_wrap = TRUE,
         first_text_from = "bottom"
     )
-    expect_s3_class(res, "gTree")
-    expect_true("textbox" %in% class(res))
-})
+    expect_s3_class(res_bottom, "gTree")
+    expect_true("textbox" %in% class(res_bottom))
 
-test_that(".textbox_grob handles first_text_from = 'bottom' without word_wrap", {
-    pdf(file = NULL)
-    on.exit(dev.off())
-
-    res <- TiDEomics:::.textbox_grob(
+    res_no_wrap <- TiDEomics:::.textbox_grob(
         text = c("hello", "world"),
         word_wrap = FALSE,
         first_text_from = "bottom"
     )
-    expect_s3_class(res, "gTree")
-    expect_true("textbox" %in% class(res))
+    expect_s3_class(res_no_wrap, "gTree")
+    expect_true("textbox" %in% class(res_no_wrap))
+
+    res_padding <- TiDEomics:::.textbox_grob(
+        text = "hello",
+        padding = grid::unit(c(2, 4), "mm")
+    )
+    expect_s3_class(res_padding, "gTree")
+    expect_true("textbox" %in% class(res_padding))
 })
 
 test_that(".textbox_grob errors on invalid first_text_from", {
@@ -155,18 +216,6 @@ test_that(".textbox_grob errors on invalid first_text_from", {
         ),
         "`first_text_from` can be 'top' or 'bottom'"
     )
-})
-
-test_that(".textbox_grob handles padding of length 2", {
-    pdf(file = NULL)
-    on.exit(dev.off())
-
-    res <- TiDEomics:::.textbox_grob(
-        text = "hello",
-        padding = grid::unit(c(2, 4), "mm")
-    )
-    expect_s3_class(res, "gTree")
-    expect_true("textbox" %in% class(res))
 })
 
 test_that(".multicol_textbox_grob returns nullGrob for empty cats", {
@@ -307,15 +356,15 @@ test_that("plot_modules_h with pre-existing col in enrichment", {
     )
 })
 
-test_that("plot_modules_h .check_len length mismatch message", {
-    expect_message(
+test_that("plot_modules_h rejects enrichment parameter length mismatch", {
+    expect_error(
         plot_modules_h(example_module, merged,
             assay = 2, scale = TRUE, enrich_list = example_go$all,
             enrich_category = c("BP", "CC"),
             enrich_rank_by = c("p.adjust", "pvalue", "qvalue"),
             enrich_top_n = 3,
             heatmap_width = 6, heatmap_height = 4),
-        "First 2 values used"
+        "length 1 or length 2"
     )
 })
 
@@ -369,7 +418,7 @@ test_that("plot_modules_h skips category with no matching terms", {
     expect_s4_class(
         plot_modules_h(example_module, merged,
             assay = 2, scale = TRUE, enrich_list = enrich_mock,
-            enrich_category = c("BP", "CC"), enrich_top_n = 3,
+            enrich_category = c("BP", "MF"), enrich_top_n = 3,
             heatmap_width = 6, heatmap_height = 4),
         "HeatmapList"
     )

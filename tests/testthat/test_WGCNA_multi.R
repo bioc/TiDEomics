@@ -7,29 +7,26 @@ test_that("extract_consensus_hubs returns consensus and per-dataset hubs", {
     n_mod <- length(unique(colors[colors != 0]))
 
     hubs <- extract_consensus_hubs(example_cons, top_n = 1)
-    expect_named(hubs, c("Consensus", "Exp1", "Exp2"))
-    expect_length(hubs$Consensus, n_mod)
-    expect_length(hubs$Exp1, n_mod)
-    expect_length(hubs$Exp2, n_mod)
-    # one consensus hub per non-grey module
-    expect_false(anyDuplicated(hubs$Consensus) > 0)
-    expect_false(any(colors[hubs$Consensus] %in% c("grey", "0", 0)))
+    expect_s3_class(hubs, "data.frame")
+    expect_named(hubs,
+        c("Feature", "Module", "Set", "Rank", "Score", "ScoreType"))
+    expect_equal(as.integer(table(hubs$Set)),
+        c(n_mod, n_mod, n_mod))
+    expect_setequal(unique(hubs$Set),
+        c("Consensus hub", "Exp1 hub", "Exp2 hub"))
+    expect_false(any(colors[hubs$Feature] %in% c("grey", "0", 0)))
+    expect_equal(hubs$Rank, rep(1L, nrow(hubs)))
 
-    # dataset-specific hubs exclude the consensus hub of their module
-    expect_false(any(hubs$Exp1 %in% hubs$Consensus))
-    expect_false(any(hubs$Exp2 %in% hubs$Consensus))
-    expect_false(any(colors[hubs$Exp1] %in% c("grey", "0", 0)))
-
-    # top_n = 2 returns more hubs; hubs are real shared features
+    # top_n = 2 returns more hubs from every set; overlaps are retained
     hubs2 <- extract_consensus_hubs(example_cons, top_n = 2)
-    expect_length(hubs2$Consensus, 2 * n_mod)
-    expect_false(anyDuplicated(hubs2$Consensus) > 0)
-    expect_true(all(hubs2$Consensus %in% example_cons$common_features))
-    expect_true(all(hubs2$Exp1 %in%
+    expect_equal(as.integer(table(hubs2$Set)),
+        c(2 * n_mod, 2 * n_mod, 2 * n_mod))
+    expect_true(all(hubs2$Feature %in% example_cons$common_features))
+    expect_true(all(hubs2$Feature[hubs2$Set == "Exp1 hub"] %in%
         colnames(example_cons$multiExpr$Exp1$data)))
-    expect_true(all(hubs2$Exp2 %in%
+    expect_true(all(hubs2$Feature[hubs2$Set == "Exp2 hub"] %in%
         colnames(example_cons$multiExpr$Exp2$data)))
-    expect_false(any(colors[hubs2$Consensus] %in% c("grey", "0", 0)))
+    expect_false(any(colors[hubs2$Feature] %in% c("grey", "0", 0)))
 })
 
 test_that("extract_consensus_hubs handles exclude_grey", {
@@ -39,10 +36,9 @@ test_that("extract_consensus_hubs handles exclude_grey", {
 
     hubs_grey <- extract_consensus_hubs(example_cons, top_n = 1,
         exclude_grey = FALSE)
-    expect_length(hubs_grey$Consensus, n_mod + n_grey_mod)
-    # the grey module contributes a hub only when not excluded
-    expect_length(hubs_grey$Consensus[colors[hubs_grey$Consensus] == 0],
-        n_grey_mod)
+    expect_equal(nrow(hubs_grey),
+        3 * (n_mod + n_grey_mod))
+    expect_equal(sum(hubs_grey$Module == "0"), 3 * n_grey_mod)
 })
 
 test_that("extract_consensus_hubs validates input", {
@@ -66,15 +62,17 @@ test_that("extract_consensus_hubs handles edge-case networks", {
     cons$network$colors[] <- 0
     expect_message(hubs <- extract_consensus_hubs(cons),
         "No modules to extract hubs from")
-    expect_named(hubs, c("Consensus", "Exp1", "Exp2"))
-    expect_equal(lengths(hubs), c(Consensus = 0, Exp1 = 0, Exp2 = 0))
+    expect_s3_class(hubs, "data.frame")
+    expect_named(hubs,
+        c("Feature", "Module", "Set", "Rank", "Score", "ScoreType"))
+    expect_equal(nrow(hubs), 0L)
 
     # unsigned networks use absolute kME values
     cons <- example_cons
     cons$parameters$networkType <- "unsigned"
     hubs <- extract_consensus_hubs(cons, top_n = 1)
-    expect_named(hubs, c("Consensus", "Exp1", "Exp2"))
-    expect_true(length(hubs$Consensus) >= 1)
+    expect_true(nrow(hubs) >= 1)
+    expect_true(all(grepl("abs", hubs$ScoreType)))
 
     # a module with no signedKME column triggers a missing-column error
     cons <- example_cons
@@ -203,8 +201,8 @@ test_that("run_consensus_WGCNA runs and returns consensus network", {
     expect_equal(cons$network$consensusQuantile, 0)
 
     hubs <- extract_consensus_hubs(cons, top_n = 2)
-    expect_named(hubs, c("Consensus", "Exp1", "Exp2"))
-    expect_true(all(hubs$Consensus %in% cons$common_features))
+    expect_s3_class(hubs, "data.frame")
+    expect_true(all(hubs$Feature %in% cons$common_features))
 })
 
 test_that("run_consensus_WGCNA warns when feature sets differ", {

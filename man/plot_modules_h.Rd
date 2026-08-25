@@ -13,7 +13,7 @@ plot_modules_h(
   profile_width = 3,
   profile_link_width = 1,
   enrich_list = NULL,
-  enrich_category = "BP",
+  enrich_category = NULL,
   enrich_rank_by = "p.adjust",
   enrich_top_n = 3,
   enrich_threshold = 0.05,
@@ -67,9 +67,10 @@ If NULL (default), no enrichment terms will be displayed.}
 
 \item{enrich_category}{Category name(s) of enrichment to display:
 a single string (e.g. \code{"BP"}), or a vector for multiple
-categories (e.g. \code{c("BP", "CC", "Hub features")}).
-When \code{"Hub features"} is included, \code{mark_features} are shown as a column
-in the textbox.}
+categories (e.g. \code{c("BP", "CC", "Features")}).
+When \code{"Features"} is included, \code{mark_features} are shown as a column
+in the textbox. Categories must be present in \code{enrich_list}, except
+for \code{"Features"}.}
 
 \item{enrich_rank_by}{Numeric column used to rank enrichment terms within
 each module. A single string (default: \code{"p.adjust"}) is recycled for all
@@ -86,7 +87,7 @@ Supply an integer vector of matching length for per-category control.}
 below this threshold are drawn in black, terms above in grey.
 Supply a vector matching \code{enrich_category} for per-category control,
 or set to \code{NULL} to skip colour-coding (all terms black).
-Set to \code{NA} for \code{"Hub features"}.}
+Set to \code{NA} for \code{"Features"}.}
 
 \item{fontsize}{Base font size (default: 8)}
 
@@ -95,15 +96,17 @@ Set to \code{NA} for \code{"Hub features"}.}
 \item{heatmap_height}{Height of the heatmap body in cm (default: 8).
 Set to \code{NULL} to auto-size.}
 
-\item{mark_features}{Features to label. Accepts two forms:
+\item{mark_features}{Features to label. Accepts three forms:
 \itemize{
 \item A \strong{character vector}: all marked in black on the left.
 \item A \strong{named list} of character vectors, e.g.
-\code{list("Hub 1" = c("gene1"), "Hub 2" = c("gene2"))}.
+\code{list("Set 1" = c("gene1"), "Set 2" = c("gene2"))}.
 Names become categories with auto-assigned colours (via
 \code{ggsci::pal_jco()}).
+\item A data frame with \code{Feature} and \code{Set} columns, such as the output
+of \code{extract_consensus_hubs()}. \code{Set} values become categories.
 Auto-routed: shown as \code{anno_mark} (left
-side, connecting lines) unless \code{"Hub features"} is present in
+side, connecting lines) unless \code{"Features"} is present in
 \code{enrich_category}, in which case an \code{anno_multicol_textbox} (right side)
 is built instead, using the same colours.
 Set to \code{NULL} (default) to skip marking.

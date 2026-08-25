@@ -145,9 +145,10 @@
 #'   If NULL (default), no enrichment terms will be displayed.
 #' @param enrich_category Category name(s) of enrichment to display:
 #'   a single string (e.g. `"BP"`), or a vector for multiple
-#'   categories (e.g. `c("BP", "CC", "Hub features")`).
-#'   When `"Hub features"` is included, `mark_features` are shown as a column
-#'   in the textbox.
+#'   categories (e.g. `c("BP", "CC", "Features")`).
+#'   When `"Features"` is included, `mark_features` are shown as a column
+#'   in the textbox. Categories must be present in `enrich_list`, except
+#'   for `"Features"`.
 #' @param enrich_rank_by Numeric column used to rank enrichment terms within
 #'   each module. A single string (default: `"p.adjust"`) is recycled for all
 #'   categories in `enrich_category`. Supply a character vector of matching
@@ -161,19 +162,21 @@
 #'   below this threshold are drawn in black, terms above in grey.
 #'   Supply a vector matching `enrich_category` for per-category control,
 #'   or set to `NULL` to skip colour-coding (all terms black).
-#'   Set to `NA` for `"Hub features"`.
+#'   Set to `NA` for `"Features"`.
 #' @param fontsize Base font size (default: 8)
 #' @param heatmap_width Width of the heatmap body in cm (default: 8)
 #' @param heatmap_height Height of the heatmap body in cm (default: 8).
 #'   Set to `NULL` to auto-size.
-#' @param mark_features Features to label. Accepts two forms:
+#' @param mark_features Features to label. Accepts three forms:
 #'     - A **character vector**: all marked in black on the left.
 #'     - A **named list** of character vectors, e.g.
-#'         `list("Hub 1" = c("gene1"), "Hub 2" = c("gene2"))`.
+#'         `list("Set 1" = c("gene1"), "Set 2" = c("gene2"))`.
 #'         Names become categories with auto-assigned colours (via
 #'         `ggsci::pal_jco()`).
+#'     - A data frame with `Feature` and `Set` columns, such as the output
+#'         of `extract_consensus_hubs()`. `Set` values become categories.
 #'     Auto-routed: shown as `anno_mark` (left
-#'     side, connecting lines) unless `"Hub features"` is present in
+#'     side, connecting lines) unless `"Features"` is present in
 #'     `enrich_category`, in which case an `anno_multicol_textbox` (right side)
 #'     is built instead, using the same colours.
 #'     Set to `NULL` (default) to skip marking.
@@ -233,7 +236,7 @@ plot_modules_h <- function(
     profile_width = 3,
     profile_link_width = 1,
     enrich_list = NULL,
-    enrich_category = "BP",
+    enrich_category = NULL,
     enrich_rank_by = "p.adjust",
     enrich_top_n = 3,
     enrich_threshold = 0.05,
@@ -250,11 +253,9 @@ plot_modules_h <- function(
     names = NULL
 ) {
     .check_df(module, "module")
-    .check_character(enrich_category, "enrich_category")
     .check_logical(scale, "scale")
     .check_positive(profile_width, "profile_width")
     .check_positive(profile_link_width, "profile_link_width")
-    .check_positive_int(enrich_top_n, "enrich_top_n")
     .check_positive(fontsize, "fontsize")
     .check_positive(heatmap_width, "heatmap_width")
     if (!is.null(heatmap_height))
@@ -266,14 +267,116 @@ plot_modules_h <- function(
         ylabel <- if (scale) "Z-score of log2 abundance" else "Log2 abundance"
     }
     .check_character(ylabel, "ylabel")
-    .check_character(enrich_rank_by, "enrich_rank_by")
     .check_character(suffix, "suffix")
     .check_character(device, "device")
-    if (!is.null(enrich_list))
+
+    # Transform hub/annotation tables to the named-list format.
+    if (is.data.frame(mark_features)) {
+        required_mark_cols <- c("Feature", "Set")
+        if (!all(required_mark_cols %in% colnames(mark_features))) {
+            stop("Data-frame 'mark_features' must contain 'Feature' and ",
+                "'Set' columns.")
+        }
+        if (anyNA(mark_features$Feature) || anyNA(mark_features$Set) ||
+            any(as.character(mark_features$Feature) == "") ||
+            any(as.character(mark_features$Set) == "")) {
+            stop("Data-frame 'mark_features' must not contain missing or ",
+                "empty 'Feature' or 'Set' values.")
+        }
+        mark_features <- split(
+            as.character(mark_features$Feature),
+            as.character(mark_features$Set)
+        )
+    }
+
+    # Enrichment parameters validation and recycling
+    if (!is.null(enrich_category)) {
+        .check_character(enrich_category, "enrich_category")
+    }
+    if (!is.null(enrich_list)) {
         .check_list(enrich_list, "enrich_list")
-    if (!is.null(enrich_threshold)) {
-        valid_vals <- enrich_threshold[!is.na(enrich_threshold)]
-        for (v in valid_vals) .check_pval(v, "enrich_threshold")
+    }
+    if (!is.null(enrich_category) &&
+        (anyNA(enrich_category) || any(enrich_category == ""))) {
+        stop("'enrich_category' must not contain missing or empty strings.")
+    }
+    valid_categories <- c(
+        if (is.null(enrich_list)) character(0) else names(enrich_list),
+        "Features"
+    )
+    invalid_categories <- setdiff(enrich_category, valid_categories)
+    if (length(invalid_categories) > 0L) {
+        stop("'enrich_category' contains categories not present in ",
+            "'enrich_list': ", paste(invalid_categories, collapse = ", "),
+            ". Use 'Features' for marked feature annotations.")
+    }
+    has_feature_text <- is.character(enrich_category) &&
+        !is.null(mark_features) && length(mark_features) > 0L &&
+        "Features" %in% enrich_category
+    if (!is.null(enrich_list)) {
+        if (anyNA(enrich_category) || any(enrich_category == "")) {
+            stop("'enrich_category' must not contain missing or empty strings.")
+        }
+        if (anyDuplicated(enrich_category)) {
+            stop("'enrich_category' values must be unique.")
+        }
+        n_cats <- length(enrich_category)
+        non_hub <- enrich_category != "Features"
+        n_enrich <- sum(non_hub)
+        enrich_rank_full <- rep(NA_character_, n_cats)
+        enrich_top_full <- rep(NA_integer_, n_cats)
+        enrich_threshold_full <- rep(NA_real_, n_cats)
+
+        if (n_enrich > 0L) {
+            .check_character(enrich_rank_by, "enrich_rank_by")
+            rank_input <- enrich_rank_by
+            if (length(rank_input) == n_cats) {
+                rank_input <- rank_input[non_hub]
+            }
+            rank_non_hub <- .recycle_enrich_param(
+                rank_input, "enrich_rank_by", n_enrich)
+            if (anyNA(rank_non_hub) || any(rank_non_hub == "")) {
+                stop("'enrich_rank_by' must not contain missing or empty ",
+                    "strings for enrichment categories.")
+            }
+            enrich_rank_full[non_hub] <- rank_non_hub
+
+            top_input <- enrich_top_n
+            if (length(top_input) == n_cats) {
+                top_input <- top_input[non_hub]
+            }
+            top_non_hub <- .recycle_enrich_param(
+                top_input, "enrich_top_n", n_enrich)
+            if (!is.numeric(top_non_hub) ||
+                any(!is.finite(top_non_hub))) {
+                stop("'enrich_top_n' must contain positive integers.")
+            }
+            for (v in top_non_hub) {
+                .check_positive_int(v, "enrich_top_n")
+            }
+            enrich_top_full[non_hub] <- top_non_hub
+
+            if (!is.null(enrich_threshold)) {
+                threshold_input <- enrich_threshold
+                if (length(threshold_input) == n_cats) {
+                    threshold_input <- threshold_input[non_hub]
+                }
+                threshold_non_hub <- .recycle_enrich_param(
+                    threshold_input, "enrich_threshold", n_enrich)
+                for (v in threshold_non_hub[!is.na(threshold_non_hub)]) {
+                    .check_pval(v, "enrich_threshold")
+                }
+                enrich_threshold_full[non_hub] <- threshold_non_hub
+            }
+        }
+        enrich_rank_by <- enrich_rank_full
+        enrich_top_n <- enrich_top_full
+        enrich_threshold <- enrich_threshold_full
+    } else {
+        enrich_category <- if (has_feature_text) "Features" else character(0)
+        enrich_rank_by <- if (has_feature_text) NA_character_ else character(0)
+        enrich_top_n <- if (has_feature_text) NA_integer_ else integer(0)
+        enrich_threshold <- if (has_feature_text) NA_real_ else numeric(0)
     }
     if (!is.null(mark_features)) {
         if (!is.character(mark_features) && !is.list(mark_features)) {
@@ -381,7 +484,7 @@ plot_modules_h <- function(
             feat_col <- feat_col[!duplicated(base::names(feat_col))]
             mark_state$feat_col <- feat_col
             mark_state$lgd <- ComplexHeatmap::Legend(
-                title = "Hub type", labels = cats,
+                title = "Feature set", labels = cats,
                 legend_gp = grid::gpar(fill = unname(cat_cols)),
                 labels_gp = grid::gpar(fontsize = fontsize),
                 title_gp = grid::gpar(fontsize = fontsize)
@@ -392,32 +495,6 @@ plot_modules_h <- function(
                 rep("black", length(all_feats)), all_feats
             )
         }
-    }
-
-    # Enrichment parameters validation and recycling
-    if (!is.null(enrich_list)) {
-        n_cats <- length(enrich_category)
-        .check_len <- function(val, name, n) {
-            if (length(val) > 1 && length(val) != n) {
-                message(
-                    "  ", name, " has length ", length(val),
-                    " but enrich_category has ", n, " categories. ",
-                    "First ", n, " values used."
-                )
-            }
-        }
-        .check_len(enrich_top_n, "enrich_top_n", n_cats)
-        .check_len(enrich_rank_by, "enrich_rank_by", n_cats)
-        .check_len(enrich_threshold, "enrich_threshold", n_cats)
-        enrich_top_n <- rep(enrich_top_n, length.out = n_cats)
-        enrich_rank_by <- rep(enrich_rank_by, length.out = n_cats)
-        if (is.null(enrich_threshold)) {
-            enrich_threshold <- rep(NA_real_, n_cats)
-        } else {
-            enrich_threshold <- rep(enrich_threshold,
-                length.out = n_cats)
-        }
-        enrich_threshold[enrich_category == "Hub features"] <- NA_real_
     }
 
     # Use a shared mapping so the same group has the same colour across
@@ -492,12 +569,17 @@ plot_modules_h <- function(
             anno_ggplot2_profile)
 
         # ---- Multi-category annotation (rightmost dataset only) ----
-        if (i == n_datasets && !is.null(enrich_list)) {
+        if (i == n_datasets &&
+            (!is.null(enrich_list) || has_feature_text)) {
             mod_levels <- levels(data_module_longs[[i]]$Module)
             mat_nrow <- nrow(mats[[i]])
 
             # Build combined multi-column textbox from all enrichment categories
-            enr_cats <- setdiff(enrich_category, "Hub features")
+            enr_cats <- if (is.null(enrich_list)) {
+                character(0)
+            } else {
+                setdiff(enrich_category, "Features")
+            }
             n_enr <- length(enr_cats)
 
             # First pass: collect per-category per-module term data
@@ -505,11 +587,21 @@ plot_modules_h <- function(
             for (ci in seq_len(n_enr)) {
                 cate <- enr_cats[ci]
                 if (is.null(enrich_list[[cate]])) next
-                top_n <- enrich_top_n[ci]
-                rank_by <- enrich_rank_by[ci]
-                p_thresh <- enrich_threshold[ci]
+                param_i <- match(cate, enrich_category)
+                top_n <- enrich_top_n[param_i]
+                rank_by <- enrich_rank_by[param_i]
+                enr_df <- as.data.frame(enrich_list[[cate]])
+                if (!rank_by %in% colnames(enr_df)) {
+                    stop("'enrich_rank_by' column '", rank_by,
+                        "' not found in enrich_list category '", cate, "'.")
+                }
+                if (!is.numeric(enr_df[[rank_by]])) {
+                    stop("'enrich_rank_by' column '", rank_by,
+                        "' in enrich_list category '", cate,
+                        "' must be numeric.")
+                }
 
-                termanno <- enrich_list[[cate]] |>
+                termanno <- enr_df |>
                     as.data.frame() |>
                     dplyr::mutate(
                         id = as.character(.module_labels(Cluster))
@@ -526,10 +618,11 @@ plot_modules_h <- function(
                 # Colour-coding
                 if ("col" %in% colnames(termanno)) {
                     termanno$col <- termanno[["col"]]
-                } else if (!is.na(p_thresh) && !is.null(p_thresh) &&
+                } else if (!is.na(enrich_threshold[param_i]) &&
                     rank_by %in% colnames(termanno)) {
                     termanno$col <- ifelse(
-                        termanno[[rank_by]] < p_thresh, "black", "grey70")
+                        termanno[[rank_by]] < enrich_threshold[param_i],
+                        "black", "grey70")
                 } else {
                     termanno$col <- "black"
                 }
@@ -559,17 +652,16 @@ plot_modules_h <- function(
                 cat_terms[[cate]] <- term_list
             }
 
-            # Hub features as a column in the multi-column textbox
-            if ("Hub features" %in% enrich_category &&
-                !is.null(mark_features) && length(mark_features) > 0) {
+            # Feature annotations as a column in the multi-column textbox
+            if (has_feature_text) {
                 hres <- .build_marked_features_anno(
                     mark_features, module, mark_state,
                     fontsize, mod_levels
                 )
                 if (!is.null(hres)) {
-                    cat_terms[["Hub features"]] <- hres
+                    cat_terms[["Features"]] <- hres
                 } else {
-                    message("Hub features: no marked features found ",
+                    message("Features: no marked features found ",
                         "in module data")
                 }
             }
@@ -615,10 +707,9 @@ plot_modules_h <- function(
         }
 
         # ---- anno_mark for key features (leftmost dataset only) ----
-        # Skip anno_mark if Hub features is already shown as textbox
-        has_hub_text <- "Hub features" %in% enrich_category
+        # Skip anno_mark if feature annotations are already shown as textbox
         left_ann <- NULL
-        if (i == 1 && length(mark_state$feat_col) > 0 && !has_hub_text) {
+        if (i == 1 && length(mark_state$feat_col) > 0 && !has_feature_text) {
             feats_present <- intersect(
                 base::names(mark_state$feat_col), rownames(mats[[i]])
             )
@@ -709,22 +800,17 @@ plot_modules_h <- function(
     draw_ht <- function() {
         lgd_list <- list(anno_ggplot2_profile_lgd)
         n_cats <- length(enrich_category)
-        if (is.null(enrich_threshold)) {
-            p_thresh <- rep(NA_real_, n_cats)
-        } else {
-            p_thresh <- rep(enrich_threshold, length.out = n_cats)
-        }
         for (ci in seq_len(n_cats)) {
             cate <- enrich_category[ci]
-            pt <- p_thresh[ci]
-            if (cate == "Hub features") {
+            pt <- enrich_threshold[ci]
+            if (cate == "Features") {
                 if (!is.null(mark_features) && length(mark_features) > 0) {
                     if (is.list(mark_features)) {
                         n_hub <- length(mark_features)
                         hub_cols <-
                             ggsci::pal_jco()(max(n_hub, 2))[seq_len(n_hub)]
                         hub_lgd <- ComplexHeatmap::Legend(
-                            title = "Hub features",
+                            title = "Features",
                             labels = base::names(mark_features),
                             type = "lines",
                             legend_gp = grid::gpar(col = unname(hub_cols),
@@ -736,8 +822,8 @@ plot_modules_h <- function(
                     } else {
                         # Character vector: black
                         hub_lgd <- ComplexHeatmap::Legend(
-                            title = "Hub features",
-                            labels = "Hub features",
+                            title = "Features",
+                            labels = "Features",
                             type = "lines",
                             legend_gp = grid::gpar(col = "black", lwd = 2),
                             labels_gp = grid::gpar(fontsize = fontsize),
@@ -746,8 +832,9 @@ plot_modules_h <- function(
                         lgd_list <- c(lgd_list, list(hub_lgd))
                     }
                 }
-            } else if (!is.null(enrich_list[[cate]]) &&
-                !is.na(pt) && !is.null(pt)) {
+            } else if (!is.null(enrich_list) &&
+                !is.null(enrich_list[[cate]]) &&
+                !is.na(pt)) {
                 go_lgd <- ComplexHeatmap::Legend(
                     title = cate,
                     labels = c(
@@ -763,8 +850,7 @@ plot_modules_h <- function(
                 lgd_list <- c(lgd_list, list(go_lgd))
             }
         }
-        has_hub_text <- "Hub features" %in% enrich_category
-        if (!is.null(mark_state$lgd) && !has_hub_text) {
+        if (!is.null(mark_state$lgd) && !has_feature_text) {
             lgd_list <- c(lgd_list, list(mark_state$lgd))
         }
 
@@ -816,4 +902,5 @@ plot_modules_h <- function(
     }
 
     draw_ht()
+    invisible(ht_list)
 }
