@@ -22,7 +22,7 @@ compatibility with the Bioconductor ecosystem.
 Key functionality:
 \itemize{
 \item \strong{Data preparation & normalisation:} \code{\link[=create_input]{create_input()}},
-\code{\link[=prepare_tide]{prepare_tide()}}, \code{\link[=split_groups]{split_groups()}}, \code{\link[=merge_replicates]{merge_replicates()}},
+\code{\link[=prepare_tide]{prepare_tide()}}, \code{\link[=combine_tide]{combine_tide()}}, \code{\link[=split_groups]{split_groups()}}, \code{\link[=merge_replicates]{merge_replicates()}},
 \code{\link[=merge_groups]{merge_groups()}}, \code{\link[=normalise_to_start]{normalise_to_start()}}, \code{\link[=impute_groups]{impute_groups()}}
 \item \strong{Quality control & exploration:} \code{\link[=plot_missing]{plot_missing()}},
 \code{\link[=plot_distribution]{plot_distribution()}}, \code{\link[=plot_ID]{plot_ID()}}, \code{\link[=plot_cv]{plot_cv()}},

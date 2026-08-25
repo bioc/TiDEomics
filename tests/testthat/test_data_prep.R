@@ -129,6 +129,39 @@ test_that("prepare_tide returns expected list structure", {
     expect_true(is.list(tide$WGCNA))
 })
 
+test_that("combine_tide combines results by numeric or named assay", {
+    combined_num <- combine_tide(
+        list(RNA = tide, Protein = tide), assay = 2)
+    combined_chr <- combine_tide(
+        list(RNA = tide, Protein = tide), assay = "norm")
+
+    expect_equal(combined_num$assay, "norm")
+    expect_equal(combined_num$shared_features,
+        combined_chr$shared_features)
+    expect_equal(combined_num$filter_summary$Dataset,
+        c("RNA", "Protein"))
+    expect_equal(length(combined_num$se_list_filtered_shared), 2L)
+    expect_equal(
+        rownames(combined_num$se_list_filtered_shared$RNA),
+        rownames(combined_num$se_list_filtered_shared$Protein)
+    )
+})
+
+test_that("combine_tide validates assay and input names", {
+    expect_error(
+        combine_tide(list(RNA = tide), assay = 3),
+        "Numeric 'assay' must be an integer"
+    )
+    expect_error(
+        combine_tide(list(RNA = tide), assay = "missing"),
+        "must be one of"
+    )
+    expect_error(
+        combine_tide(list(tide), assay = 1),
+        "must have unique, non-empty names"
+    )
+})
+
 test_that("prepare_tide validates parameters", {
     expect_error(
         prepare_tide(tutorial_data, tutorial_sample_info,
@@ -158,11 +191,14 @@ test_that("prepare_tide handles keep variants", {
         keep = "below_quantile", residual_threshold = NULL,
         min_groups = 2, n_keep = 100)
     expect_match(res_bq$filter_summary$threshold[3], "below_quantile = ")
+    expect_true(is.numeric(res_bq$filter_summary$residual_cutoff))
+    expect_true(is.finite(res_bq$filter_summary$residual_cutoff[3]))
 
     res_th <- prepare_tide(tutorial_data, tutorial_sample_info,
         keep = "threshold", residual_threshold = NULL,
         min_groups = 2, n_keep = 100)
     expect_match(res_th$filter_summary$threshold[3], "skipped")
+    expect_equal(res_th$filter_summary$residual_cutoff[3], 100)
 
     res <- prepare_tide(tutorial_data, tutorial_sample_info,
         keep = "below_quantile", residual_threshold = 0.9,

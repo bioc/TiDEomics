@@ -16,7 +16,7 @@
 #' @details
 #' Key functionality:
 #' - **Data preparation & normalisation:** [create_input()],
-#'   [prepare_tide()], [split_groups()], [merge_replicates()],
+#'   [prepare_tide()], [combine_tide()], [split_groups()], [merge_replicates()],
 #'   [merge_groups()], [normalise_to_start()], [impute_groups()]
 #' - **Quality control & exploration:** [plot_missing()],
 #'   [plot_distribution()], [plot_ID()], [plot_cv()],
