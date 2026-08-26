@@ -4,7 +4,12 @@
 \alias{theme_custom}
 \title{Custom ggplot2 theme}
 \usage{
-theme_custom(base_size = 8, panel_border = FALSE, legend_position = "right")
+theme_custom(
+  base_size = 8,
+  panel_border = FALSE,
+  legend_position = "right",
+  base_family = "sans"
+)
 }
 \arguments{
 \item{base_size}{Base font size (default: 8).}
@@ -13,6 +18,8 @@ theme_custom(base_size = 8, panel_border = FALSE, legend_position = "right")
 (default: FALSE).}
 
 \item{legend_position}{Legend position (default: "right").}
+
+\item{base_family}{Base font family (default: "sans").}
 }
 \value{
 A ggplot2 theme object.

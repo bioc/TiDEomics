@@ -43,10 +43,12 @@ output 'Overlap' when analysing with a background. (default: \code{FALSE})}
 \value{
 A named list of data.frames, one per database. Each data.frame
 has columns \code{Cluster}, \code{Description}, \code{p.adjust}
-(Adjusted.P.value from enrichR output),
+(Adjusted.P.value from enrichR output), \code{Count},
 \code{Combined.Score}, \code{Genes}, and any additional
 columns returned by the enrichR API. Compatible with
 \code{plot_modules_h(enrich_list = result, enrich_category = "DSigDB")}.
+\code{Count} is parsed from \code{Overlap} column, counted from \code{Genes} column when
+\code{Overlap} is absent or invalid, or \code{NA} if both are unavailable.
 }
 \description{
 Enrichment analysis of multiple gene sets against databases

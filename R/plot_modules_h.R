@@ -129,9 +129,8 @@
 #' @param scale Whether to scale the data (z-score) across samples for each
 #' feature (default is TRUE)
 #' @param ylabel Y axis label. A single character string shared by all
-#'   datasets, or a character vector with one entry per dataset
-#'   (multi-input only). Default: NULL, i.e. "Z-score of log2 abundance"
-#'   when scale = TRUE, "Log2 abundance" otherwise.
+#'   datasets. Default: NULL, i.e. "Z-score of log2 abundance" when
+#'   scale = TRUE, "Log2 abundance" otherwise.
 #' @param profile_width Width of the mean expression profile panels in cm
 #' (default: 3)
 #' @param profile_link_width Width of the link between heatmap
@@ -182,10 +181,10 @@
 #'     Set to `NULL` (default) to skip marking.
 #' @param width Width of the saved image (default is 16 (cm))
 #' @param height Height of the saved image (default is 12 (cm))
-#' @param res Resolution of the saved image (except pdf format)
+#' @param res Resolution of the saved image (except pdf and svg formats)
 #' (default: 300 (ppi))
 #' @param device Image file format(s) for saving. Can be a character
-#'   vector with one or more of `"png"`, `"pdf"`, `"tiff"`, `"jpeg"`
+#'   vector with one or more of `"png"`, `"pdf"`, `"svg"`, `"tiff"`, `"jpeg"`
 #'   (default: `"png"`)
 #' @param save Directory to save the plot, no saving if is NULL
 #' (default is NULL)
@@ -257,6 +256,7 @@ plot_modules_h <- function(
     .check_positive(profile_width, "profile_width")
     .check_positive(profile_link_width, "profile_link_width")
     .check_positive(fontsize, "fontsize")
+    fontfamily <- "sans"
     .check_positive(heatmap_width, "heatmap_width")
     if (!is.null(heatmap_height))
         .check_positive(heatmap_height, "heatmap_height")
@@ -395,10 +395,8 @@ plot_modules_h <- function(
     for (nm in nms) {
         .check_se_merged(se_obj_list[[nm]], arg = nm)
     }
-    if (length(ylabel) != 1L &&
-            length(ylabel) != n_datasets) {
-        stop("The 'ylabel' must be length 1 or length equal to the ",
-            "number of datasets (", n_datasets, ").")
+    if (length(ylabel) != 1L) {
+        stop("The 'ylabel' must be a single character string.")
     }
     if (!is.null(names)) {
         .check_character(names, "names")
@@ -520,17 +518,22 @@ plot_modules_h <- function(
                 dplyr::mutate(Time = as.numeric(as.character(Time))) |>
                 ggplot(aes(x = Time, y = Abundance, group = Feature)) +
                 stat_summary(aes(group = Group, color = Group),
-                    fun = mean, geom = "line", linewidth = 1
+                    fun = mean, geom = "line", linewidth = 1, na.rm = TRUE
                 ) +
                 scale_x_continuous(expand = c(0.05, 0)) + # default
                 scale_color_manual(values = group_colours[groups[[i]]]) +
                 labs(x = NULL, y = NULL, title = NULL) +
-                theme_custom(panel_border = TRUE) +
+                theme_custom(panel_border = TRUE,
+                    base_family = fontfamily) +
                 theme(
-                    text = element_text(size = fontsize),
+                    text = element_text(family = fontfamily,
+                        size = fontsize),
                     axis.text = element_blank(),
                     axis.title = element_blank(),
                     axis.ticks = element_blank(),
+                    panel.border = element_rect(
+                        fill = NA, colour = "grey65", linewidth = 0.35
+                    ),
                     legend.position = "none",
                     plot.margin = margin(0, 0, 0, 0, unit = "cm")
                 )
@@ -543,25 +546,38 @@ plot_modules_h <- function(
                 g <- ggplot2_profile_list[[nm]]
                 g <- grid::grid.grabExpr(grid::grid.draw(g))
                 grid::pushViewport(grid::viewport())
-                grid::grid.rect()
+                grid::grid.rect(gp = grid::gpar(
+                    fill = "transparent", col = "grey65", lwd = 0.35
+                ))
                 grid::grid.draw(g)
                 grid::popViewport()
                 if (nm == last_mod) {
                     grid::grid.xaxis(at = time_breaks_norm,
-                        label = as.character(time_breaks),
-                        gp = grid::gpar(fontsize = fontsize))
+                        label = FALSE,
+                        gp = grid::gpar(col = "grey65",
+                            fontsize = fontsize,
+                            fontfamily = fontfamily))
+                    grid::grid.text(as.character(time_breaks),
+                        x = grid::unit(time_breaks_norm, "npc"),
+                        y = grid::unit(-1.2, "lines"),
+                        just = c("center", "top"),
+                        gp = grid::gpar(col = "black",
+                            fontsize = fontsize,
+                            fontfamily = fontfamily))
                     grid::grid.text("Time",
                         x = unit(0.5, "npc"),
                         y = unit(0, "npc") - unit(6, "mm"),
                         just = c("center", "top"),
-                        gp = grid::gpar(fontsize = fontsize))
+                        gp = grid::gpar(fontsize = fontsize,
+                            fontfamily = fontfamily))
                 }
             },
             size = 1 / length(unique(mods[[i]])),
             gap = unit(0, "cm"),
             width = unit(profile_width, "cm"),
             side = "right",
-            link_gp = grid::gpar(fill = "grey95", col = "grey50"),
+            link_gp = grid::gpar(fill = "grey98", col = "grey65",
+                lwd = 0.5),
             link_width = unit(profile_link_width, "cm")
         )
 
@@ -627,8 +643,9 @@ plot_modules_h <- function(
                     termanno$col <- "black"
                 }
                 termanno$fontsize <- fontsize
+                termanno$fontfamily <- fontfamily
                 termanno <- termanno |>
-                    dplyr::select(id, term, col, fontsize)
+                    dplyr::select(id, term, col, fontsize, fontfamily)
 
                 if (nrow(termanno) == 0) next
 
@@ -637,13 +654,14 @@ plot_modules_h <- function(
                     if (nrow(tmp) == 0) {
                         data.frame(
                             text = character(0), col = character(0),
-                            fontsize = numeric(0),
+                            fontsize = numeric(0), fontfamily = character(0),
                             stringsAsFactors = FALSE
                         )
                     } else {
                         data.frame(
                             text = tmp$term, col = tmp$col,
                             fontsize = tmp$fontsize,
+                            fontfamily = tmp$fontfamily,
                             stringsAsFactors = FALSE
                         )
                     }
@@ -659,6 +677,12 @@ plot_modules_h <- function(
                     fontsize, mod_levels
                 )
                 if (!is.null(hres)) {
+                    hres <- lapply(hres, function(df) {
+                        if (nrow(df) > 0L) {
+                            df$fontfamily <- fontfamily
+                        }
+                        df
+                    })
                     cat_terms[["Features"]] <- hres
                 } else {
                     message("Features: no marked features found ",
@@ -690,12 +714,13 @@ plot_modules_h <- function(
                 combined_anno <- .anno_multicol_textbox(
                     align_to = align_to, text = text,
                     background_gp = grid::gpar(
-                        fill = "grey95", col = "grey50"
+                        fill = "grey98", col = "grey65"
                     ),
                     by = "anno_link", side = "right",
                     show_headers = TRUE,
                     header_gp = grid::gpar(
-                        fontsize = fontsize
+                        fontsize = fontsize, fontface = "bold",
+                        fontfamily = fontfamily
                     )
                 )
 
@@ -722,10 +747,10 @@ plot_modules_h <- function(
                         labels = feats_present,
                         side = "left",
                         labels_gp = grid::gpar(
-                            col = cols,
-                            fontsize = fontsize
+                            col = cols, fontsize = fontsize,
+                            fontfamily = fontfamily
                         ),
-                        link_gp = grid::gpar(col = "grey40", lwd = 0.5),
+                        link_gp = grid::gpar(col = "grey65", lwd = 0.5),
                         padding = unit(2, "mm")
                     )
                 )
@@ -739,10 +764,11 @@ plot_modules_h <- function(
             show_row_names = FALSE, show_column_names = FALSE,
             row_split = mods[[i]],
             row_gap = unit(0, "mm"), row_title_rot = 0,
-            row_title_gp = grid::gpar(fontsize = fontsize),
+            row_title_gp = grid::gpar(fontsize = fontsize,
+                fontface = "bold", fontfamily = fontfamily),
             layer_fun = function(j, i, x, y, w, h, fill, slice_r, slice_c) {
                 grid::grid.rect(gp = grid::gpar(
-                    fill = "transparent", col = "grey50"
+                    fill = "transparent", col = "grey65", lwd = 0.55
                 ))
             }, # draw frames around the modules
             column_split = sp_infos[[i]]$Group,
@@ -750,14 +776,17 @@ plot_modules_h <- function(
             column_title_gp =
                 grid::gpar(fontsize =
                     if (n_datasets > 1) (fontsize + 2) else fontsize,
-                    fontface = if (n_datasets > 1) "bold" else "plain"),
+                    fontface = if (n_datasets > 1) "bold" else "plain",
+                    fontfamily = fontfamily),
             column_title_side = "top",
-            column_names_gp = grid::gpar(fontsize = fontsize),
+            column_names_gp = grid::gpar(fontsize = fontsize,
+                fontfamily = fontfamily),
             top_annotation = if (n_datasets > 1) {
                 ComplexHeatmap::HeatmapAnnotation(
                     Group = ComplexHeatmap::anno_block(
                         labels = groups[[i]],
-                        labels_gp = grid::gpar(fontsize = fontsize),
+                        labels_gp = grid::gpar(fontsize = fontsize,
+                            fontface = "bold", fontfamily = fontfamily),
                         gp = grid::gpar(fill = NA, col = NA),
                         height = grid::unit(6, "mm")
                     ),
@@ -768,10 +797,13 @@ plot_modules_h <- function(
             },
             right_annotation = right_ann,
             use_raster = FALSE,
+            show_heatmap_legend = i == n_datasets,
             heatmap_legend_param = list(
-                title = if (length(ylabel) == 1L) ylabel else ylabel[i],
-                title_gp = grid::gpar(fontsize = fontsize),
-                labels_gp = grid::gpar(fontsize = fontsize)
+                title = ylabel,
+                labels_gp = grid::gpar(fontsize = fontsize,
+                    fontfamily = fontfamily),
+                title_gp = grid::gpar(fontsize = fontsize,
+                    fontface = "bold", fontfamily = fontfamily)
             ),
             width = grid::unit(heatmap_width, "cm"),
             height = if (is.null(heatmap_height)) NULL
@@ -786,8 +818,10 @@ plot_modules_h <- function(
         legend_gp = grid::gpar(
             fill = unname(group_colours)
         ),
-        labels_gp = grid::gpar(fontsize = fontsize),
-        title_gp = grid::gpar(fontsize = fontsize)
+        labels_gp = grid::gpar(fontsize = fontsize,
+            fontfamily = fontfamily),
+        title_gp = grid::gpar(fontsize = fontsize,
+            fontface = "bold", fontfamily = fontfamily)
     )
 
     ht_list <- heatmaps[[1]]
@@ -815,8 +849,10 @@ plot_modules_h <- function(
                             type = "lines",
                             legend_gp = grid::gpar(col = unname(hub_cols),
                                 lwd = 2),
-                            labels_gp = grid::gpar(fontsize = fontsize),
-                            title_gp = grid::gpar(fontsize = fontsize)
+                            labels_gp = grid::gpar(fontsize = fontsize,
+                                fontfamily = fontfamily),
+                            title_gp = grid::gpar(fontsize = fontsize,
+                                fontface = "bold", fontfamily = fontfamily)
                         )
                         lgd_list <- c(lgd_list, list(hub_lgd))
                     } else {
@@ -826,8 +862,10 @@ plot_modules_h <- function(
                             labels = "Features",
                             type = "lines",
                             legend_gp = grid::gpar(col = "black", lwd = 2),
-                            labels_gp = grid::gpar(fontsize = fontsize),
-                            title_gp = grid::gpar(fontsize = fontsize)
+                            labels_gp = grid::gpar(fontsize = fontsize,
+                                fontfamily = fontfamily),
+                            title_gp = grid::gpar(fontsize = fontsize,
+                                fontface = "bold", fontfamily = fontfamily)
                         )
                         lgd_list <- c(lgd_list, list(hub_lgd))
                     }
@@ -844,8 +882,10 @@ plot_modules_h <- function(
                     type = "lines",
                     legend_gp = grid::gpar(col = c("black", "grey70"),
                         lwd = 2),
-                    labels_gp = grid::gpar(fontsize = fontsize),
-                    title_gp = grid::gpar(fontsize = fontsize)
+                    labels_gp = grid::gpar(fontsize = fontsize,
+                        fontfamily = fontfamily),
+                    title_gp = grid::gpar(fontsize = fontsize,
+                        fontface = "bold", fontfamily = fontfamily)
                 )
                 lgd_list <- c(lgd_list, list(go_lgd))
             }
@@ -869,27 +909,32 @@ plot_modules_h <- function(
         }
 
         prefix <- if (n_datasets > 1L) "WGCNA_h_multi_" else "WGCNA_h_"
+        file_base <- file.path(save, paste0(prefix, suffix, Sys.Date()))
         for (ext in device) {
             if (ext == "pdf") {
-                grDevices::pdf(
-                    file = file.path(save, paste0(prefix, suffix,
-                        Sys.Date(), ".", ext)),
+                grDevices::cairo_pdf(
+                    file = paste0(file_base, ".", ext),
                     width = width / 2.54,
-                    height = height / 2.54
+                    height = height / 2.54,
+                    family = fontfamily
+                )
+            } else if (ext == "svg") {
+                grDevices::svg(
+                    filename = paste0(file_base, ".", ext),
+                    width = width / 2.54,
+                    height = height / 2.54,
+                    family = fontfamily
                 )
             } else if (ext == "png") {
-                grDevices::png(file.path(save, paste0(prefix,
-                    suffix, Sys.Date(), ".", ext)),
+                grDevices::png(paste0(file_base, ".", ext),
                     width = width, height = height,
                     units = "cm", res = res)
             } else if (ext == "tiff") {
-                grDevices::tiff(file.path(save, paste0(prefix,
-                    suffix, Sys.Date(), ".", ext)),
+                grDevices::tiff(paste0(file_base, ".", ext),
                     width = width, height = height,
                     units = "cm", res = res)
             } else if (ext == "jpeg") {
-                grDevices::jpeg(file.path(save, paste0(prefix,
-                    suffix, Sys.Date(), ".", ext)),
+                grDevices::jpeg(paste0(file_base, ".", ext),
                     width = width, height = height,
                     units = "cm", res = res)
             } else {

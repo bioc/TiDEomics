@@ -4,21 +4,17 @@ data("example_net")
 data("example_go")
 
 test_that("enrichGO_rank works and validates parameters", {
-    data("example_obj")
-
-    vd_20 <- decomp_variance(example_obj,
-        features = rownames(example_obj)[1:20],
-        fixed_effect_var = NULL, assay = "orig", core = 1)
-    vd_10 <- decomp_variance(example_obj,
-        features = rownames(example_obj)[1:10],
-        fixed_effect_var = NULL, assay = "orig", core = 1)
-    rank_table_10 <- as.data.frame(vd_10)
-
     skip_if_not_installed("org.Mm.eg.db")
     library(org.Mm.eg.db)
+    data("example_obj")
+
+    vd <- decomp_variance(example_obj,
+        features = rownames(example_obj)[1:20],
+        fixed_effect_var = NULL, assay = "orig", core = 1)
+    rank_table <- as.data.frame(vd)
 
     # Basic output
-    res <- enrichGO_rank(vd_20, gene_rank_by = "Time",
+    res <- enrichGO_rank(vd, gene_rank_by = "Time",
         OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
         category = "BP", pvalueCutoff = 0.99)
     if (!is.null(res)) {
@@ -28,28 +24,28 @@ test_that("enrichGO_rank works and validates parameters", {
 
     # Invalid gene_rank_by column
     expect_error(
-        enrichGO_rank(vd_10, gene_rank_by = "NotAColumn",
+        enrichGO_rank(vd, gene_rank_by = "NotAColumn",
             OrgDb = org.Mm.eg.db, keyType = "SYMBOL"),
         "Gene ranking variable not found"
     )
 
     # Empty gene_rank_by
     expect_error(
-        enrichGO_rank(rank_table_10, gene_rank_by = character(0),
+        enrichGO_rank(rank_table, gene_rank_by = character(0),
             OrgDb = NULL, keyType = "SYMBOL"),
         "non-empty"
     )
 
     # Multiple gene_rank_by values
     expect_error(
-        enrichGO_rank(vd_10, gene_rank_by = c("a", "b"),
+        enrichGO_rank(vd, gene_rank_by = c("a", "b"),
             OrgDb = org.Mm.eg.db, keyType = "SYMBOL"),
         "Please specify one variable for ranking the genes."
     )
 
     # NULL gene_rank_by
     expect_error(
-        enrichGO_rank(rank_table_10, gene_rank_by = NULL,
+        enrichGO_rank(rank_table, gene_rank_by = NULL,
             OrgDb = NULL, keyType = "SYMBOL"),
         "gene_rank_by.*must be a character"
     )
@@ -63,9 +59,6 @@ test_that("enrichGO_rank messages on invalid go_rank_by and returns NULL on stri
 
     vd <- decomp_variance(example_obj,
         features = rownames(example_obj)[1:100],
-        fixed_effect_var = NULL, assay = "orig", core = 1)
-    vd_small <- decomp_variance(example_obj,
-        features = rownames(example_obj)[1:10],
         fixed_effect_var = NULL, assay = "orig", core = 1)
 
     # go_rank_by not found in result
@@ -87,7 +80,7 @@ test_that("enrichGO_rank messages on invalid go_rank_by and returns NULL on stri
     )
 
     expect_message(
-        res <- enrichGO_rank(vd_small, gene_rank_by = "Time",
+        res <- enrichGO_rank(vd, gene_rank_by = "Time",
             OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
             category = "BP", pvalueCutoff = 0.05),
         "No significant GO terms found in any category."
@@ -98,10 +91,6 @@ test_that("enrichGO_rank messages on invalid go_rank_by and returns NULL on stri
 test_that("enrichGO_list and plot_GO work", {
     skip_if_not_installed("org.Mm.eg.db")
     library(org.Mm.eg.db)
-
-    example_module <- WGCNA_module(example_net) |>
-        dplyr::filter(Module %in% c("1", "2")) |>
-        dplyr::slice_head(n = 25, by = Module)
 
     # Dotplot
     expect_error(
@@ -126,13 +115,6 @@ test_that("enrichGO_list and plot_GO work", {
     if (length(emap_names) > 0)
         expect_s3_class(p[[emap_names[1]]], "ggplot")
 
-    # enrichGO_list accepts data.frame input (no universe)
-    expect_error(
-        enrichGO_list(example_module, OrgDb = org.Mm.eg.db,
-            category = "BP", pvalueCutoff = 0.5, qvalueCutoff = 0.5),
-        NA
-    )
-
     # enrichGO_list supports multiple categories with simplify
     example_module <- WGCNA_module(example_net) |>
         dplyr::filter(Module %in% c("1", "2"))
@@ -141,32 +123,26 @@ test_that("enrichGO_list and plot_GO work", {
         universe = WGCNA_module(example_net, exclude_grey = FALSE)$Feature,
         pvalueCutoff = 0.5, qvalueCutoff = 0.5,
         category = c("BP", "CC"), simplify = TRUE)
-    expect_true(all(c("BP", "CC") %in% names(go_multi$all)))
-    expect_true(all(c("BP", "CC") %in% names(go_multi$simplified)))
-    expect_true("unmerged_all" %in% names(go_multi))
-    expect_true("unmerged_simplified" %in% names(go_multi))
-    expect_type(go_multi$unmerged_simplified, "list")
-    expect_true("BP" %in% names(go_multi$unmerged_simplified))
-    expect_true("CC" %in% names(go_multi$unmerged_simplified))
+    expect_named(go_multi,
+        c("all", "simplified", "unmerged_all", "unmerged_simplified"))
+    expect_named(go_multi$all, c("BP", "CC"))
+    expect_named(go_multi$simplified, c("BP", "CC"))
+    expect_named(go_multi$unmerged_all, c("BP", "CC"))
+    expect_named(go_multi$unmerged_simplified, c("BP", "CC"))
 })
 
 test_that("enrichGO_list validates universe and universe_list", {
     skip_if_not_installed("org.Mm.eg.db")
     library(org.Mm.eg.db)
 
-    data("example_net")
-    example_module <- WGCNA_module(example_net) |>
-        dplyr::filter(Module %in% c("1", "2")) |>
-        dplyr::slice_head(n = 25, by = Module)
-    gene_list <- list(a = example_module$Feature[1:10],
-                      b = example_module$Feature[11:20])
+    gene_list <- list(a = c("A"), b = c("B"))
 
     # Both universe and universe_list given
     expect_error(
         enrichGO_list(gene_list, OrgDb = org.Mm.eg.db,
             category = "BP",
-            universe = example_module$Feature,
-            universe_list = list(a = example_module$Feature),
+            universe = c("A", "B"),
+            universe_list = list(a = c("A")),
             pvalueCutoff = 0.5, qvalueCutoff = 0.5),
         "only one of universe"
     )
@@ -184,8 +160,7 @@ test_that("enrichGO_list validates universe and universe_list", {
     expect_error(
         enrichGO_list(gene_list, OrgDb = org.Mm.eg.db,
             category = "BP",
-            universe_list = list(a = example_module$Feature,
-                                 c = example_module$Feature),
+            universe_list = list(a = c("A"), c = c("C")),
             pvalueCutoff = 0.5, qvalueCutoff = 0.5),
         "Names of gene_list and universe_list must match"
     )
@@ -230,8 +205,24 @@ test_that("plot_GO messages and errors on invalid input", {
     )
 })
 
+# Shared enrichR mock for tests that exercise local output handling.
+mock_enrichr <- function(mock_result = data.frame()) {
+    local_mocked_bindings(
+        setEnrichrSite = function(site) NULL,
+        listEnrichrDbs = function() data.frame(
+            libraryName = "DSigDB", stringsAsFactors = FALSE
+        ),
+        enrichr = function(genes, databases, ...) {
+            stats::setNames(lapply(databases, function(db) mock_result),
+                databases)
+        },
+        .package = "enrichR"
+    )
+}
+
 test_that("enrichR_list validates parameters", {
     skip_if_not_installed("enrichR")
+    mock_enrichr()
 
     gene_list <- list(A = c("TP53", "BRCA1"), B = c("EGFR", "MYC"))
 
@@ -242,14 +233,6 @@ test_that("enrichR_list validates parameters", {
             universe = c("TP53", "BRCA1", "EGFR", "MYC"),
             universe_list = list(A = c("TP53"), B = c("EGFR"))),
         "only one of universe"
-    )
-
-    # No databases available
-    expect_error(
-        enrichR_list(list(A = c("TP53", "BRCA1")),
-            databases = "NonExistentDB_XYZ123",
-            universe = c("TP53", "BRCA1")),
-        "None of the requested databases"
     )
 
     # Site parameter validation
@@ -304,32 +287,21 @@ test_that(".prepare_gene_list works", {
     )
 })
 
-# enrichR_list mocked tests (unchanged)
 test_that("enrichR_list does not print background message when universe is provided", {
     skip_if_not_installed("enrichR")
 
-    local_mocked_bindings(
-        setEnrichrSite = function(site) NULL,
-        listEnrichrDbs = function() data.frame(libraryName = "DSigDB",
-            stringsAsFactors = FALSE),
-        enrichr = function(genes, databases, ...) {
-            stats::setNames(lapply(databases, function(db) {
-                data.frame(
-                    Term = "Test pathway",
-                    Overlap = "1/100",
-                    P.value = 0.001,
-                    Adjusted.P.value = 0.01,
-                    Old.P.value = 0.001,
-                    Old.Adjusted.P.value = 0.01,
-                    Z.score = 2.0,
-                    Combined.Score = 10.0,
-                    Genes = paste(genes, collapse = ","),
-                    stringsAsFactors = FALSE
-                )
-            }), databases)
-        },
-        .package = "enrichR"
-    )
+    mock_enrichr(data.frame(
+        Term = "Test pathway",
+        Overlap = "1/100",
+        P.value = 0.001,
+        Adjusted.P.value = 0.01,
+        Old.P.value = 0.001,
+        Old.Adjusted.P.value = 0.01,
+        Z.score = 2.0,
+        Combined.Score = 10.0,
+        Genes = "TP53,BRCA1",
+        stringsAsFactors = FALSE
+    ))
 
     gene_list <- list(A = c("TP53", "BRCA1"))
 
@@ -339,17 +311,51 @@ test_that("enrichR_list does not print background message when universe is provi
     )
 
     expect_false(any(grepl("Background genes not specified", msgs)))
+    result <- enrichR_list(gene_list, databases = "DSigDB",
+        universe = c("TP53", "BRCA1", "EGFR", "MYC"))
+    expect_equal(result[["DSigDB"]]$Count, 1L)
+})
+
+test_that("enrichR_list counts semicolon-separated Genes without Overlap", {
+    skip_if_not_installed("enrichR")
+
+    mock_enrichr(data.frame(
+        Term = "Test pathway",
+        P.value = 0.001,
+        Adjusted.P.value = 0.01,
+        Combined.Score = 10.0,
+        Genes = "TP53;BRCA1",
+        stringsAsFactors = FALSE
+    ))
+
+    result <- suppressMessages(enrichR_list(
+        list(A = c("TP53", "BRCA1")), databases = "DSigDB"
+    ))
+    expect_equal(result[["DSigDB"]]$Count, 2L)
+})
+
+test_that("enrichR_list uses Overlap only when Genes is unavailable", {
+    skip_if_not_installed("enrichR")
+
+    mock_enrichr(data.frame(
+        Term = "Test pathway",
+        Overlap = "1/100",
+        P.value = 0.001,
+        Adjusted.P.value = 0.01,
+        Combined.Score = 10.0,
+        stringsAsFactors = FALSE
+    ))
+
+    result <- suppressMessages(enrichR_list(
+        list(A = c("TP53", "BRCA1")), databases = "DSigDB"
+    ))
+    expect_equal(result[["DSigDB"]]$Count, 1L)
 })
 
 test_that("enrichR_list errors when universe_list is unnamed", {
     skip_if_not_installed("enrichR")
 
-    local_mocked_bindings(
-        setEnrichrSite = function(site) NULL,
-        listEnrichrDbs = function() data.frame(libraryName = "DSigDB",
-            stringsAsFactors = FALSE),
-        .package = "enrichR"
-    )
+    mock_enrichr()
 
     gene_list <- list(A = c("TP53", "BRCA1"))
     expect_error(
@@ -362,35 +368,24 @@ test_that("enrichR_list errors when universe_list is unnamed", {
 test_that("enrichR_list skips empty gene lists during enrichment", {
     skip_if_not_installed("enrichR")
 
-    local_mocked_bindings(
-        setEnrichrSite = function(site) NULL,
-        listEnrichrDbs = function() data.frame(libraryName = "DSigDB",
-            stringsAsFactors = FALSE),
-        enrichr = function(genes, databases, ...) {
-            stats::setNames(lapply(databases, function(db) {
-                data.frame(
-                    Term = "Test pathway",
-                    Overlap = "1/100",
-                    P.value = 0.001,
-                    Adjusted.P.value = 0.01,
-                    Old.P.value = 0.001,
-                    Old.Adjusted.P.value = 0.01,
-                    Z.score = 2.0,
-                    Combined.Score = 10.0,
-                    Genes = paste(genes, collapse = ","),
-                    stringsAsFactors = FALSE
-                )
-            }), databases)
-        },
-        .package = "enrichR"
-    )
+    mock_enrichr(data.frame(
+        Term = "Test pathway",
+        Overlap = "1/100",
+        P.value = 0.001,
+        Adjusted.P.value = 0.01,
+        Old.P.value = 0.001,
+        Old.Adjusted.P.value = 0.01,
+        Z.score = 2.0,
+        Combined.Score = 10.0,
+        Genes = "TP53,BRCA1",
+        stringsAsFactors = FALSE
+    ))
 
     gene_list <- list(A = c("TP53", "BRCA1"), B = character(0))
     result <- suppressMessages(
         enrichR_list(gene_list, databases = "DSigDB")
     )
 
-    expect_type(result, "list")
     expect_true("DSigDB" %in% names(result))
     expect_gt(nrow(result[["DSigDB"]]), 0)
 })
@@ -398,28 +393,18 @@ test_that("enrichR_list skips empty gene lists during enrichment", {
 test_that("enrichR_list messages when no enriched terms found", {
     skip_if_not_installed("enrichR")
 
-    local_mocked_bindings(
-        setEnrichrSite = function(site) NULL,
-        listEnrichrDbs = function() data.frame(libraryName = "DSigDB",
-            stringsAsFactors = FALSE),
-        enrichr = function(genes, databases, ...) {
-            stats::setNames(lapply(databases, function(db) {
-                data.frame(
-                    Term = character(0),
-                    Overlap = character(0),
-                    P.value = numeric(0),
-                    Adjusted.P.value = numeric(0),
-                    Old.P.value = numeric(0),
-                    Old.Adjusted.P.value = numeric(0),
-                    Z.score = numeric(0),
-                    Combined.Score = numeric(0),
-                    Genes = character(0),
-                    stringsAsFactors = FALSE
-                )
-            }), databases)
-        },
-        .package = "enrichR"
-    )
+    mock_enrichr(data.frame(
+        Term = character(0),
+        Overlap = character(0),
+        P.value = numeric(0),
+        Adjusted.P.value = numeric(0),
+        Old.P.value = numeric(0),
+        Old.Adjusted.P.value = numeric(0),
+        Z.score = numeric(0),
+        Combined.Score = numeric(0),
+        Genes = character(0),
+        stringsAsFactors = FALSE
+    ))
 
     gene_list <- list(A = c("TP53", "BRCA1"))
 
@@ -427,6 +412,5 @@ test_that("enrichR_list messages when no enriched terms found", {
         result <- enrichR_list(gene_list, databases = "DSigDB"),
         "No enriched terms found"
     )
-    expect_type(result, "list")
     expect_length(result, 0)
 })

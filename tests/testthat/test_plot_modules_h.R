@@ -133,22 +133,27 @@ test_that("plot_modules_h validates enrichment parameters", {
         enrich_list = example_go$all,
         enrich_category = c("BP", "BP")), "must be unique")
     expect_error(plot_modules_h(example_module, merged, assay = 2,
-        enrich_list = example_go$all, enrich_top_n = -1), "positive")
+        enrich_list = example_go$all, enrich_category = "BP",
+        enrich_top_n = -1), "positive")
     expect_error(plot_modules_h(example_module, merged, assay = 2,
-        enrich_list = example_go$all, enrich_rank_by = NA_character_),
+        enrich_list = example_go$all, enrich_category = "BP",
+        enrich_rank_by = NA_character_),
         "missing or empty")
     expect_error(plot_modules_h(example_module, merged, assay = 2,
-        enrich_list = example_go$all, enrich_rank_by = ""),
+        enrich_list = example_go$all, enrich_category = "BP",
+        enrich_rank_by = ""),
         "missing or empty")
     expect_error(plot_modules_h(example_module, merged, assay = 2,
-        enrich_list = example_go$all, enrich_rank_by = "not_a_column"),
+        enrich_list = example_go$all, enrich_category = "BP",
+        enrich_rank_by = "not_a_column"),
         "not found")
     enrich_non_numeric <- example_go$all
     enrich_non_numeric$BP <- as.data.frame(enrich_non_numeric$BP)
     enrich_non_numeric$BP$p.adjust <-
         as.character(enrich_non_numeric$BP$p.adjust)
     expect_error(plot_modules_h(example_module, merged, assay = 2,
-        enrich_list = enrich_non_numeric, enrich_rank_by = "p.adjust"),
+        enrich_list = enrich_non_numeric, enrich_category = "BP",
+        enrich_rank_by = "p.adjust"),
         "must be numeric")
     expect_error(plot_modules_h(example_module, merged, assay = 2,
         fontsize = -1), "positive")

@@ -32,10 +32,12 @@
 #'
 #' @returns A named list of data.frames, one per database. Each data.frame
 #'   has columns `Cluster`, `Description`, `p.adjust`
-#'   (Adjusted.P.value from enrichR output),
+#'   (Adjusted.P.value from enrichR output), `Count`,
 #'   `Combined.Score`, `Genes`, and any additional
 #'   columns returned by the enrichR API. Compatible with
 #'   `plot_modules_h(enrich_list = result, enrich_category = "DSigDB")`.
+#'   `Count` is parsed from `Overlap` column, counted from `Genes` column when
+#'   `Overlap` is absent or invalid, or `NA` if both are unavailable.
 #' @export
 #'
 #' @examples
@@ -147,12 +149,46 @@ enrichR_list <- function(
         }
     }
 
+    count_overlap <- function(x) {
+        if (length(x) != 1L || is.na(x)) return(NA_integer_)
+        value <- sub("/.*$", "", trimws(as.character(x)))
+        value <- suppressWarnings(as.integer(value))
+        if (is.na(value) || value < 0L) return(NA_integer_)
+        value
+    }
+
+    count_genes <- function(x) {
+        if (length(x) != 1L || is.na(x)) return(NA_integer_)
+        genes <- trimws(strsplit(as.character(x), "[,;]")[[1]])
+        as.integer(length(unique(genes[nzchar(genes)])))
+    }
+
     for (db in names(db_tables)) {
+        overlap_counts <- if ("Overlap" %in% colnames(db_tables[[db]])) {
+            unname(vapply(db_tables[[db]]$Overlap,
+                count_overlap, integer(1)))
+        } else {
+            rep(NA_integer_, nrow(db_tables[[db]]))
+        }
+        count_values <- overlap_counts
+        use_genes <- anyNA(count_values) &&
+            "Genes" %in% colnames(db_tables[[db]])
+        if (use_genes) {
+            missing_rows <- which(is.na(count_values))
+            gene_counts <- unname(vapply(
+                db_tables[[db]]$Genes[missing_rows],
+                count_genes, integer(1)))
+            count_values[missing_rows] <- gene_counts
+        }
+        if (!("Genes" %in% colnames(db_tables[[db]]))) {
+            db_tables[[db]]$Genes <- NA_character_
+        }
         db_tables[[db]] <- db_tables[[db]] |>
             dplyr::rename(Description = Term,
                         p.adjust = Adjusted.P.value) |>
+            dplyr::mutate(Count = count_values) |>
             dplyr::select(Cluster, Description, p.adjust,
-                Combined.Score, Genes,
+                Count, Combined.Score, Genes,
                 dplyr::everything()) |>
             dplyr::arrange(Cluster, p.adjust)
         rownames(db_tables[[db]]) <- NULL

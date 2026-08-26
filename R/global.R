@@ -60,6 +60,7 @@ utils::globalVariables(c(
 #' @param panel_border Logical, whether to draw a border around the panel
 #'   (default: FALSE).
 #' @param legend_position Legend position (default: "right").
+#' @param base_family Base font family (default: "sans").
 #'
 #' @return A ggplot2 theme object.
 #' @import ggplot2
@@ -73,12 +74,13 @@ utils::globalVariables(c(
 #'     theme_custom(base_size = 10)
 theme_custom <- function(
     base_size = 8, panel_border = FALSE,
-    legend_position = "right"
+    legend_position = "right", base_family = "sans"
 ) {
     .check_character(legend_position, "legend_position")
     legend_position <- match.arg(legend_position,
         c("right", "left", "bottom", "top", "none"))
     .check_logical(panel_border, "panel_border")
+    .check_character(base_family, "base_family")
     .check_positive(base_size, "base_size")
     half_line <- base_size / 2
     if (panel_border) {
@@ -89,9 +91,10 @@ theme_custom <- function(
         panel.border <- element_blank()
         axis.line <- element_line(color = "black", linewidth = 0.5)
     }
-    theme_minimal(base_size = base_size) +
+    theme_minimal(base_size = base_size, base_family = base_family) +
         theme(
-            text = element_text(size = base_size, colour = "black"),
+            text = element_text(family = base_family,
+                size = base_size, colour = "black"),
             plot.title = element_text(size = base_size + 1, face = "bold",
                 hjust = 0, margin = margin(b = half_line)),
             plot.subtitle = element_text(size = base_size,

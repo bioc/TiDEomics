@@ -47,9 +47,8 @@ index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
 for time 0 normalised data. (Required, no default.)}
 
 \item{ylabel}{Y axis label. A single character string shared by all
-datasets, or a character vector with one entry per dataset
-(multi-input only). Default: NULL, i.e. "Z-score of log2 abundance"
-when scale = TRUE, "Log2 abundance" otherwise.}
+datasets. Default: NULL, i.e. "Z-score of log2 abundance" when
+scale = TRUE, "Log2 abundance" otherwise.}
 
 \item{profile_width}{Width of the mean expression profile panels in cm
 (default: 3)}
@@ -116,13 +115,13 @@ Set to \code{NULL} (default) to skip marking.
 
 \item{height}{Height of the saved image (default is 12 (cm))}
 
-\item{res}{Resolution of the saved image (except pdf format)
+\item{res}{Resolution of the saved image (except pdf and svg formats)
 (default: 300 (ppi))}
 
 \item{suffix}{Suffix for the saved image file name (default: "")}
 
 \item{device}{Image file format(s) for saving. Can be a character
-vector with one or more of \code{"png"}, \code{"pdf"}, \code{"tiff"}, \code{"jpeg"}
+vector with one or more of \code{"png"}, \code{"pdf"}, \code{"svg"}, \code{"tiff"}, \code{"jpeg"}
 (default: \code{"png"})}
 
 \item{save}{Directory to save the plot, no saving if is NULL

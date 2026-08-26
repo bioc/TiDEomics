@@ -54,7 +54,7 @@ test_that("plot_modules_h multiple datasets: errors", {
         names = "OnlyOne"), "one entry per dataset")
     expect_error(plot_modules_h(example_module, se_list, assay = 2,
         ylabel = c("Y one", "Y two", "Y three")),
-        "length equal to the number of datasets \\(2\\)")
+        "single character string")
     expect_error(plot_modules_h(example_module,
         list(Exp1 = example_obj_merged, Exp2 = example_obj), assay = 2),
         "'Exp2' must contain merged data")
