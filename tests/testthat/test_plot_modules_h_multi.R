@@ -25,6 +25,81 @@ test_that("plot_modules_h multiple datasets: works with per-dataset panels", {
         base::names(pq@ht_list[[1]]@top_annotation@anno_list))
 })
 
+test_that("plot_modules_h supports group annotation modes", {
+    pq_name <- plot_modules_h(example_module, se_list, assay = 2,
+        group_annotation = "name", heatmap_width = 6,
+        heatmap_height = 4)
+    expect_true("Group" %in%
+        base::names(pq_name@ht_list[[1]]@top_annotation@anno_list))
+
+    pq_colour <- plot_modules_h(example_module, se_list, assay = 2,
+        group_annotation = "colour", heatmap_width = 6,
+        heatmap_height = 4)
+    expect_true("Group" %in%
+        base::names(pq_colour@ht_list[[1]]@top_annotation@anno_list))
+
+    pq_both <- plot_modules_h(example_module, se_list, assay = 2,
+        group_annotation = "both", heatmap_width = 6,
+        heatmap_height = 4)
+    expect_equal(
+        base::names(pq_both@ht_list[[1]]@top_annotation@anno_list),
+        c("Group_name", "Group_colour")
+    )
+
+    pq_none <- plot_modules_h(example_module, se_list, assay = 2,
+        group_annotation = "none", heatmap_width = 6,
+        heatmap_height = 4)
+    expect_true(is.null(pq_none@ht_list[[1]]@top_annotation) ||
+        length(pq_none@ht_list[[1]]@top_annotation@anno_list) == 0L)
+})
+
+test_that("plot_modules_h supports group annotations for one dataset", {
+    pq_both <- plot_modules_h(example_module, example_obj_merged, assay = 2,
+        group_annotation = "both", heatmap_width = 6,
+        heatmap_height = 4)
+    expect_equal(
+        base::names(pq_both@top_annotation@anno_list),
+        c("Group_name", "Group_colour")
+    )
+
+    pq_none <- plot_modules_h(example_module, example_obj_merged, assay = 2,
+        group_annotation = "none", heatmap_width = 6,
+        heatmap_height = 4)
+    expect_true(is.null(pq_none@top_annotation) ||
+        length(pq_none@top_annotation@anno_list) == 0L)
+})
+
+test_that("plot_modules_h can return native legends", {
+    result <- plot_modules_h(example_module, se_list, assay = 2,
+        return_legends = TRUE, heatmap_width = 6, heatmap_height = 4)
+    expect_named(result, c("heatmap", "legends"))
+    expect_s4_class(result$heatmap, "HeatmapList")
+    expect_length(result$legends, 1L)
+})
+
+test_that("plot_modules_h validates group annotation mode", {
+    expect_error(
+        plot_modules_h(example_module, se_list, assay = 2,
+            group_annotation = 1),
+        "must be a character vector"
+    )
+    expect_error(
+        plot_modules_h(example_module, se_list, assay = 2,
+            group_annotation = NA_character_),
+        "should be one of"
+    )
+    expect_error(
+        plot_modules_h(example_module, se_list, assay = 2,
+            group_annotation = "invalid"),
+        "should be one of"
+    )
+    expect_error(
+        plot_modules_h(example_module, se_list, assay = 2,
+            return_legends = 1),
+        "must be TRUE or FALSE"
+    )
+})
+
 test_that("plot_modules_h multiple datasets: names override titles", {
     pq <- plot_modules_h(example_module, se_list, assay = 2,
         names = c("A", "B"),

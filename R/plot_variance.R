@@ -84,9 +84,9 @@ plot_variance <- function(var_decomp, rank = "Group",
             "Subject:Time" = "#E69F00",
             "Residual" = "grey"
         )) +
+        scale_y_continuous(expand = c(0, 0)) +
         theme_custom(base_size = fontsize) +
         theme(
-            axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 1),
             legend.position = "right"
         ) +
         coord_flip()

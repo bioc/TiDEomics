@@ -163,6 +163,16 @@
 #'   or set to `NULL` to skip colour-coding (all terms black).
 #'   Set to `NA` for `"Features"`.
 #' @param fontsize Base font size (default: 8)
+#' @param group_annotation Top annotation for group-split heatmap columns:
+#'   `"name"` (default), `"colour"`, `"both"`, or `"none"`.
+#'   In `"both"` mode, group names are above the colour strip.
+#' @param return_legends Logical; if `TRUE`, return a list containing the
+#'   Heatmap/HeatmapList and the native ComplexHeatmap legend objects.
+#'   (default: `FALSE`)
+#' @param profile_scale Y-axis scaling for the mean expression profiles:
+#'   `"dataset"` (default) uses one range across modules within each
+#'   dataset, `"shared"` uses one range across all modules and datasets,
+#'   and `"free"` uses an independent range for each module.
 #' @param heatmap_width Width of the heatmap body in cm (default: 8)
 #' @param heatmap_height Height of the heatmap body in cm (default: 8).
 #'   Set to `NULL` to auto-size.
@@ -196,7 +206,8 @@
 #' @import SummarizedExperiment
 #'
 #' @returns A combined plot of heatmap, mean expression profile, and enrichment
-#' terms for each WGCNA module
+#' terms for each WGCNA module. If `return_legends = TRUE`, returns a list with
+#' elements `heatmap` and `legends` instead.
 #' @export
 #' @examples
 #' data(example_obj)
@@ -240,6 +251,9 @@ plot_modules_h <- function(
     enrich_top_n = 3,
     enrich_threshold = 0.05,
     fontsize = 8,
+    group_annotation = c("name", "colour", "both", "none"),
+    return_legends = FALSE,
+    profile_scale = c("dataset", "shared", "free"),
     heatmap_width = 8,
     heatmap_height = 8,
     mark_features = NULL,
@@ -256,6 +270,11 @@ plot_modules_h <- function(
     .check_positive(profile_width, "profile_width")
     .check_positive(profile_link_width, "profile_link_width")
     .check_positive(fontsize, "fontsize")
+    .check_character(group_annotation, "group_annotation")
+    group_annotation <- match.arg(group_annotation)
+    .check_logical(return_legends, "return_legends")
+    .check_character(profile_scale, "profile_scale")
+    profile_scale <- match.arg(profile_scale)
     fontfamily <- "sans"
     .check_positive(heatmap_width, "heatmap_width")
     if (!is.null(heatmap_height))
@@ -458,6 +477,35 @@ plot_modules_h <- function(
         mods[[i]] <- data_module_wider$Module
     }
 
+    profile_values <- lapply(data_module_longs, function(x) {
+        x |>
+            dplyr::group_by(Module, Group, Time) |>
+            dplyr::summarise(
+                Abundance = mean(Abundance, na.rm = TRUE),
+                .groups = "drop"
+            ) |>
+            dplyr::pull(Abundance)
+    }) |>
+        lapply(function(values) values[is.finite(values)])
+    get_profile_limits <- function(values) {
+        if (length(values) == 0L) return(NULL)
+        limits <- range(values)
+        if (diff(limits) == 0) {
+            padding <- max(abs(limits[1]) * 0.05, 0.5)
+            limits <- limits + c(-padding, padding)
+        }
+        limits
+    }
+    if (profile_scale == "shared") {
+        profile_y_limits <- rep(list(get_profile_limits(
+            unlist(profile_values, use.names = FALSE)
+        )), n_datasets)
+    } else if (profile_scale == "dataset") {
+        profile_y_limits <- lapply(profile_values, get_profile_limits)
+    } else {
+        profile_y_limits <- rep(list(NULL), n_datasets)
+    }
+
     all_vals <- unlist(lapply(mats, function(m) as.vector(m)))
     min_val <- min(all_vals, na.rm = TRUE)
     max_val <- max(all_vals, na.rm = TRUE)
@@ -501,6 +549,48 @@ plot_modules_h <- function(
     group_colours <- get_custom_palette(all_groups) |>
         stats::setNames(all_groups)
 
+    group_name_height <- grid::unit(max(4, 0.75 * fontsize), "mm")
+    group_colour_height <- grid::unit(max(2, 0.4 * fontsize), "mm")
+    make_group_name_anno <- function(group_levels) {
+        ComplexHeatmap::anno_block(
+            labels = group_levels,
+            labels_gp = grid::gpar(fontsize = fontsize,
+                fontface = "bold", fontfamily = fontfamily),
+            gp = grid::gpar(fill = NA, col = NA),
+            height = group_name_height
+        )
+    }
+    make_group_colour_anno <- function(group_levels) {
+        ComplexHeatmap::anno_block(
+            gp = grid::gpar(
+                fill = unname(group_colours[group_levels]), col = NA
+            ),
+            height = group_colour_height
+        )
+    }
+    make_group_top_anno <- function(group_levels) {
+        if (group_annotation == "none") {
+            return(NULL)
+        }
+        if (group_annotation == "name") {
+            return(ComplexHeatmap::HeatmapAnnotation(
+                Group = make_group_name_anno(group_levels),
+                show_annotation_name = FALSE
+            ))
+        }
+        if (group_annotation == "colour") {
+            return(ComplexHeatmap::HeatmapAnnotation(
+                Group = make_group_colour_anno(group_levels),
+                show_annotation_name = FALSE
+            ))
+        }
+        ComplexHeatmap::HeatmapAnnotation(
+            Group_name = make_group_name_anno(group_levels),
+            Group_colour = make_group_colour_anno(group_levels),
+            show_annotation_name = FALSE
+        )
+    }
+
     heatmaps <- lapply(seq_len(n_datasets), function(i) {
         # Pretty time breaks for profile x-axis
         time_vals <- as.numeric(levels(data_module_longs[[i]]$Time))
@@ -513,7 +603,7 @@ plot_modules_h <- function(
         last_mod <- utils::tail(levels(data_module_longs[[i]]$Module), 1)
         ggplot2_profile_list <- list()
         for (m in levels(data_module_longs[[i]]$Module)) {
-            ggplot2_profile_list[[m]] <- data_module_longs[[i]] |>
+            profile_plot <- data_module_longs[[i]] |>
                 dplyr::filter(Module == m) |>
                 dplyr::mutate(Time = as.numeric(as.character(Time))) |>
                 ggplot(aes(x = Time, y = Abundance, group = Feature)) +
@@ -537,6 +627,11 @@ plot_modules_h <- function(
                     legend.position = "none",
                     plot.margin = margin(0, 0, 0, 0, unit = "cm")
                 )
+            if (!is.null(profile_y_limits[[i]])) {
+                profile_plot <- profile_plot +
+                    coord_cartesian(ylim = profile_y_limits[[i]])
+            }
+            ggplot2_profile_list[[m]] <- profile_plot
         }
 
         anno_ggplot2_profile <- ComplexHeatmap::anno_zoom(
@@ -566,7 +661,7 @@ plot_modules_h <- function(
                             fontfamily = fontfamily))
                     grid::grid.text("Time",
                         x = unit(0.5, "npc"),
-                        y = unit(0, "npc") - unit(6, "mm"),
+                        y = grid::unit(-2.4, "lines"),
                         just = c("center", "top"),
                         gp = grid::gpar(fontsize = fontsize,
                             fontfamily = fontfamily))
@@ -772,7 +867,7 @@ plot_modules_h <- function(
                 ))
             }, # draw frames around the modules
             column_split = sp_infos[[i]]$Group,
-            column_title = if (n_datasets > 1) disp[i] else character(0),
+            column_title = if (n_datasets > 1) disp[i] else NULL,
             column_title_gp =
                 grid::gpar(fontsize =
                     if (n_datasets > 1) (fontsize + 2) else fontsize,
@@ -781,17 +876,8 @@ plot_modules_h <- function(
             column_title_side = "top",
             column_names_gp = grid::gpar(fontsize = fontsize,
                 fontfamily = fontfamily),
-            top_annotation = if (n_datasets > 1) {
-                ComplexHeatmap::HeatmapAnnotation(
-                    Group = ComplexHeatmap::anno_block(
-                        labels = groups[[i]],
-                        labels_gp = grid::gpar(fontsize = fontsize,
-                            fontface = "bold", fontfamily = fontfamily),
-                        gp = grid::gpar(fill = NA, col = NA),
-                        height = grid::unit(6, "mm")
-                    ),
-                    show_annotation_name = FALSE
-                )
+            top_annotation = if (group_annotation != "none") {
+                make_group_top_anno(groups[[i]])
             } else {
                 NULL
             },
@@ -831,7 +917,7 @@ plot_modules_h <- function(
         }
     }
 
-    draw_ht <- function() {
+    build_legends <- function() {
         lgd_list <- list(anno_ggplot2_profile_lgd)
         n_cats <- length(enrich_category)
         for (ci in seq_len(n_cats)) {
@@ -893,6 +979,12 @@ plot_modules_h <- function(
         if (!is.null(mark_state$lgd) && !has_feature_text) {
             lgd_list <- c(lgd_list, list(mark_state$lgd))
         }
+        lgd_list
+    }
+
+    lgd_list <- build_legends()
+
+    draw_ht <- function() {
 
         pad_bottom <- 10
         ComplexHeatmap::draw(ht_list,
@@ -947,5 +1039,10 @@ plot_modules_h <- function(
     }
 
     draw_ht()
-    invisible(ht_list)
+    result <- if (return_legends) {
+        list(heatmap = ht_list, legends = lgd_list)
+    } else {
+        ht_list
+    }
+    invisible(result)
 }

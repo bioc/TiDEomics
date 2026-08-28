@@ -100,7 +100,7 @@ theme_custom <- function(
             plot.subtitle = element_text(size = base_size,
                 margin = margin(b = half_line)),
             axis.title = element_text(size = base_size + 1),
-            axis.text = element_text(size = base_size),
+            axis.text = element_text(size = base_size, colour = "black"),
             axis.ticks = element_line(linewidth = 0.5),
             axis.line = axis.line,
             panel.background = element_rect(fill = NA, colour = NA),

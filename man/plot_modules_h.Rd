@@ -18,6 +18,9 @@ plot_modules_h(
   enrich_top_n = 3,
   enrich_threshold = 0.05,
   fontsize = 8,
+  group_annotation = c("name", "colour", "both", "none"),
+  return_legends = FALSE,
+  profile_scale = c("dataset", "shared", "free"),
   heatmap_width = 8,
   heatmap_height = 8,
   mark_features = NULL,
@@ -90,6 +93,19 @@ Set to \code{NA} for \code{"Features"}.}
 
 \item{fontsize}{Base font size (default: 8)}
 
+\item{group_annotation}{Top annotation for group-split heatmap columns:
+\code{"name"} (default), \code{"colour"}, \code{"both"}, or \code{"none"}.
+In \code{"both"} mode, group names are above the colour strip.}
+
+\item{return_legends}{Logical; if \code{TRUE}, return a list containing the
+Heatmap/HeatmapList and the native ComplexHeatmap legend objects.
+(default: \code{FALSE})}
+
+\item{profile_scale}{Y-axis scaling for the mean expression profiles:
+\code{"dataset"} (default) uses one range across modules within each
+dataset, \code{"shared"} uses one range across all modules and datasets,
+and \code{"free"} uses an independent range for each module.}
+
 \item{heatmap_width}{Width of the heatmap body in cm (default: 8)}
 
 \item{heatmap_height}{Height of the heatmap body in cm (default: 8).
@@ -133,7 +149,8 @@ the names of \code{se_obj_merged}.}
 }
 \value{
 A combined plot of heatmap, mean expression profile, and enrichment
-terms for each WGCNA module
+terms for each WGCNA module. If \code{return_legends = TRUE}, returns a list with
+elements \code{heatmap} and \code{legends} instead.
 }
 \description{
 Plot WGCNA modules' heatmaps, mean expression profiles,
