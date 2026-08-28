@@ -13,6 +13,11 @@ enrichGO_rank(
   category = NULL,
   pvalueCutoff = 0.05,
   pAdjustMethod = "BH",
+  simplify = FALSE,
+  simplify_cutoff = 0.7,
+  simplify_by = "p.adjust",
+  simplify_select_fun = min,
+  simplify_measure = "Wang",
   ...
 )
 }
@@ -42,10 +47,28 @@ BP, MF, CC)}
 \item{pAdjustMethod}{Parameter of \code{clusterProfiler::gseGO()}
 (default is "BH")}
 
+\item{simplify}{Whether to simplify the GO terms by removing
+redundant terms with \code{clusterProfiler::simplify()} (default is FALSE)}
+
+\item{simplify_cutoff}{Parameter of \code{clusterProfiler::simplify()},
+cutoff for similarity when simplifying GO terms (default is 0.7)}
+
+\item{simplify_by}{Parameter of \code{clusterProfiler::simplify()},
+method to choose the representative term (default is "p.adjust")}
+
+\item{simplify_select_fun}{Parameter of \code{clusterProfiler::simplify()},
+function to select the representative term (default is \code{min})}
+
+\item{simplify_measure}{Parameter of \code{clusterProfiler::simplify()},
+method to calculate similarity when simplifying GO terms
+(default is "Wang")}
+
 \item{...}{additional arguments passed to \code{clusterProfiler::gseGO()}}
 }
 \value{
-A list of \code{gseaResult} objects containing the GSEA results
+A list containing \code{all}, a list of \code{gseaResult} objects with the
+GSEA results. If \code{simplify = TRUE}, the output also contains \code{simplified},
+a list of simplified \code{gseaResult} objects.
 }
 \description{
 Gene ontology enrichment analysis of a ranked gene list

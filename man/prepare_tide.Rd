@@ -13,7 +13,7 @@ prepare_tide(
   feature_threshold = 0,
   filter_ratio = 0.5,
   min_groups = 2,
-  keep = c("below_quantile", "top_n", "threshold"),
+  keep = c("quantile", "top_n", "threshold"),
   residual_threshold = NULL,
   n_keep = 5000,
   interaction = FALSE,
@@ -63,17 +63,17 @@ with the above filter_ratio, to pass the cross group filter
 (default: 2). Passed to \code{group_specific_features()}.}
 
 \item{keep}{How to select features after variance decomposition:
-\code{"below_quantile"} (default): keep features with residual variance below
-\code{residual_threshold} quantile (0-1 scale).
+\code{"quantile"} (default): keep features with residual variance at or below
+the \code{residual_threshold} quantile (0-1 scale).
 \code{"top_n"}: keep the top \code{n_keep} lowest-residual features.
 \code{"threshold"}: keep features with residual percentage below
 \code{residual_threshold} (0-100 scale; use 100 to skip filtering).}
 
-\item{residual_threshold}{Numeric: when \code{keep = "below_quantile"},
+\item{residual_threshold}{Numeric: when \code{keep = "quantile"},
 the quantile of residual variance to use as cutoff (0-1 scale).
 When \code{keep = "threshold"}, the percentage cutoff
 (0-100 scale, 100 = keep all features).
-(default: NULL, auto-assigned as 0.75 for "below_quantile",
+(default: NULL, auto-assigned as 0.75 for "quantile",
 100 for "threshold")}
 
 \item{n_keep}{Number of features to keep when \code{keep = "top_n"}

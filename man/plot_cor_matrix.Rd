@@ -21,6 +21,7 @@ plot_cor_matrix(
   title = NULL,
   shared_only = FALSE,
   names = NULL,
+  plot_cophenetic = FALSE,
   ...
 )
 }
@@ -68,13 +69,17 @@ only applies when \code{se_obj} is a list of multiple datasets)}
 titles. Default: NULL, i.e. the names of \code{se_obj} (when a list).
 Only applies when \code{se_obj} is a list of multiple datasets.}
 
+\item{plot_cophenetic}{Logical, whether to include the cophenetic
+correlation in the combined plot title (default is FALSE) in addition
+to reporting by text.}
+
 \item{...}{Additional arguments to be passed to \code{ComplexHeatmap::Heatmap()}}
 }
 \value{
 A heatmap showing the correlation between samples. With a named
 list of datasets, all heatmaps share the same colour scale,
-include cophenetic-correlation subtitle, and are returned
-invisibly as a named list of Heatmap objects.
+include a cophenetic-correlation subtitle when \code{plot_cophenetic} is TRUE,
+and are returned invisibly as a named list of Heatmap objects.
 }
 \description{
 Plot correlation matrix between samples as a heatmap

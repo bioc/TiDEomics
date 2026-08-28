@@ -16,10 +16,14 @@ test_that("enrichGO_rank works and validates parameters", {
     # Basic output
     res <- enrichGO_rank(vd, gene_rank_by = "Time",
         OrgDb = org.Mm.eg.db, keyType = "SYMBOL",
-        category = "BP", pvalueCutoff = 0.99)
+        category = "BP", pvalueCutoff = 0.99, simplify = TRUE)
     if (!is.null(res)) {
         expect_type(res, "list")
-        expect_s4_class(res$BP, "gseaResult")
+        expect_named(res, c("all", "simplified"))
+        expect_s4_class(res$all$BP, "gseaResult")
+        if ("BP" %in% names(res$simplified)) {
+            expect_s4_class(res$simplified$BP, "gseaResult")
+        }
     }
 
     # Invalid gene_rank_by column
@@ -135,6 +139,10 @@ test_that("enrichGO_list validates universe and universe_list", {
     skip_if_not_installed("org.Mm.eg.db")
     library(org.Mm.eg.db)
 
+    example_module <- WGCNA_module(example_net) |>
+        dplyr::filter(Module %in% c("1", "2")) |>
+        dplyr::slice_head(n = 25, by = Module)
+
     gene_list <- list(a = c("A"), b = c("B"))
 
     # Both universe and universe_list given
@@ -170,7 +178,6 @@ test_that("enrichGO_list skips empty gene list element", {
     skip_if_not_installed("org.Mm.eg.db")
     library(org.Mm.eg.db)
 
-    data("example_net")
     example_module <- WGCNA_module(example_net) |>
         dplyr::filter(Module %in% c("1", "2")) |>
         dplyr::slice_head(n = 25, by = Module)
@@ -216,7 +223,8 @@ mock_enrichr <- function(mock_result = data.frame()) {
             stats::setNames(lapply(databases, function(db) mock_result),
                 databases)
         },
-        .package = "enrichR"
+        .package = "enrichR",
+        .env = parent.frame()
     )
 }
 

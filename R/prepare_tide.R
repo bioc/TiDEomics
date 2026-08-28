@@ -54,16 +54,16 @@
 #'   with the above filter_ratio, to pass the cross group filter
 #'   (default: 2). Passed to `group_specific_features()`.
 #' @param keep How to select features after variance decomposition:
-#'   `"below_quantile"` (default): keep features with residual variance below
-#'   `residual_threshold` quantile (0-1 scale).
+#'   `"quantile"` (default): keep features with residual variance at or below
+#'   the `residual_threshold` quantile (0-1 scale).
 #'   `"top_n"`: keep the top `n_keep` lowest-residual features.
 #'   `"threshold"`: keep features with residual percentage below
 #'   `residual_threshold` (0-100 scale; use 100 to skip filtering).
-#' @param residual_threshold Numeric: when `keep = "below_quantile"`,
+#' @param residual_threshold Numeric: when `keep = "quantile"`,
 #'   the quantile of residual variance to use as cutoff (0-1 scale).
 #'   When `keep = "threshold"`, the percentage cutoff
 #'   (0-100 scale, 100 = keep all features).
-#'   (default: NULL, auto-assigned as 0.75 for "below_quantile",
+#'   (default: NULL, auto-assigned as 0.75 for "quantile",
 #'   100 for "threshold")
 #' @param n_keep Number of features to keep when `keep = "top_n"`
 #'   (default: 5000).
@@ -110,7 +110,7 @@ prepare_tide <- function(
     feature_threshold = 0,
     filter_ratio = 0.5,
     min_groups = 2,
-    keep = c("below_quantile", "top_n", "threshold"),
+    keep = c("quantile", "top_n", "threshold"),
     residual_threshold = NULL,
     n_keep = 5000,
     interaction = FALSE,
@@ -118,7 +118,7 @@ prepare_tide <- function(
 ) {
     keep <- match.arg(keep)
     if (is.null(residual_threshold)) {
-        residual_threshold <- if (keep == "below_quantile") 0.75 else 100
+        residual_threshold <- if (keep == "quantile") 0.75 else 100
     }
 
     if (!is.null(feature_threshold)) {
@@ -128,7 +128,7 @@ prepare_tide <- function(
     .check_df(sample_ann, "sample_ann")
     .check_pval(filter_ratio, "filter_ratio")
     .check_positive_int(min_groups, "min_groups")
-    if (keep == "below_quantile") {
+    if (keep == "quantile") {
         .check_pval(residual_threshold, "residual_threshold")
     } else if (keep == "threshold") {
         if (residual_threshold < 0 || residual_threshold > 100) {
@@ -199,7 +199,7 @@ prepare_tide <- function(
         names(res_var) <- var_decomp$Feature
         res_var <- res_var[!is.na(res_var)]
 
-        if (keep == "below_quantile") {
+        if (keep == "quantile") {
             cutoff <- stats::quantile(res_var, probs = residual_threshold,
                 na.rm = TRUE)
             keep_features <- names(res_var)[res_var <= cutoff]

@@ -238,6 +238,7 @@ plot_pca <- function(
                     gridlines.minor = FALSE,
                     plotaxes = FALSE,
                     trianglelabSize = fontsize,
+                    borderWidth = 0.4,
                     colkey = get_custom_palette(colData(se)$Group |> unique())
                 )
                 p_list$p5 <- p5
@@ -257,7 +258,9 @@ plot_pca <- function(
         title = paste0("PCA across datasets",
             if (shared_only) " (shared features without missing values)"
             else " (all features without missing values)"),
-        theme = ggplot2::theme(legend.position = "right")
+        theme = ggplot2::theme(legend.position = "right",
+            legend.box = "horizontal",
+            plot.title = element_text(size = fontsize + 2, face = "bold"))
     )
     return(list(
         p_list = stats::setNames(lapply(results, function(r) r$p_list), nms),

@@ -80,13 +80,14 @@ especially for comparison of more than two conditions across time.
     appropriate when biological variation across groups and time course is
     expected.
 
-Existing packages on time-course omics analysis are available, typically
-designed for transcriptomics data. Some packages are limited to two-group
-comparisons (e.g. `splineTimeR`) or expect raw sequencing counts (e.g.
-`ImpulseDE2`, `TCseq`). `maSigPro` supports multi-group time-course DE analysis
-via polynomial regression, complementary to `TiDEomics` with fewer
-assumptions about temporal trends. `TiDEomics` also integrates QC, filtering
-and downstream functional enrichment within the same workflow.
+Existing packages on time-course omics analysis are available, typically focus
+on particular data types or analytical tasks. Some packages are limited to
+two-group comparisons (e.g. `splineTimeR`) or expect raw sequencing counts (e.g.
+`ImpulseDE2`, `TCseq`). `maSigPro` and `timeOmics` focus on temporal modelling
+and profile clustering, complementary to `TiDEomics`.`maSigPro` supports
+multi-group time-course DE analysis via polynomial regression, while
+`timeOmics` supports multi-omics integration. `TiDEomics` also integrates QC,
+filtering and downstream functional enrichment within the same workflow.
 
 TiDEomics incorporates `Trendy` [@Trendy] which operates on single time
 series to estimate breakpoints per group per feature,
@@ -124,7 +125,8 @@ Key features covered:
     each group and summarise dynamic patterns.
 
 - *Variance decomposition modified from PALMO*: Quantify relative contributions
-    from `Time`, `Group`, and `Residual`, distinguish time or group-dependent
+    from `Time`, `Group`, `Subject` when present, optional interaction terms,
+    and `Residual`, distinguish time or group-dependent
     DE features and "noisy" features.
 
 - *Module identification with WGCNA*: Identify co-expression modules with
@@ -203,7 +205,7 @@ For the most common scenarios in transcriptomics and proteomics:
     producing protein x sample matrix. Depending on software and settings,
     manual normalisation and log transformation may be required, e.g. median
     normalisation. Missing values are accepted in most TiDEomics functions,
-    and a basic imputation function `impute_groups()` is provided.
+    and `impute_groups()` provides optional imputation.
 
 ## Workflow
 
@@ -523,6 +525,10 @@ plot_volcano(DE_between_group_out,
     abundance, providing information about the direction (up or down) and
     duration of changing.
 
+- `Net_FC`: signed fold change between the latest and earliest time points.
+    Positive values indicate a net increase and negative values a
+    net decrease. `NA` when only one time point is available.
+
 - `Exp_threshold`: user-set value threshold for a feature to be considered
     expressed in a sample. This can be used to filter features based on
     expression level, e.g. setting `threshold = 0` means that only
@@ -710,7 +716,8 @@ with TiDEomics functions.
 
 **Filtering strategies**:
 
-- Features with too many missing values will be automatically removed with
+- Features and samples with excessive missing values will be automatically
+    removed by WGCNA's quality control functions `WGCNA::goodSamples()` and
     `WGCNA::goodGenes()` included in the `prepare_WGCNA()` function, and can
     also be pre-filtered with the calculated feature property (output of
     `calc_feature_property()` and `summarise_feature_property()`).
@@ -721,9 +728,9 @@ with TiDEomics functions.
 [WGCNA FAQ](https://edo98811.github.io/WGCNA_official_documentation/faq.html).
 
 ```{r wgcna-prepare}
-# Example filtering by residual variance < Q3
+# Example filtering by residual variance <= Q3
 var_res_q3 <- stats::quantile(var_decomp$Residual, 0.75, na.rm = TRUE)
-filter_wgcna <- var_decomp |> dplyr::filter(Residual < var_res_q3) |>
+filter_wgcna <- var_decomp |> dplyr::filter(Residual <= var_res_q3) |>
     dplyr::pull(Feature)
 
 data_obj_wgcna <- data_obj[filter_wgcna, ]
@@ -889,6 +896,10 @@ horizontally aligned with annotation of the modules with their top enriched
 GO terms. The plotting function is adapted from ClusterGVis
 package [@ClusterGVis].
 
+`plot_modules_h()` supports extensive customisation, e.g. `group_annotation`
+controls whether groups are labelled above the heatmap by names (default),
+colour strips, both, or neither. See `?plot_modules_h` for details.
+
 ```{r plot-wgcna-modules-go, fig.width = 8, fig.height = 5}
 plot_modules_h(gene_module,
     data_obj_merged, assay = 2, scale = TRUE,
@@ -904,9 +915,9 @@ Multiple enrichment categories (e.g. GO BP, CC, MF, MSigDB collections,
 enrichR databases) can be displayed side-by-side
 by passing a vector to `enrich_category`. Features of interest can
 be marked on the heatmap or shown as an annotation column via
-`mark_features` and `enrich_category = "Hub features"`. The
+`mark_features` and `enrich_category = "Features"`. The
 `enrich_threshold` parameter controls per-category p-value colour-coding
-of enrichment terms; set to `NA` for "Hub features", which use auto-assigned
+of enrichment terms; set to `NA` for "Features", which use auto-assigned
 colours instead.
 
 Hub features can be extracted by WGCNA module membership (the correlation of
@@ -970,13 +981,20 @@ variance decomposition, and feature filtering. It is convenient for standard
 analyses, while running each step individually allows for more control over
 parameters.
 
+By default, `prepare_tide()` keeps features with mean values greater than
+`feature_threshold` (or non-NA when `feature_threshold` is NULL) in at
+least 50% time points in at least two groups. It then retains features with
+residual variance at or below the 75th percentile, applied separately to the
+original and time-0-normalised data.
+
 ```{r prepare-tide}
 tide <- prepare_tide(
     data = tutorial_data,
     sample_ann = tutorial_sample_info,
     filter_ratio = 0.5,
+    feature_threshold = 0,
     min_groups = 2,
-    keep = "below_quantile",
+    keep = "quantile",
     residual_threshold = 0.75
 )
 tide$filter_summary

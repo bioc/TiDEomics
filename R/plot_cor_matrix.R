@@ -33,14 +33,17 @@
 #' @param names Optional character vector of dataset names for the per-heatmap
 #'   titles. Default: NULL, i.e. the names of `se_obj` (when a list).
 #'   Only applies when `se_obj` is a list of multiple datasets.
+#' @param plot_cophenetic Logical, whether to include the cophenetic
+#'   correlation in the combined plot title (default is FALSE) in addition
+#'   to reporting by text.
 #' @param ... Additional arguments to be passed to `ComplexHeatmap::Heatmap()`
 #'
 #' @import SummarizedExperiment
 #'
 #' @returns A heatmap showing the correlation between samples. With a named
 #'   list of datasets, all heatmaps share the same colour scale,
-#'   include cophenetic-correlation subtitle, and are returned
-#'   invisibly as a named list of Heatmap objects.
+#'   include a cophenetic-correlation subtitle when `plot_cophenetic` is TRUE,
+#'   and are returned invisibly as a named list of Heatmap objects.
 #' @export
 #' @examples
 #' data(example_obj)
@@ -59,6 +62,7 @@ plot_cor_matrix <- function(
     title = NULL,
     shared_only = FALSE,
     names = NULL,
+    plot_cophenetic = FALSE,
     ...
 ) {
     .check_logical(label_group, "label_group")
@@ -72,6 +76,7 @@ plot_cor_matrix <- function(
     .check_positive(cellheight, "cellheight")
     .check_character(use, "use")
     .check_logical(shared_only, "shared_only")
+    .check_logical(plot_cophenetic, "plot_cophenetic")
     if (is.null(method) || length(method) != 1) {
         method <- "spearman"
     }
@@ -262,7 +267,7 @@ plot_cor_matrix <- function(
     }
     heatmaps <- stats::setNames(heatmaps, nms)
 
-    title_final <- if (is.null(sim_text)) {
+    title_final <- if (!plot_cophenetic || is.null(sim_text)) {
         title
     } else {
         paste0(title, "\n", sim_text)

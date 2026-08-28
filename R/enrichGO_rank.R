@@ -20,9 +20,22 @@
 #' (default is 0.05)
 #' @param pAdjustMethod Parameter of `clusterProfiler::gseGO()`
 #' (default is "BH")
+#' @param simplify Whether to simplify the GO terms by removing
+#'   redundant terms with `clusterProfiler::simplify()` (default is FALSE)
+#' @param simplify_cutoff Parameter of `clusterProfiler::simplify()`,
+#'   cutoff for similarity when simplifying GO terms (default is 0.7)
+#' @param simplify_by Parameter of `clusterProfiler::simplify()`,
+#'   method to choose the representative term (default is "p.adjust")
+#' @param simplify_select_fun Parameter of `clusterProfiler::simplify()`,
+#'   function to select the representative term (default is `min`)
+#' @param simplify_measure Parameter of `clusterProfiler::simplify()`,
+#'   method to calculate similarity when simplifying GO terms
+#'   (default is "Wang")
 #' @param ... additional arguments passed to `clusterProfiler::gseGO()`
 #'
-#' @returns A list of `gseaResult` objects containing the GSEA results
+#' @returns A list containing `all`, a list of `gseaResult` objects with the
+#'   GSEA results. If `simplify = TRUE`, the output also contains `simplified`,
+#'   a list of simplified `gseaResult` objects.
 #' @export
 #'
 #' @examples
@@ -45,12 +58,24 @@ enrichGO_rank <- function(
     category = NULL,
     pvalueCutoff = 0.05,
     pAdjustMethod = "BH",
+    simplify = FALSE,
+    simplify_cutoff = 0.7,
+    simplify_by = "p.adjust",
+    simplify_select_fun = min,
+    simplify_measure = "Wang",
     ...
 ) {
     .check_df(rank_table, "rank_table")
     .check_character(gene_rank_by, "gene_rank_by")
     .check_character(keyType, "keyType")
     .check_character(go_rank_by, "go_rank_by")
+    .check_logical(simplify, "simplify")
+    .check_pval(simplify_cutoff, "simplify_cutoff")
+    .check_character(simplify_by, "simplify_by")
+    .check_character(simplify_measure, "simplify_measure")
+    if (!is.function(simplify_select_fun)) {
+        stop("'simplify_select_fun' must be a function.")
+    }
     pAdjustMethod <- match.arg(pAdjustMethod,
         c("holm", "hochberg", "hommel", "bonferroni",
             "BH", "BY", "fdr", "none"))
@@ -91,6 +116,7 @@ enrichGO_rank <- function(
     }
 
     gse_list <- list()
+    gse_list_simplify <- list()
     for (ont in category) {
         gse_rank <- clusterProfiler::gseGO(
             geneList = rank_list,
@@ -122,6 +148,25 @@ enrichGO_rank <- function(
         }
 
         gse_list[[ont]] <- gse_rank
+
+        if (simplify) {
+            message("Simplifying GO terms for category: ", ont)
+            gse_rank_simplify <- clusterProfiler::simplify(gse_rank,
+                cutoff = simplify_cutoff,
+                by = simplify_by,
+                select_fun = simplify_select_fun,
+                measure = simplify_measure
+            )
+
+            if (nrow(gse_rank_simplify@result) > 0 &&
+                go_rank_by %in% colnames(gse_rank_simplify@result)) {
+                gse_rank_simplify@result <-
+                    gse_rank_simplify@result |>
+                    dplyr::arrange(.data[[go_rank_by]])
+            }
+
+            gse_list_simplify[[ont]] <- gse_rank_simplify
+        }
     }
 
     if (length(gse_list) == 0) {
@@ -129,5 +174,9 @@ enrichGO_rank <- function(
         return(NULL)
     }
 
-    return(gse_list)
+    if (simplify) {
+        return(list(all = gse_list, simplified = gse_list_simplify))
+    }
+
+    return(list(all = gse_list))
 }

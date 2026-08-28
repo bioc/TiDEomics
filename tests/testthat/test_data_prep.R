@@ -171,7 +171,7 @@ test_that("prepare_tide validates parameters", {
     )
     expect_error(
         prepare_tide(tutorial_data, tutorial_sample_info,
-            keep = "below_quantile", residual_threshold = 2)
+            keep = "quantile", residual_threshold = 2)
     )
     expect_error(
         prepare_tide(tutorial_data, tutorial_sample_info,
@@ -188,9 +188,9 @@ test_that("prepare_tide validates parameters", {
 
 test_that("prepare_tide handles keep variants", {
     res_bq <- prepare_tide(tutorial_data, tutorial_sample_info,
-        keep = "below_quantile", residual_threshold = NULL,
+        keep = "quantile", residual_threshold = NULL,
         min_groups = 2, n_keep = 100)
-    expect_match(res_bq$filter_summary$threshold[3], "below_quantile = ")
+    expect_match(res_bq$filter_summary$threshold[3], "quantile = ")
     expect_true(is.numeric(res_bq$filter_summary$residual_cutoff))
     expect_true(is.finite(res_bq$filter_summary$residual_cutoff[3]))
 
@@ -201,7 +201,7 @@ test_that("prepare_tide handles keep variants", {
     expect_equal(res_th$filter_summary$residual_cutoff[3], 100)
 
     res <- prepare_tide(tutorial_data, tutorial_sample_info,
-        keep = "below_quantile", residual_threshold = 0.9,
+        keep = "quantile", residual_threshold = 0.9,
         min_groups = 2, n_keep = 100)
     expect_type(res, "list")
     expect_true("se" %in% names(res))
@@ -210,6 +210,11 @@ test_that("prepare_tide handles keep variants", {
         keep = "top_n", n_keep = 50, min_groups = 2)
     expect_type(res, "list")
     expect_true("se" %in% names(res))
+})
+
+test_that("quantile filtering includes the cutoff", {
+    body_text <- paste(deparse(body(prepare_tide)), collapse = " ")
+    expect_match(body_text, "res_var <= cutoff", fixed = TRUE)
 })
 
 test_that("prepare_tide accepts feature_threshold = NULL", {
