@@ -1,20 +1,12 @@
-# ---- Local textbox grob (avoids ComplexHeatmap:::textbox_grob) ----
-#
-# Adapted from ComplexHeatmap:::textbox_grob, with internal helper functions
-# .recycle_gp and .subset_gp
-# (ComplexHeatmap:::recycle_gp, ComplexHeatmap:::subset_gp)
-# included here to avoid dependency on ComplexHeatmap's internal functions.
-#
-# Simplified text layout: stacks text strings vertically, each with its
-# own gp (color, fontsize, fontfamily, fontface). No word-wrapping or
-# random colours - our caller always provides explicit colours and
-# controls text length via top_n.
-
 #' Local textbox grob
 #'
-#' Stacks text strings vertically with per-string graphical parameters.
+#' Stacks text strings vertically with per-string graphical parameters (color,
+#' fontsize, fontfamily, fontface).
+#' Added `term_space` to allow extra spacing.
+#'
 #' Adapted from `ComplexHeatmap:::textbox_grob` to avoid dependency on
-#' unexported ComplexHeatmap internals.
+#' unexported ComplexHeatmap internal functions, including .recycle_gp and
+#' .subset_gp (ComplexHeatmap:::recycle_gp, ComplexHeatmap:::subset_gp).
 #'
 #' @param text Character vector of text strings to display.
 #' @param x X position as a `grid::unit` (default: 0.5 npc).
@@ -41,6 +33,9 @@
 #' @param add_new_line Logical; force each text string to a new line
 #'   (default: `FALSE`).
 #' @param word_wrap Logical; enable word wrapping (default: `FALSE`).
+#' @param term_space Optional vertical spacing after a complete term when
+#'   terms are separated onto different lines. `NULL` preserves the
+#'   original `line_space` behavior.
 #'
 #' @return A `grid::gTree` of class `"textbox"`.
 #' @keywords internal
@@ -55,7 +50,8 @@
     max_width = unit(100, "mm"),
     padding = unit(4, "pt"),
     first_text_from = "top",
-    add_new_line = FALSE, word_wrap = FALSE
+    add_new_line = FALSE, word_wrap = FALSE,
+    term_space = NULL
 ) {
     n_text <- length(text)
     for (nm in c("fontsize", "fontfamily", "fontface")) {
@@ -98,7 +94,8 @@
     vp_just <- just
     text_lt <- list(
         text = text, space_after = rep(TRUE, n_text),
-        new_line_after = rep(FALSE, n_text)
+        new_line_after = rep(FALSE, n_text),
+        term_end = rep(TRUE, n_text)
     )
     if (add_new_line && !word_wrap) {
         text_lt$new_line_after <- rep(TRUE, n_text)
@@ -124,9 +121,11 @@
         gp2$fontface <- rep(gp$fontface, times = nw)
         text_lt <- list(
             text = unlist(words), space_after = rep(FALSE, sum(nw)),
-            new_line_after = rep(FALSE, sum(nw))
+            new_line_after = rep(FALSE, sum(nw)),
+            term_end = rep(FALSE, sum(nw))
         )
         text_lt$space_after[cumsum(nw)] <- TRUE
+        text_lt$term_end[cumsum(nw)] <- TRUE
         if (add_new_line) {
             text_lt$new_line_after[cumsum(nw)] <- TRUE
         }
@@ -153,6 +152,9 @@
     if (grid::is.unit(line_space)) {
         line_space <- grid::convertHeight(line_space, "mm", valueOnly = TRUE)
     }
+    if (grid::is.unit(term_space)) {
+        term_space <- grid::convertHeight(term_space, "mm", valueOnly = TRUE)
+    }
     if (grid::is.unit(text_space)) {
         text_space <- grid::convertWidth(text_space, "mm", valueOnly = TRUE)
     }
@@ -172,7 +174,9 @@
             if (current_line_width + text_width[i] + text_space >
                 max_width || text_lt$new_line_after[i - 1]) {
                 x[i] <- 0
-                y[i] <- h + line_space
+                line_gap <- if (!is.null(term_space) &&
+                    text_lt$term_end[i - 1]) term_space else line_space
+                y[i] <- h + line_gap
                 current_line_width <- text_width[i]
                 w <- max(w, current_line_width)
                 h <- y[i] + text_height[i]
@@ -198,7 +202,9 @@
                 y[prev_line_ind] <- h
                 prev_line_ind <- i
                 x[i] <- 0
-                y[i] <- h - line_space
+                line_gap <- if (!is.null(term_space) &&
+                    text_lt$term_end[i - 1]) term_space else line_space
+                y[i] <- h - line_gap
                 current_line_width <- text_width[i]
                 w <- max(w, current_line_width)
                 h <- y[i] - text_height[i]
@@ -250,8 +256,6 @@
     return(gb)
 }
 
-# ---- Internal: reformat cat_terms to text ----
-
 #' Reformat enrichment category terms into per-module text lists
 #'
 #' Transposes `cat_terms` from category-first (`cat_terms[[cate]][[mod]]`)
@@ -283,8 +287,6 @@
     out
 }
 
-# ---- Internal: per-column textbox helpers ----
-
 #' Build a single-column textbox grob
 #'
 #' Stacks term text strings vertically using the local `.textbox_grob`.
@@ -295,7 +297,7 @@
 #' @param ... Passed to `.textbox_grob`.
 #' @return A textbox grob.
 #' @keywords internal
-.multicol_textbox_col_grob <- function(df, ...) {
+.multicol_textbox_col_grob <- function(df, text_padding = NULL, ...) {
     if (!is.data.frame(df) || nrow(df) == 0) {
         return(grid::nullGrob())
     }
@@ -305,9 +307,16 @@
         fontfamily = if ("fontfamily" %in% names(df)) df$fontfamily,
         fontface = if ("fontface" %in% names(df)) df$fontface
     )
-    .textbox_grob(
-        text = df$text, gp = gp,
-        add_new_line = TRUE, ...
+    textbox_args <- list(...)
+    if (!is.null(text_padding)) {
+        textbox_args$padding <- text_padding
+    }
+    do.call(
+        .textbox_grob,
+        c(
+            list(text = df$text, gp = gp, add_new_line = TRUE),
+            textbox_args
+        )
     )
 }
 
@@ -355,8 +364,6 @@
     widths_mm
 }
 
-# ---- Internal: multi-column textbox grob ----
-
 #' Multi-column textbox grob
 #'
 #' Arranges per-category textbox grobs side-by-side in absolute mm units.
@@ -371,6 +378,7 @@
 #'   (top, left, bottom, right). Default: 0 mm all sides.
 #' @param column_widths_mm Optional numeric vector of pre-computed column
 #'   widths in mm. If NULL, auto-computed from grob widths.
+#' @param text_padding Optional padding passed to each category textbox.
 #' @param ... Passed to `.multicol_textbox_col_grob`.
 #' @return A `gTree` of class `"multicol_textbox"`.
 #' @keywords internal
@@ -378,7 +386,7 @@
     x, col_gap = unit(2, "mm"),
     background_gp = grid::gpar(fill = "#F7F7F7", col = "#CCCCCC"),
     padding = unit(c(0, 0, 0, 0), "mm"),
-    column_widths_mm = NULL, ...
+    column_widths_mm = NULL, text_padding = NULL, ...
 ) {
     cats <- names(x)
     if (length(cats) == 0) {
@@ -386,7 +394,9 @@
     }
 
     col_grobs <- lapply(cats, function(cate) {
-        .multicol_textbox_col_grob(x[[cate]], ...)
+        .multicol_textbox_col_grob(
+            x[[cate]], text_padding = text_padding, ...
+        )
     })
     names(col_grobs) <- cats
 
@@ -413,7 +423,7 @@
     pad_b <- grid::convertHeight(padding[[3]], "mm", valueOnly = TRUE)
 
     n <- length(cats)
-    total_w_mm <- sum(slot_widths_mm) + gap_mm * max(n - 1L, 0L) 
+    total_w_mm <- sum(slot_widths_mm) + gap_mm * max(n - 1L, 0L)
         + pad_l + pad_r
     total_h_mm <- max(heights_mm) + pad_t + pad_b
 
@@ -450,7 +460,98 @@
     gb
 }
 
-# ---- .anno_multicol_textbox (based on ComplexHeatmap:::anno_textbox) ----
+#' Build reusable multi-column textbox grobs and dimensions
+#'
+#' @param text A named list of per-module category data.frames.
+#' @param textbox_args Arguments passed to the textbox grob helpers.
+#' @return A list containing per-module grobs and measured dimensions.
+#' @keywords internal
+.multicol_textbox_layout <- function(
+    text, textbox_args = list()
+) {
+    column_widths_mm <- .measure_multicol_widths(
+        text, textbox_args = textbox_args
+    )
+    gbl <- lapply(text, function(x) {
+        do.call(.multicol_textbox_grob, c(
+            list(x = x, column_widths_mm = column_widths_mm),
+            textbox_args
+        ))
+    })
+    widths_mm <- vapply(gbl, function(g) {
+        grid::convertWidth(
+            g[["vp"]][["width"]], "mm", valueOnly = TRUE
+        )
+    }, numeric(1))
+    heights_mm <- vapply(gbl, function(g) {
+        grid::convertHeight(
+            g[["vp"]][["height"]], "mm", valueOnly = TRUE
+        )
+    }, numeric(1))
+    empty_panels <- vapply(text, function(txt) {
+        all(vapply(txt, function(df) {
+            !is.data.frame(df) || nrow(df) == 0L
+        }, logical(1)))
+    }, logical(1))
+    list(
+        grobs = gbl,
+        column_widths_mm = column_widths_mm,
+        widths_mm = widths_mm,
+        heights_mm = heights_mm,
+        width_mm = if (length(widths_mm)) max(widths_mm) else 0,
+        empty_panels = empty_panels
+    )
+}
+
+#' Create a panel function for a reusable textbox layout
+#'
+#' This draws only the textbox panel. Heatmap connectors are drawn by
+#' the outer annotation layout so profile and textbox share coordinates.
+#'
+#' @param layout Output from `.multicol_textbox_layout`.
+#' @param background_gp Background graphical parameters.
+#' @param show_headers Logical; draw category headers for the first module.
+#' @param header_gp Graphical parameters for category headers.
+#' @param header_offset Offset above the textbox in grid units.
+#' @return A panel function accepting `index` and `nm`.
+#' @keywords internal
+.multicol_textbox_panel_fun <- function(
+    layout, background_gp, show_headers = FALSE,
+    header_gp = grid::gpar(fontface = "bold"),
+    header_offset = unit(1.5, "mm")
+) {
+    first_nm <- names(layout$grobs)[1]
+    function(index, nm) {
+        is_empty <- isTRUE(layout$empty_panels[[nm]])
+        bg_fill <- if (is_empty) "transparent" else background_gp$fill
+        bg_col <- if (is_empty) "transparent" else background_gp$col
+        grid::grid.rect(gp = grid::gpar(
+            fill = bg_fill, col = bg_col,
+            lty = background_gp$lty, lwd = background_gp$lwd
+        ))
+        if (show_headers && identical(nm, first_nm)) {
+            gb <- layout$grobs[[nm]]
+            col_labels <- attr(gb, "column_labels")
+            col_widths <- attr(gb, "column_widths_mm")
+            col_gap_mm <- attr(gb, "column_gap_mm")
+            padding_mm <- attr(gb, "padding_mm")
+            cur_x <- padding_mm[["left"]]
+            x_pos_mm <- numeric(length(col_widths))
+            for (i in seq_along(col_widths)) {
+                x_pos_mm[i] <- cur_x + col_widths[i] / 2
+                cur_x <- cur_x + col_widths[i] + col_gap_mm
+            }
+            grid::grid.text(
+                label = col_labels,
+                x = unit(x_pos_mm, "mm"),
+                y = unit(1, "npc") + header_offset,
+                just = c("center", "bottom"),
+                gp = header_gp
+            )
+        }
+        grid::grid.draw(layout$grobs[[nm]])
+    }
+}
 
 #' Multi-column textbox row annotation for ComplexHeatmap
 #'
@@ -546,7 +647,7 @@
                 max(df$fontsize, na.rm = TRUE)
             }, numeric(1))
         }), use.names = FALSE)
-        header_gp$fontsize <- if (length(header_sizes)) 
+        header_gp$fontsize <- if (length(header_sizes))
             max(header_sizes) else 8
     }
     if (is.null(header_offset)) {
@@ -557,38 +658,26 @@
         tmp <- tempfile(fileext = ".pdf")
         grDevices::pdf(tmp)
     }
-
-    column_widths_mm <- .measure_multicol_widths(text, textbox_args)
-    gbl <- lapply(text, function(x) {
-        do.call(.multicol_textbox_grob, c(
-            list(x = x, column_widths_mm = column_widths_mm),
-            textbox_args
-        ))
-    })
-
-    if (!dev_was_open) {
-        grDevices::dev.off()
-        unlink(tmp)
-    }
+    layout <- tryCatch(
+        .multicol_textbox_layout(
+            text, textbox_args = textbox_args
+        ),
+        finally = if (!dev_was_open) {
+            grDevices::dev.off()
+            unlink(tmp)
+        }
+    )
+    gbl <- layout$grobs
     margin <- unit(1, "mm")
-    gbl_h <- lapply(gbl, function(x) {
-        grid::convertHeight(x$vp$height, "cm") + margin
-    })
-    gbl_h <- do.call(grid::unit.c, gbl_h)
-    gbl_w <- lapply(gbl, function(x) grid::convertWidth(x$vp$width, "cm"))
-    gbl_w <- do.call(grid::unit.c, gbl_w)
-    gbl_w <- max(gbl_w) + margin
+    gbl_h <- grid::unit(layout$heights_mm, "mm") + margin
+    gbl_w <- grid::unit(max(layout$widths_mm), "mm") + margin
 
     side <- match.arg(side)
     first_nm <- names(gbl)[1]
 
     # Detect empty panels (all categories have no terms) for
     # transparent background
-    empty_panels <- vapply(text, function(txt) {
-        all(vapply(txt, function(df) {
-            !is.data.frame(df) || nrow(df) == 0
-        }, logical(1)))
-    }, logical(1))
+    empty_panels <- layout$empty_panels
 
     if (by %in% c("anno_link", "anno_zoom")) {
         panel_fun <- function(index, nm) {

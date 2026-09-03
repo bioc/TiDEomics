@@ -105,6 +105,130 @@
     term_list
 }
 
+#' Build the selected-module profile and textbox annotation
+#'
+#' Combines aligned profile and enrichment panels inside a row `anno_zoom`.
+#'
+#' @return A ComplexHeatmap row annotation.
+#' @keywords internal
+.make_selected_anno_zoom <- function(
+    profile_row_groups,
+    profile_width_mm,
+    link_width_mm,
+    heatmap_height_mm = NULL,
+    profile_height_mm = NULL,
+    profile_panel_fun,
+    text_panel_fun = NULL,
+    text_row_groups = NULL,
+    text_heights_mm = numeric(0),
+    textbox_width_mm = 0,
+    textbox_gap_mm = 2,
+    link_gp = grid::gpar(
+        fill = "grey98", col = "grey50", lwd = 0.5
+    )
+) {
+    has_text <- !is.null(text_panel_fun) &&
+        length(text_row_groups) > 0L
+    valid_text_heights <- text_heights_mm[
+        is.finite(text_heights_mm)
+    ]
+    max_text_height_mm <- if (
+        has_text && length(valid_text_heights) > 0L
+    ) {
+        max(valid_text_heights)
+    } else {
+        0
+    }
+    n_panels <- length(profile_row_groups)
+    if (is.null(heatmap_height_mm)) {
+        panel_size <- rep(1, n_panels)
+        min_panel_gap_mm <- 0
+        target_panel_height_mm <- max(
+            profile_width_mm, max_text_height_mm
+        )
+        target_gap <- (
+            grid::unit(1, "npc") -
+                grid::unit(n_panels * target_panel_height_mm, "mm")
+        ) / (n_panels + 1)
+        panel_gap <- grid::unit.pmax(
+            grid::unit(min_panel_gap_mm, "mm"), target_gap
+        )
+        profile_panel_height <- grid::unit.pmin(
+            grid::unit(1, "npc"),
+            grid::unit(profile_width_mm, "mm")
+        )
+        panel_extend <- -grid::unit.c(panel_gap, panel_gap)
+    } else {
+        panel_height_mm <- max(
+            profile_height_mm, max_text_height_mm
+        )
+        panel_gap_mm <- (
+            heatmap_height_mm - n_panels * panel_height_mm
+        ) / (n_panels + 1)
+        if (panel_gap_mm < 0) {
+            stop(
+                "The heatmap is too short for selected anno_zoom panels."
+            )
+        }
+        panel_size <- grid::unit(
+            rep(panel_height_mm, n_panels), "mm"
+        )
+        panel_gap <- grid::unit(panel_gap_mm, "mm")
+        profile_panel_height <- grid::unit(
+            profile_height_mm, "mm"
+        )
+        panel_extend <- -grid::unit.c(panel_gap, panel_gap)
+    }
+    content_width_mm <- profile_width_mm +
+        if (has_text) textbox_gap_mm + textbox_width_mm else 0
+
+    panel_fun <- function(index, nm) {
+        grid::pushViewport(grid::viewport(
+            x = grid::unit(0, "npc"),
+            y = grid::unit(0.5, "npc"),
+            width = grid::unit(profile_width_mm, "mm"),
+            height = profile_panel_height,
+            just = base::c("left", "center"),
+            clip = "off"
+        ))
+        profile_panel_fun(index, nm)
+        grid::popViewport()
+
+        if (has_text && nm %in% base::names(text_row_groups)) {
+            text_height <- text_heights_mm[[nm]]
+            if (is.finite(text_height) && text_height > 0) {
+                grid::pushViewport(grid::viewport(
+                    x = grid::unit(
+                        profile_width_mm + textbox_gap_mm, "mm"
+                    ),
+                    y = grid::unit(0.5, "npc"),
+                    width = grid::unit(textbox_width_mm, "mm"),
+                    height = grid::unit(text_height, "mm"),
+                    just = base::c("left", "center"),
+                    clip = "off"
+                ))
+                text_panel_fun(index, nm)
+                grid::popViewport()
+            }
+        }
+    }
+
+    ComplexHeatmap::anno_zoom(
+        align_to = profile_row_groups,
+        which = "row",
+        side = "right",
+        panel_fun = panel_fun,
+        size = panel_size,
+        gap = panel_gap,
+        link_width = grid::unit(link_width_mm, "mm"),
+        link_gp = link_gp,
+        width = grid::unit(
+            link_width_mm + content_width_mm, "mm"
+        ),
+        extend = panel_extend,
+        internal_line = TRUE
+    )
+}
 
 #' Plot modules (horizontal layout)
 #'
@@ -162,6 +286,8 @@
 #'   Supply a vector matching `enrich_category` for per-category control,
 #'   or set to `NULL` to skip colour-coding (all terms black).
 #'   Set to `NA` for `"Features"`.
+#' @param enrich_wrap_width Optional maximum enrichment term width in cm.
+#'   The default `NULL` disables wrapping.
 #' @param fontsize Base font size (default: 8)
 #' @param group_annotation Top annotation for group-split heatmap columns:
 #'   `"name"` (default), `"colour"`, `"both"`, or `"none"`.
@@ -169,6 +295,8 @@
 #' @param return_legends Logical; if `TRUE`, return a list containing the
 #'   Heatmap/HeatmapList and the native ComplexHeatmap legend objects.
 #'   (default: `FALSE`)
+#' @param legend_position Legend position: `"right"` (default) or
+#'   `"bottom"`.
 #' @param profile_scale Y-axis scaling for the mean expression profiles:
 #'   `"dataset"` (default) uses one range across modules within each
 #'   dataset, `"shared"` uses one range across all modules and datasets,
@@ -192,7 +320,7 @@
 #' @param width Width of the saved image (default is 16 (cm))
 #' @param height Height of the saved image (default is 12 (cm))
 #' @param res Resolution of the saved image (except pdf and svg formats)
-#' (default: 300 (ppi))
+#'   (default: 300 (ppi))
 #' @param device Image file format(s) for saving. Can be a character
 #'   vector with one or more of `"png"`, `"pdf"`, `"svg"`, `"tiff"`, `"jpeg"`
 #'   (default: `"png"`)
@@ -202,6 +330,9 @@
 #' @param names Optional character vector of dataset names for the plot
 #'   subtitles when multi-dataset. Default: NULL, i.e.
 #'   the names of `se_obj_merged`.
+#' @param selected_modules Optional character or numeric module labels for
+#'   which profiles and enrichment panels should be displayed. The default
+#'   `NULL` keeps all modules.
 #' @import ggplot2
 #' @import SummarizedExperiment
 #'
@@ -250,6 +381,7 @@ plot_modules_h <- function(
     enrich_rank_by = "p.adjust",
     enrich_top_n = 3,
     enrich_threshold = 0.05,
+    enrich_wrap_width = NULL,
     fontsize = 8,
     group_annotation = c("name", "colour", "both", "none"),
     return_legends = FALSE,
@@ -263,7 +395,9 @@ plot_modules_h <- function(
     suffix = "",
     device = "png",
     save = NULL,
-    names = NULL
+    names = NULL,
+    selected_modules = NULL,
+    legend_position = c("right", "bottom")
 ) {
     .check_df(module, "module")
     .check_logical(scale, "scale")
@@ -275,6 +409,7 @@ plot_modules_h <- function(
     .check_logical(return_legends, "return_legends")
     .check_character(profile_scale, "profile_scale")
     profile_scale <- match.arg(profile_scale)
+    legend_position <- match.arg(legend_position)
     fontfamily <- "sans"
     .check_positive(heatmap_width, "heatmap_width")
     if (!is.null(heatmap_height))
@@ -282,6 +417,20 @@ plot_modules_h <- function(
     .check_positive(width, "width")
     .check_positive(height, "height")
     .check_positive_int(res, "res")
+    if (!is.null(selected_modules) &&
+        !is.character(selected_modules) &&
+        !is.numeric(selected_modules)) {
+        stop("'selected_modules' must be character or numeric.")
+    }
+    if (!is.null(selected_modules) && length(selected_modules) == 0L) {
+        stop("'selected_modules' must contain at least one module.")
+    }
+    if (!is.null(enrich_list) && !is.null(enrich_wrap_width) &&
+        (!is.numeric(enrich_wrap_width) ||
+            length(enrich_wrap_width) != 1L ||
+            !is.finite(enrich_wrap_width) || enrich_wrap_width <= 0)) {
+        stop("'enrich_wrap_width' must be one positive number or NULL.")
+    }
     if (is.null(ylabel)) {
         ylabel <- if (scale) "Z-score of log2 abundance" else "Log2 abundance"
     }
@@ -450,6 +599,21 @@ plot_modules_h <- function(
         levels = base::names(sort(mod_sizes, decreasing = TRUE))
     )
     stopifnot(nrow(module) > 0)
+    all_module_levels <- levels(module$Module)
+    selected_mode <- !is.null(selected_modules)
+    if (selected_mode) {
+        selected_modules <- as.character(.module_labels(selected_modules))
+        missing_modules <- setdiff(selected_modules, all_module_levels)
+        if (length(missing_modules) > 0L) {
+            stop("'selected_modules' contains unknown module(s): ",
+                paste(missing_modules, collapse = ", "))
+        }
+        profile_modules <- all_module_levels[
+            all_module_levels %in% selected_modules
+        ]
+    } else {
+        profile_modules <- all_module_levels
+    }
 
     data_module_longs <- list()
     groups <- list()
@@ -475,6 +639,18 @@ plot_modules_h <- function(
             dplyr::select(-Module) |>
             as.matrix()
         mods[[i]] <- data_module_wider$Module
+    }
+
+    selected_profile_height <- NULL
+    if (selected_mode && !is.null(heatmap_height)) {
+        n_profile_modules <- length(profile_modules)
+        available_profile_height <- heatmap_height / n_profile_modules
+        if (available_profile_height <= 0) {
+            stop("The heatmap is too short for selected profiles.")
+        }
+        selected_profile_height <- min(
+            profile_width, available_profile_height
+        )
     }
 
     profile_values <- lapply(data_module_longs, function(x) {
@@ -526,7 +702,7 @@ plot_modules_h <- function(
             all_feats <- unlist(mark_features, use.names = FALSE)
             feat_col <- rep(unname(cat_cols), times = lengths(mark_features))
             base::names(feat_col) <- unlist(mark_features, use.names = FALSE)
-            # De-duplicate: first category wins if a feature appears in multiple
+            # De-duplicate: use first category if a feature appears in multiple
             feat_col <- feat_col[!duplicated(base::names(feat_col))]
             mark_state$feat_col <- feat_col
             mark_state$lgd <- ComplexHeatmap::Legend(
@@ -600,7 +776,41 @@ plot_modules_h <- function(
             time_breaks <= t_range[2]]
         t_range_exp <- t_range + c(-1, 1) * 0.05 * diff(t_range)
         time_breaks_norm <- (time_breaks - t_range_exp[1]) / diff(t_range_exp)
-        last_mod <- utils::tail(levels(data_module_longs[[i]]$Module), 1)
+        last_mod <- utils::tail(profile_modules, 1)
+        make_profile_panel_fun <- function(profile_grobs, isolate = FALSE) {
+            function(index, nm) {
+                if (isolate) {
+                    grid::pushViewport(grid::viewport())
+                    on.exit(grid::popViewport(), add = TRUE)
+                }
+                g <- profile_grobs[[nm]]
+                g <- grid::grid.grabExpr(grid::grid.draw(g))
+                grid::grid.rect(gp = grid::gpar(
+                    fill = "transparent", col = "grey50", lwd = 0.5
+                ))
+                grid::grid.draw(g)
+                if (nm == last_mod) {
+                    grid::grid.xaxis(at = time_breaks_norm,
+                        label = FALSE,
+                        gp = grid::gpar(col = "grey50",
+                            fontsize = fontsize,
+                            fontfamily = fontfamily))
+                    grid::grid.text(as.character(time_breaks),
+                        x = grid::unit(time_breaks_norm, "npc"),
+                        y = grid::unit(-1.2, "lines"),
+                        just = c("center", "top"),
+                        gp = grid::gpar(col = "black",
+                            fontsize = fontsize,
+                            fontfamily = fontfamily))
+                    grid::grid.text("Time",
+                        x = grid::unit(0.5, "npc"),
+                        y = grid::unit(-2.4, "lines"),
+                        just = c("center", "top"),
+                        gp = grid::gpar(fontsize = fontsize,
+                            fontfamily = fontfamily))
+                }
+            }
+        }
         ggplot2_profile_list <- list()
         for (m in levels(data_module_longs[[i]]$Module)) {
             profile_plot <- data_module_longs[[i]] |>
@@ -622,7 +832,7 @@ plot_modules_h <- function(
                     axis.title = element_blank(),
                     axis.ticks = element_blank(),
                     panel.border = element_rect(
-                        fill = NA, colour = "grey65", linewidth = 0.35
+                        fill = NA, colour = "grey50", linewidth = 0.5
                     ),
                     legend.position = "none",
                     plot.margin = margin(0, 0, 0, 0, unit = "cm")
@@ -634,56 +844,66 @@ plot_modules_h <- function(
             ggplot2_profile_list[[m]] <- profile_plot
         }
 
-        anno_ggplot2_profile <- ComplexHeatmap::anno_zoom(
-            align_to = mods[[i]],
-            which = "row",
-            panel_fun = function(index, nm) {
-                g <- ggplot2_profile_list[[nm]]
-                g <- grid::grid.grabExpr(grid::grid.draw(g))
-                grid::pushViewport(grid::viewport())
-                grid::grid.rect(gp = grid::gpar(
-                    fill = "transparent", col = "grey65", lwd = 0.35
-                ))
-                grid::grid.draw(g)
-                grid::popViewport()
-                if (nm == last_mod) {
-                    grid::grid.xaxis(at = time_breaks_norm,
-                        label = FALSE,
-                        gp = grid::gpar(col = "grey65",
-                            fontsize = fontsize,
-                            fontfamily = fontfamily))
-                    grid::grid.text(as.character(time_breaks),
-                        x = grid::unit(time_breaks_norm, "npc"),
-                        y = grid::unit(-1.2, "lines"),
-                        just = c("center", "top"),
-                        gp = grid::gpar(col = "black",
-                            fontsize = fontsize,
-                            fontfamily = fontfamily))
-                    grid::grid.text("Time",
-                        x = unit(0.5, "npc"),
-                        y = grid::unit(-2.4, "lines"),
-                        just = c("center", "top"),
-                        gp = grid::gpar(fontsize = fontsize,
-                            fontfamily = fontfamily))
-                }
-            },
-            size = 1 / length(unique(mods[[i]])),
-            gap = unit(0, "cm"),
-            width = unit(profile_width, "cm"),
-            side = "right",
-            link_gp = grid::gpar(fill = "grey98", col = "grey65",
-                lwd = 0.5),
-            link_width = unit(profile_link_width, "cm")
-        )
+        profile_align_to <- if (selected_mode) {
+            align_to <- lapply(profile_modules, function(mod) {
+                which(as.character(mods[[i]]) == mod)
+            })
+            base::names(align_to) <- profile_modules
+            align_to
+        } else {
+            mods[[i]]
+        }
+        if (!selected_mode) {
+            profile_size <- 1 / length(unique(mods[[i]]))
+            profile_gap <- unit(0, "cm")
+        }
 
-        right_ann <- ComplexHeatmap::rowAnnotation(profile =
-            anno_ggplot2_profile)
+        selected_profile_spec <- NULL
+        text_panel_fun <- NULL
+        text_row_groups <- NULL
+        text_heights_mm <- numeric(0)
+        textbox_width_mm <- 0
+        combined_anno <- NULL
+        if (selected_mode) {
+            profile_grobs <- lapply(profile_modules, function(mod) {
+                ggplot2_profile_list[[mod]]
+            })
+            base::names(profile_grobs) <- profile_modules
+            profile_panel_fun <- make_profile_panel_fun(
+                profile_grobs = profile_grobs
+            )
+            selected_profile_spec <- list(
+                row_groups = profile_align_to,
+                panel_fun = profile_panel_fun
+            )
+            anno_ggplot2_profile <- NULL
+        } else {
+            anno_ggplot2_profile <- ComplexHeatmap::anno_zoom(
+                align_to = profile_align_to,
+                which = "row",
+                panel_fun = make_profile_panel_fun(
+                    profile_grobs = ggplot2_profile_list,
+                    isolate = TRUE
+                ),
+                size = profile_size,
+                gap = profile_gap,
+                width = unit(profile_width, "cm"),
+                side = "right",
+                link_gp = grid::gpar(
+                    fill = "grey98", col = "grey50", lwd = 0.5
+                ),
+                link_width = unit(profile_link_width, "cm")
+            )
+        }
 
         # ---- Multi-category annotation (rightmost dataset only) ----
         if (i == n_datasets &&
             (!is.null(enrich_list) || has_feature_text)) {
-            mod_levels <- levels(data_module_longs[[i]]$Module)
-            mat_nrow <- nrow(mats[[i]])
+            mod_levels <- if (selected_mode) {
+                profile_modules
+            } else {
+                levels(data_module_longs[[i]]$Module)
+            }
 
             # Build combined multi-column textbox from all enrichment categories
             enr_cats <- if (is.null(enrich_list)) {
@@ -733,7 +953,7 @@ plot_modules_h <- function(
                     rank_by %in% colnames(termanno)) {
                     termanno$col <- ifelse(
                         termanno[[rank_by]] < enrich_threshold[param_i],
-                        "black", "grey70")
+                        "black", "grey50")
                 } else {
                     termanno$col <- "black"
                 }
@@ -791,39 +1011,128 @@ plot_modules_h <- function(
                     mod %in% base::names(ct) && nrow(ct[[mod]]) > 0
                 }, logical(1)))
             }, logical(1))
-            if (any(has_terms)) {
+            if (!selected_mode && any(has_terms)) {
                 cat_terms <- lapply(cat_terms, function(ct)
                     ct[mod_levels[has_terms]])
             }
 
             # Build a single multi-column textbox from all categories
             if (length(cat_terms) > 0) {
-                align_to <- factor(
-                    rep(mod_levels,
-                        each = round(mat_nrow / length(mod_levels))
-                    ),
-                    levels = mod_levels
-                )
                 text <- .reformat_cat_terms(cat_terms)
-
-                combined_anno <- .anno_multicol_textbox(
-                    align_to = align_to, text = text,
-                    background_gp = grid::gpar(
-                        fill = "grey98", col = "grey65"
-                    ),
-                    by = "anno_link", side = "right",
-                    show_headers = TRUE,
-                    header_gp = grid::gpar(
-                        fontsize = fontsize, fontface = "bold",
-                        fontfamily = fontfamily
+                textbox_args <- list(
+                    word_wrap = !is.null(enrich_wrap_width),
+                    max_width = if (is.null(enrich_wrap_width)) {
+                        NULL
+                    } else {
+                        unit(enrich_wrap_width, "cm")
+                    },
+                    line_space = unit(0.15 * fontsize, "pt"),
+                    term_space = unit(0.75 * fontsize, "pt"),
+                    text_padding = unit(0.65 * fontsize, "pt")
+                )
+                if (!selected_mode) {
+                    align_to <- factor(
+                        rep(mod_levels,
+                            each = round(nrow(mats[[i]]) / length(mod_levels))
+                        ),
+                        levels = mod_levels
                     )
-                )
+                    combined_anno <- do.call(
+                        .anno_multicol_textbox,
+                        c(
+                            list(
+                                align_to = align_to,
+                                text = text,
+                                background_gp = grid::gpar(
+                                    fill = "grey98", col = "grey50"
+                                ),
+                                by = "anno_link",
+                                side = "right",
+                                show_headers = TRUE,
+                                header_gp = grid::gpar(
+                                    fontsize = fontsize,
+                                    fontface = "bold",
+                                    fontfamily = fontfamily
+                                )
+                            ),
+                            if (is.null(enrich_wrap_width)) {
+                                list()
+                            } else {
+                                textbox_args
+                            }
+                        )
+                    )
+                } else {
+                    text_row_groups <- profile_align_to[names(text)]
+                    base::names(text_row_groups) <- names(text)
 
-                right_ann <- ComplexHeatmap::rowAnnotation(
-                    profile = anno_ggplot2_profile,
-                    Enrichment = combined_anno
-                )
+                    dev_was_open <- length(grDevices::dev.list()) > 0L
+                    if (!dev_was_open) {
+                        tmp <- tempfile(fileext = ".pdf")
+                        grDevices::pdf(tmp)
+                    }
+                    textbox_layout <- tryCatch(
+                        .multicol_textbox_layout(
+                            text, textbox_args = textbox_args
+                        ),
+                        finally = if (!dev_was_open) {
+                            grDevices::dev.off()
+                            unlink(tmp)
+                        }
+                    )
+                    textbox_width_mm <- textbox_layout$width_mm
+                    text_heights_mm <- textbox_layout$heights_mm
+                    text_panel_fun <- .multicol_textbox_panel_fun(
+                        textbox_layout,
+                        background_gp = grid::gpar(
+                            fill = "grey98", col = "grey50", lty = 1,
+                            lwd = 0.5
+                        ),
+                        show_headers = TRUE,
+                        header_gp = grid::gpar(
+                            fontsize = fontsize, fontface = "bold",
+                            fontfamily = fontfamily
+                        )
+                    )
+
+                }
+
             }
+        }
+
+        if (!is.null(selected_profile_spec)) {
+            selected_anno <- .make_selected_anno_zoom(
+                profile_row_groups = selected_profile_spec$row_groups,
+                profile_width_mm = profile_width * 10,
+                link_width_mm = profile_link_width * 10,
+                heatmap_height_mm = if (is.null(heatmap_height)) {
+                    NULL
+                } else {
+                    heatmap_height * 10
+                },
+                profile_height_mm = if (is.null(heatmap_height)) {
+                    NULL
+                } else {
+                    selected_profile_height * 10
+                },
+                profile_panel_fun = selected_profile_spec$panel_fun,
+                text_panel_fun = text_panel_fun,
+                text_row_groups = text_row_groups,
+                text_heights_mm = text_heights_mm,
+                textbox_width_mm = textbox_width_mm
+            )
+            right_ann <- ComplexHeatmap::rowAnnotation(
+                Selected = selected_anno
+            )
+        } else if (!is.null(combined_anno)) {
+            right_ann <- ComplexHeatmap::rowAnnotation(
+                profile = anno_ggplot2_profile,
+                Enrichment = combined_anno
+            )
+        } else {
+            right_ann <- ComplexHeatmap::rowAnnotation(
+                profile = anno_ggplot2_profile
+            )
         }
 
         # ---- anno_mark for key features (leftmost dataset only) ----
@@ -845,7 +1154,7 @@ plot_modules_h <- function(
                             col = cols, fontsize = fontsize,
                             fontfamily = fontfamily
                         ),
-                        link_gp = grid::gpar(col = "grey65", lwd = 0.5),
+                        link_gp = grid::gpar(col = "grey50", lwd = 0.5),
                         padding = unit(2, "mm")
                     )
                 )
@@ -863,7 +1172,7 @@ plot_modules_h <- function(
                 fontface = "bold", fontfamily = fontfamily),
             layer_fun = function(j, i, x, y, w, h, fill, slice_r, slice_c) {
                 grid::grid.rect(gp = grid::gpar(
-                    fill = "transparent", col = "grey65", lwd = 0.55
+                    fill = "transparent", col = "grey50", lwd = 1
                 ))
             }, # draw frames around the modules
             column_split = sp_infos[[i]]$Group,
@@ -896,6 +1205,19 @@ plot_modules_h <- function(
                 else grid::unit(heatmap_height, "cm")
         )
         if (!is.null(left_ann)) ht_args$left_annotation <- left_ann
+        row_title_col <- if (selected_mode) {
+            ifelse(
+                levels(data_module_longs[[i]]$Module) %in%
+                    profile_modules,
+                "black", "grey65"
+            )
+        } else {
+            "black"
+        }
+        ht_args$row_title_gp <- grid::gpar(
+            fontsize = fontsize, fontface = "bold",
+            fontfamily = fontfamily, col = row_title_col
+        )
         do.call(ComplexHeatmap::Heatmap, ht_args)
     })
 
@@ -966,7 +1288,7 @@ plot_modules_h <- function(
                         sprintf("%s >= %.2f", enrich_rank_by[ci], pt)
                     ),
                     type = "lines",
-                    legend_gp = grid::gpar(col = c("black", "grey70"),
+                    legend_gp = grid::gpar(col = c("black", "grey50"),
                         lwd = 2),
                     labels_gp = grid::gpar(fontsize = fontsize,
                         fontfamily = fontfamily),
@@ -989,7 +1311,7 @@ plot_modules_h <- function(
         pad_bottom <- 10
         ComplexHeatmap::draw(ht_list,
             heatmap_legend_list = lgd_list,
-            heatmap_legend_side = "right", merge_legends = TRUE,
+            heatmap_legend_side = legend_position, merge_legends = TRUE,
             # top, right, bottom, left
             padding = unit(c(2, 2, pad_bottom, 2), "mm")
         )

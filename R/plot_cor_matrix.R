@@ -275,9 +275,8 @@ plot_cor_matrix <- function(
     title_lines <- length(strsplit(title_final, "\n",
         fixed = TRUE)[[1]]) + 1L
 
-    # Capture each heatmap as a grob and
-    # arrange side-by-side sized to exact content width
-    # (eliminates white gaps from equal-width columns).
+    # Capture each heatmap as a grob and arrange side by side using
+    # exact content widths with small proportional gaps between datasets.
     grobs <- lapply(heatmaps, function(ht) {
         grid::grid.grabExpr(ComplexHeatmap::draw(ht,
             padding = unit(c(0, 0, 0, 0), "mm")
@@ -303,6 +302,11 @@ plot_cor_matrix <- function(
     })
     content_w <- vapply(content_dims, `[[`, numeric(1), "w")
     content_h <- max(vapply(content_dims, `[[`, numeric(1), "h"))
+    gap_fraction <- 0.05
+    gap_w <- gap_fraction * (content_w[-length(content_w)] +
+        content_w[-1]) / 2
+    layout_w <- c(rbind(content_w[-length(content_w)], gap_w),
+        content_w[length(content_w)])
 
     grid::grid.newpage()
     grid::pushViewport(grid::viewport(
@@ -318,12 +322,12 @@ plot_cor_matrix <- function(
     grid::popViewport()
     grid::pushViewport(grid::viewport(layout.pos.row = 2))
     grid::pushViewport(grid::viewport(
-        layout = grid::grid.layout(1, length(heatmaps),
-            widths = unit(content_w, "mm")
+        layout = grid::grid.layout(1, length(layout_w),
+            widths = unit(layout_w, "mm")
         )
     ))
     for (i in seq_along(grobs)) {
-        grid::pushViewport(grid::viewport(layout.pos.col = i))
+        grid::pushViewport(grid::viewport(layout.pos.col = 2L * i - 1L))
         grid::grid.draw(grobs[[i]])
         grid::popViewport()
     }

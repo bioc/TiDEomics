@@ -4,7 +4,7 @@
 \alias{.multicol_textbox_col_grob}
 \title{Build a single-column textbox grob}
 \usage{
-.multicol_textbox_col_grob(df, ...)
+.multicol_textbox_col_grob(df, text_padding = NULL, ...)
 }
 \arguments{
 \item{df}{A data.frame with columns \code{text}, \code{col}, \code{fontsize}, and

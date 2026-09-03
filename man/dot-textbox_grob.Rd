@@ -19,7 +19,8 @@
   padding = unit(4, "pt"),
   first_text_from = "top",
   add_new_line = FALSE,
-  word_wrap = FALSE
+  word_wrap = FALSE,
+  term_space = NULL
 )
 }
 \arguments{
@@ -62,13 +63,22 @@ length 1, 2, or 4 (default: 4 pt all sides).}
 (default: \code{FALSE}).}
 
 \item{word_wrap}{Logical; enable word wrapping (default: \code{FALSE}).}
+
+\item{term_space}{Optional vertical spacing after a complete term when
+terms are separated onto different lines. \code{NULL} preserves the
+original \code{line_space} behavior.}
 }
 \value{
 A \code{grid::gTree} of class \code{"textbox"}.
 }
 \description{
-Stacks text strings vertically with per-string graphical parameters.
+Stacks text strings vertically with per-string graphical parameters (color,
+fontsize, fontfamily, fontface).
+Added \code{term_space} to allow extra spacing.
+}
+\details{
 Adapted from \code{ComplexHeatmap:::textbox_grob} to avoid dependency on
-unexported ComplexHeatmap internals.
+unexported ComplexHeatmap internal functions, including .recycle_gp and
+.subset_gp (ComplexHeatmap:::recycle_gp, ComplexHeatmap:::subset_gp).
 }
 \keyword{internal}

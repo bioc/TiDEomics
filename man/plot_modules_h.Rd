@@ -17,6 +17,7 @@ plot_modules_h(
   enrich_rank_by = "p.adjust",
   enrich_top_n = 3,
   enrich_threshold = 0.05,
+  enrich_wrap_width = NULL,
   fontsize = 8,
   group_annotation = c("name", "colour", "both", "none"),
   return_legends = FALSE,
@@ -30,7 +31,9 @@ plot_modules_h(
   suffix = "",
   device = "png",
   save = NULL,
-  names = NULL
+  names = NULL,
+  selected_modules = NULL,
+  legend_position = c("right", "bottom")
 )
 }
 \arguments{
@@ -91,6 +94,9 @@ Supply a vector matching \code{enrich_category} for per-category control,
 or set to \code{NULL} to skip colour-coding (all terms black).
 Set to \code{NA} for \code{"Features"}.}
 
+\item{enrich_wrap_width}{Optional maximum enrichment term width in cm.
+The default \code{NULL} disables wrapping.}
+
 \item{fontsize}{Base font size (default: 8)}
 
 \item{group_annotation}{Top annotation for group-split heatmap columns:
@@ -146,6 +152,13 @@ vector with one or more of \code{"png"}, \code{"pdf"}, \code{"svg"}, \code{"tiff
 \item{names}{Optional character vector of dataset names for the plot
 subtitles when multi-dataset. Default: NULL, i.e.
 the names of \code{se_obj_merged}.}
+
+\item{selected_modules}{Optional character or numeric module labels for
+which profiles and enrichment panels should be displayed. The default
+\code{NULL} keeps all modules.}
+
+\item{legend_position}{Legend position: \code{"right"} (default) or
+\code{"bottom"}.}
 }
 \value{
 A combined plot of heatmap, mean expression profile, and enrichment
