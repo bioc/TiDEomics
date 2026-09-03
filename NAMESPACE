@@ -2,6 +2,7 @@
 
 export(DE_between_group)
 export(DE_between_time)
+export(DE_timecourse)
 export(WGCNA_module)
 export(calc_feature_property)
 export(calc_mean_sd)

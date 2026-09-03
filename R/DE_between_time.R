@@ -2,28 +2,27 @@
 #' @description Differential expression analysis between time points within
 #' each group by limma
 #'
-#' @param se_obj A SummarizedExperiment object created by `create_input`
+#' @param se_obj A SummarizedExperiment object created by `create_input()`
 #' @param group A character vector specifying which groups to
-#' analyse. If NULL, all groups in the 'Group' column will be used. (default
-#' is NULL)
+#'   analyse. If NULL, all groups in the 'Group' column will be used. (default
+#'   is NULL)
 #' @param filter Minimum number of replicates required in both
-#' conditions for a feature to be tested. If NULL, the minimum number of
-#' replicates across all groups and time points will be used. (default is NULL)
+#'   conditions for a feature to be tested. If NULL, the minimum number of
+#'   replicates across all groups and time points will be used.
+#'   (default is NULL)
 #' @param assay The assay to use in the SummarizedExperiment object: a numeric
 #'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
-#'   for time 0 normalised data. (Required, no default.) The selected assay should
-#' contain log-transformed, normalised values (e.g. log2-CPM for RNA-seq,
-#' log2-intensity for proteomics). A warning is issued if the data appears
-#' to be un-logged raw counts.
+#'   for time 0 normalised data. The selected assay should
+#'   contain log-transformed, normalised values. A warning is issued if the
+#'   data appears to be un-logged raw counts.
 #' @param adjP_thres Threshold for adjusted p-value to consider a
-#' feature as differentially expressed (default is 0.05)
+#'   feature as differentially expressed (default is 0.05)
 #' @param logFC_thres Threshold for log2 fold change to consider a
-#' feature as differentially expressed (default is 1)
-#' @param trend Logical, passed to `limma::eBayes()`.
-#'   Set to `TRUE` for RNA-seq count-derived data to model the mean-variance
-#'   trend. Leave as `FALSE` (default) for microarray, proteomics,
-#'   metabolomics, or other log-intensity data where the mean-variance
-#'   relationship is typically flat.
+#'   feature as differentially expressed (default is 1)
+#' @param trend Logical, passed to `limma::eBayes()`. Use `TRUE` only when the
+#'   mean-variance relationship is expected to vary with abundance. The
+#'   default `FALSE` is usually appropriate for log-transformed, normalised
+#'   data unless diagnostics support modelling a mean-variance trend.
 #'
 #' @import SummarizedExperiment
 #'

@@ -15,7 +15,7 @@ DE_between_time(
 )
 }
 \arguments{
-\item{se_obj}{A SummarizedExperiment object created by \code{create_input}}
+\item{se_obj}{A SummarizedExperiment object created by \code{create_input()}}
 
 \item{group}{A character vector specifying which groups to
 analyse. If NULL, all groups in the 'Group' column will be used. (default
@@ -23,14 +23,14 @@ is NULL)}
 
 \item{filter}{Minimum number of replicates required in both
 conditions for a feature to be tested. If NULL, the minimum number of
-replicates across all groups and time points will be used. (default is NULL)}
+replicates across all groups and time points will be used.
+(default is NULL)}
 
 \item{assay}{The assay to use in the SummarizedExperiment object: a numeric
 index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
-for time 0 normalised data. (Required, no default.) The selected assay should
-contain log-transformed, normalised values (e.g. log2-CPM for RNA-seq,
-log2-intensity for proteomics). A warning is issued if the data appears
-to be un-logged raw counts.}
+for time 0 normalised data. The selected assay should
+contain log-transformed, normalised values. A warning is issued if the
+data appears to be un-logged raw counts.}
 
 \item{adjP_thres}{Threshold for adjusted p-value to consider a
 feature as differentially expressed (default is 0.05)}
@@ -38,11 +38,10 @@ feature as differentially expressed (default is 0.05)}
 \item{logFC_thres}{Threshold for log2 fold change to consider a
 feature as differentially expressed (default is 1)}
 
-\item{trend}{Logical, passed to \code{limma::eBayes()}.
-Set to \code{TRUE} for RNA-seq count-derived data to model the mean-variance
-trend. Leave as \code{FALSE} (default) for microarray, proteomics,
-metabolomics, or other log-intensity data where the mean-variance
-relationship is typically flat.}
+\item{trend}{Logical, passed to \code{limma::eBayes()}. Use \code{TRUE} only when the
+mean-variance relationship is expected to vary with abundance. The
+default \code{FALSE} is usually appropriate for log-transformed, normalised
+data unless diagnostics support modelling a mean-variance trend.}
 }
 \value{
 A list with: \code{all_list} (nested list of DE results per group
