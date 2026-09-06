@@ -36,6 +36,81 @@ extract_consensus_hubs <- function(
     .check_positive_int(top_n, "top_n")
     .check_logical(exclude_grey, "exclude_grey")
 
+    empty_output <- function() {
+        data.frame(
+            Feature = character(0), Module = character(0),
+            Set = character(0), Rank = integer(0),
+            Score = numeric(0), ScoreType = character(0),
+            stringsAsFactors = FALSE
+        )
+    }
+
+    scores <- .consensus_kme_scores(
+        consensus, exclude_grey = exclude_grey
+    )
+    if (length(scores$modules) == 0) {
+        message("No modules to extract hubs from.")
+        return(empty_output())
+    }
+
+    colors <- scores$colors
+    feature_names <- scores$features
+    modules <- scores$modules
+    dataset_names <- names(scores$datasets)
+    hub_set_names <- paste0(dataset_names, " hub")
+    score_sets <- c(
+        list("Consensus hub" = scores$consensus),
+        stats::setNames(scores$datasets, hub_set_names)
+    )
+    score_types <- c(
+        "Consensus hub" = scores$consensus_type,
+        stats::setNames(rep(scores$dataset_type, length(dataset_names)),
+            hub_set_names)
+    )
+    rows <- lapply(names(score_sets), function(set_name) {
+        scores <- score_sets[[set_name]]
+        module_rows <- lapply(modules, function(mod) {
+            features <- feature_names[colors == mod]
+            module_scores <- scores[features]
+            keep <- is.finite(module_scores)
+            if (!any(keep)) return(NULL)
+
+            features <- features[keep]
+            module_scores <- module_scores[keep]
+            selected <- utils::head(
+                order(module_scores, decreasing = TRUE), top_n
+            )
+
+            data.frame(
+                Feature = features[selected],
+                Module = as.character(mod),
+                Set = set_name,
+                Rank = seq_along(selected),
+                Score = unname(module_scores[selected]),
+                ScoreType = unname(score_types[set_name]),
+                stringsAsFactors = FALSE
+            )
+        })
+        module_rows[!vapply(module_rows, is.null, logical(1))]
+    })
+    rows <- do.call(c, rows)
+
+    if (length(rows) == 0L) empty_output() else do.call(rbind, rows)
+}
+
+#' Calculate consensus and dataset-specific kME scores
+#'
+#' Runs `WGCNA::consensusKME()` and extracts assigned-module scores for
+#' each dataset and for the consensus network.
+#'
+#' @param consensus Output from `run_consensus_WGCNA()`.
+#' @param exclude_grey Logical; whether to exclude the grey module.
+#' @return A list containing module assignments, score vectors, and labels.
+#' @keywords internal
+.consensus_kme_scores <- function(consensus, exclude_grey = TRUE) {
+    .check_list(consensus, "consensus", "run_consensus_WGCNA")
+    .check_logical(exclude_grey, "exclude_grey")
+
     network <- consensus$network
     multiExpr <- consensus$multiExpr
     parameters <- consensus$parameters
@@ -64,19 +139,11 @@ extract_consensus_hubs <- function(
         modules <- setdiff(modules, c("grey", "0", 0))
     }
 
-    empty_output <- function() {
-        data.frame(
-            Feature = character(0), Module = character(0),
-            Set = character(0), Rank = integer(0),
-            Score = numeric(0), ScoreType = character(0),
-            stringsAsFactors = FALSE
-        )
-    }
-
-
-    if (length(modules) == 0) {
-        message("No modules to extract hubs from.")
-        return(empty_output())
+    if (length(modules) == 0L) {
+        return(list(
+            colors = colors,
+            modules = modules
+        ))
     }
 
     feature_names <- names(colors)
@@ -155,43 +222,13 @@ extract_consensus_hubs <- function(
         dataset_type <- "kME"
     }
 
-    hub_set_names <- paste0(dataset_names, " hub")
-    score_sets <- c(
-        list("Consensus hub" = consensus_scores),
-        stats::setNames(score_sets, hub_set_names)
+    list(
+        colors = colors,
+        features = feature_names,
+        modules = modules,
+        consensus = consensus_scores,
+        datasets = score_sets,
+        consensus_type = consensus_type,
+        dataset_type = dataset_type
     )
-    score_types <- c(
-        "Consensus hub" = consensus_type,
-        stats::setNames(rep(dataset_type, length(dataset_names)),
-            hub_set_names)
-    )
-    rows <- lapply(names(score_sets), function(set_name) {
-        scores <- score_sets[[set_name]]
-        module_rows <- lapply(modules, function(mod) {
-            features <- feature_names[colors == mod]
-            module_scores <- scores[features]
-            keep <- is.finite(module_scores)
-            if (!any(keep)) return(NULL)
-
-            features <- features[keep]
-            module_scores <- module_scores[keep]
-            selected <- utils::head(
-                order(module_scores, decreasing = TRUE), top_n
-            )
-
-            data.frame(
-                Feature = features[selected],
-                Module = as.character(mod),
-                Set = set_name,
-                Rank = seq_along(selected),
-                Score = unname(module_scores[selected]),
-                ScoreType = unname(score_types[set_name]),
-                stringsAsFactors = FALSE
-            )
-        })
-        module_rows[!vapply(module_rows, is.null, logical(1))]
-    })
-    rows <- do.call(c, rows)
-
-    if (length(rows) == 0L) empty_output() else do.call(rbind, rows)
 }

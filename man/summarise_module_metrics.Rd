@@ -7,25 +7,34 @@
 summarise_module_metrics(net)
 }
 \arguments{
-\item{net}{A WGCNA network object from \code{run_WGCNA()}.}
+\item{net}{A WGCNA network object from \code{run_WGCNA()} or
+\code{run_consensus_WGCNA()}.}
 }
 \value{
-A data frame with columns: \code{Module}, \code{Size},
-\code{Proportion}, \code{MeanKME}, \code{MeanKME2}, \code{MedianKME}, \code{SDKME},
-\code{MinKME}, \code{MaxKME}.
+For an individual WGCNA network, a data frame with columns:
+\code{Module}, \code{Size}, \code{Proportion}, \code{MeanKME}, \code{MeanKME2},
+\code{MedianKME}, \code{SDKME}, \code{Q25KME}, \code{Q75KME}, \code{MinKME}, and \code{MaxKME}.
+For consensus WGCNA, a named list of these data frames, with
+\code{Consensus} followed by one element for each individual dataset.
 }
 \description{
 Computes per-module metrics for a WGCNA network: module size,
 proportion of features assigned, and module membership (kME).
-Unassigned module is excluded.
+Unassigned module is excluded. For consensus WGCNA output, metrics
+are returned for the consensus and for each individual dataset.
 }
 \details{
-\code{MeanKME} and \code{MeanKME2} are the mean and mean squared module
-membership (kME = cor(feature, module eigengene)).
-\code{MeanKME2} = mean(kME^2) is the average proportion
-of per-feature variance explained by the module eigengene.
+\code{MeanKME} is mean module membership
+(\verb{kME = cor(feature, module eigengene)}). \code{MeanKME2} is the mean
+squared module membership (\code{mean(kME^2)}), equivalent to the mean
+per-feature proportion of variance explained by the module eigengene.
+\code{Q25KME} and \code{Q75KME} are the 25th and 75th kME percentiles.
+For consensus output, it is calculated from consensus
+or individual-dataset kME scores, respectively.
 }
 \examples{
 data(example_net)
 summarise_module_metrics(example_net)
+data(example_cons)
+summarise_module_metrics(example_cons)
 }

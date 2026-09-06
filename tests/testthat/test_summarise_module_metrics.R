@@ -6,9 +6,21 @@ test_that("summarise_module_metrics returns expected columns", {
 
     expect_s3_class(res, "data.frame")
     expected_cols <- c("Module", "Size", "Proportion",
-        "MeanKME", "MeanKME2", "MedianKME", "SDKME", "MinKME", "MaxKME")
+        "MeanKME", "MeanKME2", "MedianKME", "SDKME", "Q25KME",
+        "Q75KME", "MinKME", "MaxKME")
     expect_true(all(expected_cols %in% colnames(res)))
     expect_true(nrow(res) > 0)
+})
+
+test_that("summarise_module_metrics supports consensus output", {
+    data("example_cons")
+    res <- summarise_module_metrics(example_cons)
+
+    expect_true(is.list(res))
+    expect_true(all(c("Consensus", example_cons$names) %in% names(res)))
+    expect_true(all(vapply(res, function(x) {
+        all(c("Q25KME", "Q75KME") %in% colnames(x))
+    }, logical(1))))
 })
 
 test_that("summarise_module_metrics excludes grey module", {
@@ -29,7 +41,17 @@ test_that("summarise_module_metrics modules ordered by size", {
 
 test_that("summarise_module_metrics validates input", {
     expect_error(summarise_module_metrics(NULL), "must be a list")
-    expect_error(summarise_module_metrics(list()), "colors")
+    expect_error(summarise_module_metrics(list()), "must be output from")
+
+    ambiguous <- list(
+        colors = character(), input_data = data.frame(),
+        network = list(), multiExpr = list(),
+        common_features = character(), names = character(),
+        parameters = list()
+    )
+    expect_error(
+        summarise_module_metrics(ambiguous), "must be output from"
+    )
 })
 
 test_that("summarise_module_metrics kME values are in [-1, 1]", {
@@ -55,7 +77,7 @@ test_that("summarise_module_metrics errors without input_data", {
     net_no_input$input_data <- NULL
     expect_error(
         summarise_module_metrics(net_no_input),
-        "must contain 'input_data'"
+        "must be output from"
     )
 })
 
