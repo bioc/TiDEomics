@@ -17,12 +17,12 @@ test_that("plot_modules_h works", {
         enrich_list = example_go$all, enrich_category = "BP",
         fontsize = 6)
 
-    expect_s4_class(pq, "HeatmapList")
+    expect_s4_class(pq, "Heatmap")
     pq <- plot_modules_h(example_module |> dplyr::filter(Module != '0'),
         merged, assay = 2, scale = FALSE,
         enrich_list = example_go$all, enrich_category = "BP",
         fontsize = 6)
-    expect_s4_class(pq, "HeatmapList")
+    expect_s4_class(pq, "Heatmap")
 })
 
 test_that("plot_modules_h validates module argument", {
@@ -36,7 +36,7 @@ test_that("plot_modules_h handles single module without enrichment", {
 
     pq <- plot_modules_h(mod_one, merged,
         assay = 2, scale = TRUE, enrich_category = NULL, fontsize = 6)
-    expect_s4_class(pq, "HeatmapList")
+    expect_s4_class(pq, "Heatmap")
 })
 
 test_that("plot_modules_h handles Features without enrichment", {
@@ -45,7 +45,7 @@ test_that("plot_modules_h handles Features without enrichment", {
     expect_s4_class(plot_modules_h(example_module, merged,
         assay = 2, enrich_list = NULL,
         enrich_category = "Features", mark_features = hubs,
-        heatmap_width = 6, heatmap_height = 4), "HeatmapList")
+        heatmap_width = 6, heatmap_height = 4), "Heatmap")
 })
 
 test_that("plot_modules_h excludes Features from enrichment parameters", {
@@ -57,7 +57,7 @@ test_that("plot_modules_h excludes Features from enrichment parameters", {
         enrich_rank_by = c("p.adjust", "pvalue"),
         enrich_top_n = c(3, 2),
         enrich_threshold = c(0.05, 0.1), mark_features = hubs,
-        heatmap_width = 6, heatmap_height = 4), "HeatmapList")
+        heatmap_width = 6, heatmap_height = 4), "Heatmap")
 })
 
 test_that("plot_modules_h supports multi-category enrichment and parameters", {
@@ -69,7 +69,7 @@ test_that("plot_modules_h supports multi-category enrichment and parameters", {
         enrich_top_n = c(3, 2),
         enrich_rank_by = c("p.adjust", "pvalue"),
         enrich_threshold = NULL,
-        heatmap_width = 6, heatmap_height = 4), "HeatmapList")
+        heatmap_width = 6, heatmap_height = 4), "Heatmap")
 })
 
 test_that("plot_modules_h handles mark_features with Features", {
@@ -82,7 +82,7 @@ test_that("plot_modules_h handles mark_features with Features", {
         enrich_list = example_go$all,
         enrich_category = c("BP", "Features"),
         mark_features = hubs,
-        heatmap_width = 6, heatmap_height = 4), "HeatmapList")
+        heatmap_width = 6, heatmap_height = 4), "Heatmap")
 
     # Named list mark_features
     hub_list <- list(
@@ -95,7 +95,49 @@ test_that("plot_modules_h handles mark_features with Features", {
         enrich_list = example_go$all,
         enrich_category = c("BP", "Features"),
         mark_features = hub_list,
-        heatmap_width = 6, heatmap_height = 4), "HeatmapList")
+        heatmap_width = 6, heatmap_height = 4), "Heatmap")
+})
+
+test_that("plot_modules_h supports custom feature colours", {
+    hubs <- list(
+        Hub1 = utils::head(example_module$Feature, 2),
+        Hub2 = tail(example_module$Feature, 2)
+    )
+
+    result <- plot_modules_h(example_module, merged,
+        assay = 2, mark_features = hubs,
+        feature_colours = c(Hub1 = "#0072B2", Hub2 = "#D55E00"),
+        enrich_category = "Features", return_legends = TRUE,
+        heatmap_width = 6, heatmap_height = 4)
+    expect_s4_class(result$heatmap, "Heatmap")
+    expect_length(result$legends, 2)
+    feature_grob <- slot(result$legends[[2]], "grob")
+    feature_body <- feature_grob$children[[which(vapply(
+        feature_grob$children, inherits, logical(1), "legend_body"
+    ))]]
+    feature_segments <- feature_body$children[[which(vapply(
+        feature_body$children, inherits, logical(1), "segments"
+    ))]]
+    expect_equal(feature_segments$gp$col,
+        c("#0072B2", "#D55E00"))
+
+    expect_error(plot_modules_h(example_module, merged,
+        assay = 2, mark_features = hubs$Hub1,
+        feature_colours = "#009E73"), "named feature sets")
+})
+
+test_that("plot_modules_h validates custom feature colours", {
+    hubs <- list(Hub1 = utils::head(example_module$Feature, 2))
+
+    expect_error(plot_modules_h(example_module, merged, assay = 2,
+        mark_features = hubs, feature_colours = c(Other = "red")),
+        "unknown feature set")
+    expect_error(plot_modules_h(example_module, merged, assay = 2,
+        mark_features = hubs, feature_colours = c(Hub1 = "not-a-colour")),
+        "valid colours")
+    expect_error(plot_modules_h(example_module, merged, assay = 2,
+        mark_features = hubs$Hub1, feature_colours = c("red", "blue")),
+        "named feature sets")
 })
 
 test_that("plot_modules_h accepts feature annotation tables", {
@@ -110,7 +152,8 @@ test_that("plot_modules_h accepts feature annotation tables", {
         enrich_list = example_go$all,
         enrich_category = c("BP", "Features"),
         mark_features = feature_table,
-        heatmap_width = 6, heatmap_height = 4), "HeatmapList")
+        feature_colours = c(Consensus = "#0072B2", Exp1 = "#D55E00"),
+        heatmap_width = 6, heatmap_height = 4), "Heatmap")
 })
 
 test_that("plot_modules_h rejects categories absent from enrich_list", {
@@ -357,7 +400,7 @@ test_that("plot_modules_h with pre-existing col in enrichment", {
             assay = 2, scale = TRUE, enrich_list = enrich_mock,
             enrich_category = "BP", enrich_top_n = 3,
             heatmap_width = 6, heatmap_height = 4),
-        "HeatmapList"
+        "Heatmap"
     )
 })
 
@@ -382,7 +425,7 @@ test_that("plot_modules_h mark_features without Hub creates anno_mark", {
             enrich_category = "BP",
             mark_features = hubs,
             heatmap_width = 6, heatmap_height = 4),
-        "HeatmapList"
+        "Heatmap"
     )
 })
 
@@ -398,7 +441,7 @@ test_that("plot_modules_h with save writes files", {
             enrich_category = "BP",
             save = tmpdir, device = "png",
             heatmap_width = 6, heatmap_height = 4),
-        "HeatmapList"
+        "Heatmap"
     )
     png_files <- list.files(tmpdir, pattern = "\\.png$")
     expect_true(length(png_files) > 0)
@@ -425,7 +468,7 @@ test_that("plot_modules_h skips category with no matching terms", {
             assay = 2, scale = TRUE, enrich_list = enrich_mock,
             enrich_category = c("BP", "MF"), enrich_top_n = 3,
             heatmap_width = 6, heatmap_height = 4),
-        "HeatmapList"
+        "Heatmap"
     )
 })
 

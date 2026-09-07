@@ -95,6 +95,30 @@ test_that("flatten_DE handles nested DE structure", {
 
 # ---- flatten_enrich ----
 
+mock_enrichr_dde <- function() {
+    local_mocked_bindings(
+        .onAttach = function(...) NULL,
+        setEnrichrSite = function(site) NULL,
+        listEnrichrDbs = function() data.frame(
+            libraryName = "DSigDB", stringsAsFactors = FALSE
+        ),
+        enrichr = function(genes, databases, ...) {
+            mock_result <- data.frame(
+                Term = "Test pathway",
+                P.value = 0.001,
+                Adjusted.P.value = 0.01,
+                Combined.Score = 10,
+                Genes = "TP53,BRCA1",
+                stringsAsFactors = FALSE
+            )
+            stats::setNames(lapply(databases, function(db) mock_result),
+                databases)
+        },
+        .package = "enrichR",
+        .env = parent.frame()
+    )
+}
+
 test_that("flatten_enrich validates input", {
     expect_error(flatten_enrich(NULL), "must be a list")
     expect_equal(flatten_enrich(list()), list())
@@ -135,6 +159,8 @@ test_that("flatten_enrich handles multiple enrichment sources and flat msigdb", 
 test_that("flatten_enrich handles already-flat enrichR_list", {
     skip_if_not_installed("enrichR")
 
+    mock_enrichr_dde()
+
     enrichR_res <- enrichR_list(example_module_filt,
         databases = "DSigDB",
         pvalueCutoff = 0.9)
@@ -165,6 +191,8 @@ test_that("enrichGO_list output format is compatible with DeeDeeExperiment", {
 
 test_that("enrichR_list output format is compatible with DeeDeeExperiment", {
     skip_if_not_installed("enrichR")
+
+    mock_enrichr_dde()
 
     enrichR_res <- enrichR_list(example_module_filt,
         databases = "DSigDB",

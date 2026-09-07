@@ -40,13 +40,13 @@
 #' Build marked-feature term_list for multi-column textbox
 #'
 #' Build a per-module term_list from `mark_features` for use as a column
-#' in `.anno_multicol_textbox`. Accepts a named list (per-category colours
-#' from `ggsci::pal_jco()`) or a character vector (all black). Colours
-#' are taken from `mark_state$feat_col`.
+#' in `.anno_multicol_textbox`. Accepts a named list or a character vector.
+#' Colours are taken from `mark_state$feat_col`, including any custom
+#' `feature_colours` supplied to `plot_modules_h()`.
 #'
 #' @param mark_features A named list of character vectors, mapping
 #'   category names to feature IDs, or a plain character vector of
-#'   feature IDs (all shown in black).
+#'   feature IDs (shown in black by default).
 #' @param module_df A data frame with columns `Feature` and `Module`.
 #' @param mark_state A list with element `feat_col`, a named character
 #'   vector mapping feature IDs to colours.
@@ -305,7 +305,7 @@
 #' @param heatmap_height Height of the heatmap body in cm (default: 8).
 #'   Set to `NULL` to auto-size.
 #' @param mark_features Features to label. Accepts three forms:
-#'     - A **character vector**: all marked in black on the left.
+#'     - A **character vector**: all marked in black by default on the left.
 #'     - A **named list** of character vectors, e.g.
 #'         `list("Set 1" = c("gene1"), "Set 2" = c("gene2"))`.
 #'         Names become categories with auto-assigned colours (via
@@ -317,6 +317,11 @@
 #'     `enrich_category`, in which case an `anno_multicol_textbox` (right side)
 #'     is built instead, using the same colours.
 #'     Set to `NULL` (default) to skip marking.
+#' @param feature_colours Optional named character vector of colours for
+#'   marked feature sets. Names must match feature set names in
+#'   `mark_features`. If `mark_features` is a plain character vector, this
+#'   parameter is ignored. Omitted sets retain their automatic colours.
+#'   Default: `NULL`.
 #' @param width Width of the saved image (default is 16 (cm))
 #' @param height Height of the saved image (default is 12 (cm))
 #' @param res Resolution of the saved image (except pdf and svg formats)
@@ -397,7 +402,8 @@ plot_modules_h <- function(
     save = NULL,
     names = NULL,
     selected_modules = NULL,
-    legend_position = c("right", "bottom")
+    legend_position = c("right", "bottom"),
+    feature_colours = NULL
 ) {
     .check_df(module, "module")
     .check_logical(scale, "scale")
@@ -555,6 +561,35 @@ plot_modules_h <- function(
             stop("'mark_features' list must have names.")
         }
     }
+    if (!is.null(feature_colours)) {
+        colour_names <- base::names(feature_colours)
+        if (!is.list(mark_features) ||
+            is.null(base::names(mark_features)) ||
+            !is.character(feature_colours) ||
+            is.null(colour_names)) {
+            stop("'feature_colours' requires named feature sets and a ",
+                "named character vector.")
+        }
+        colour_values <- c(colour_names, unname(feature_colours))
+        if (anyNA(colour_values) || any(colour_values == "") ||
+            anyDuplicated(colour_names)) {
+            stop("'feature_colours' must have unique, non-empty names and ",
+                "values.")
+        }
+        tryCatch(
+            grDevices::col2rgb(unname(feature_colours)),
+            error = function(e) stop(
+                "'feature_colours' must contain valid colours."
+            )
+        )
+        unknown_colours <- setdiff(
+            colour_names, base::names(mark_features)
+        )
+        if (length(unknown_colours) > 0L) {
+            stop("'feature_colours' contains unknown feature set(s): ",
+                paste(unknown_colours, collapse = ", "))
+        }
+    }
     if (!is.null(save)) .check_character(save, "save")
 
     se_obj_list <- .as_se_list(se_obj_merged, arg = "se_obj_merged")
@@ -691,7 +726,9 @@ plot_modules_h <- function(
     )
 
     # Pre-process mark_features
-    mark_state <- list(feat_col = character(0), lgd = NULL)
+    mark_state <- list(
+        feat_col = character(0), set_col = character(0), lgd = NULL
+    )
     if (!is.null(mark_features) && length(mark_features) > 0) {
         if (is.list(mark_features) && !is.null(base::names(mark_features))) {
             cats <- base::names(mark_features)
@@ -699,12 +736,17 @@ plot_modules_h <- function(
             cat_cols <- stats::setNames(
                 ggsci::pal_jco()(max(n_cats, 2))[seq_len(n_cats)], cats
             )
+            if (!is.null(feature_colours)) {
+                cat_cols[base::names(feature_colours)] <-
+                    unname(feature_colours)
+            }
             all_feats <- unlist(mark_features, use.names = FALSE)
             feat_col <- rep(unname(cat_cols), times = lengths(mark_features))
             base::names(feat_col) <- unlist(mark_features, use.names = FALSE)
             # De-duplicate: use first category if a feature appears in multiple
             feat_col <- feat_col[!duplicated(base::names(feat_col))]
             mark_state$feat_col <- feat_col
+            mark_state$set_col <- cat_cols
             mark_state$lgd <- ComplexHeatmap::Legend(
                 title = "Feature set", labels = cats,
                 legend_gp = grid::gpar(fill = unname(cat_cols)),
@@ -716,8 +758,15 @@ plot_modules_h <- function(
             mark_state$feat_col <- stats::setNames(
                 rep("black", length(all_feats)), all_feats
             )
+            mark_state$set_col <- stats::setNames(
+                "black", "Features"
+            )
         }
     }
+
+    enrich_legend_colours <- stats::setNames(
+        vector("list", length(enrich_category)), enrich_category
+    )
 
     # Use a shared mapping so the same group has the same colour across
     # datasets, including when group sets or their ordering differ.
@@ -963,6 +1012,10 @@ plot_modules_h <- function(
                     dplyr::select(id, term, col, fontsize, fontfamily)
 
                 if (nrow(termanno) == 0) next
+
+                enrich_legend_colours[[cate]] <<- intersect(
+                    c("black", "grey50"), unique(termanno$col)
+                )
 
                 term_list <- lapply(mod_levels, function(mod) {
                     tmp <- termanno[termanno$id == mod, ]
@@ -1248,9 +1301,9 @@ plot_modules_h <- function(
             if (cate == "Features") {
                 if (!is.null(mark_features) && length(mark_features) > 0) {
                     if (is.list(mark_features)) {
-                        n_hub <- length(mark_features)
-                        hub_cols <-
-                            ggsci::pal_jco()(max(n_hub, 2))[seq_len(n_hub)]
+                        hub_cols <- mark_state$set_col[
+                            base::names(mark_features)
+                        ]
                         hub_lgd <- ComplexHeatmap::Legend(
                             title = "Features",
                             labels = base::names(mark_features),
@@ -1264,12 +1317,14 @@ plot_modules_h <- function(
                         )
                         lgd_list <- c(lgd_list, list(hub_lgd))
                     } else {
-                        # Character vector: black
+                        feature_colour <- mark_state$set_col[["Features"]]
                         hub_lgd <- ComplexHeatmap::Legend(
                             title = "Features",
                             labels = "Features",
                             type = "lines",
-                            legend_gp = grid::gpar(col = "black", lwd = 2),
+                            legend_gp = grid::gpar(
+                                col = feature_colour, lwd = 2
+                            ),
                             labels_gp = grid::gpar(fontsize = fontsize,
                                 fontfamily = fontfamily),
                             title_gp = grid::gpar(fontsize = fontsize,
@@ -1280,16 +1335,17 @@ plot_modules_h <- function(
                 }
             } else if (!is.null(enrich_list) &&
                 !is.null(enrich_list[[cate]]) &&
-                !is.na(pt)) {
+                !is.na(pt) && length(enrich_legend_colours[[cate]]) > 0L) {
+                legend_colours <- enrich_legend_colours[[cate]]
+                legend_labels <- c(
+                    black = sprintf("%s < %.2f", enrich_rank_by[ci], pt),
+                    grey50 = sprintf("%s >= %.2f", enrich_rank_by[ci], pt)
+                )[legend_colours]
                 go_lgd <- ComplexHeatmap::Legend(
                     title = cate,
-                    labels = c(
-                        sprintf("%s < %.2f", enrich_rank_by[ci], pt),
-                        sprintf("%s >= %.2f", enrich_rank_by[ci], pt)
-                    ),
+                    labels = unname(legend_labels),
                     type = "lines",
-                    legend_gp = grid::gpar(col = c("black", "grey50"),
-                        lwd = 2),
+                    legend_gp = grid::gpar(col = legend_colours, lwd = 2),
                     labels_gp = grid::gpar(fontsize = fontsize,
                         fontfamily = fontfamily),
                     title_gp = grid::gpar(fontsize = fontsize,

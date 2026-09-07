@@ -33,7 +33,8 @@ plot_modules_h(
   save = NULL,
   names = NULL,
   selected_modules = NULL,
-  legend_position = c("right", "bottom")
+  legend_position = c("right", "bottom"),
+  feature_colours = NULL
 )
 }
 \arguments{
@@ -119,7 +120,7 @@ Set to \code{NULL} to auto-size.}
 
 \item{mark_features}{Features to label. Accepts three forms:
 \itemize{
-\item A \strong{character vector}: all marked in black on the left.
+\item A \strong{character vector}: all marked in black by default on the left.
 \item A \strong{named list} of character vectors, e.g.
 \code{list("Set 1" = c("gene1"), "Set 2" = c("gene2"))}.
 Names become categories with auto-assigned colours (via
@@ -159,6 +160,12 @@ which profiles and enrichment panels should be displayed. The default
 
 \item{legend_position}{Legend position: \code{"right"} (default) or
 \code{"bottom"}.}
+
+\item{feature_colours}{Optional named character vector of colours for
+marked feature sets. Names must match feature set names in
+\code{mark_features}. If \code{mark_features} is a plain character vector, this
+parameter is ignored. Omitted sets retain their automatic colours.
+Default: \code{NULL}.}
 }
 \value{
 A combined plot of heatmap, mean expression profile, and enrichment

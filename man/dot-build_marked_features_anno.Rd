@@ -15,7 +15,7 @@
 \arguments{
 \item{mark_features}{A named list of character vectors, mapping
 category names to feature IDs, or a plain character vector of
-feature IDs (all shown in black).}
+feature IDs (shown in black by default).}
 
 \item{module_df}{A data frame with columns \code{Feature} and \code{Module}.}
 
@@ -33,8 +33,8 @@ the module data.
 }
 \description{
 Build a per-module term_list from \code{mark_features} for use as a column
-in \code{.anno_multicol_textbox}. Accepts a named list (per-category colours
-from \code{ggsci::pal_jco()}) or a character vector (all black). Colours
-are taken from \code{mark_state$feat_col}.
+in \code{.anno_multicol_textbox}. Accepts a named list or a character vector.
+Colours are taken from \code{mark_state$feat_col}, including any custom
+\code{feature_colours} supplied to \code{plot_modules_h()}.
 }
 \keyword{internal}

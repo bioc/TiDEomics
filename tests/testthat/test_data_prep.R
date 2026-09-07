@@ -214,7 +214,7 @@ test_that("prepare_tide handles keep variants", {
 
 test_that("quantile filtering includes the cutoff", {
     body_text <- paste(deparse(body(prepare_tide)), collapse = " ")
-    expect_match(body_text, "res_var <= cutoff", fixed = TRUE)
+    expect_match(body_text, "res_var\\s*<=\\s*cutoff")
 })
 
 test_that("prepare_tide accepts feature_threshold = NULL", {

@@ -215,6 +215,7 @@ test_that("plot_GO messages and errors on invalid input", {
 # Shared enrichR mock for tests that exercise local output handling.
 mock_enrichr <- function(mock_result = data.frame()) {
     local_mocked_bindings(
+        .onAttach = function(...) NULL,
         setEnrichrSite = function(site) NULL,
         listEnrichrDbs = function() data.frame(
             libraryName = "DSigDB", stringsAsFactors = FALSE
