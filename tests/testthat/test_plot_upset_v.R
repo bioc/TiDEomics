@@ -40,7 +40,8 @@ test_that("plot_upset_v skips enrichment checks without an enrichment list", {
             term_wrap_width = 0L,
             show_dot_column_names = "invalid",
             dot_size_col = NA_character_,
-            dot_colour_col = ""
+            dot_colour_col = "",
+            enrich_term_colours = "invalid"
         ))
     )
 })
@@ -69,6 +70,42 @@ test_that("plot_upset_v supports custom numeric enrichment columns", {
 
     expect_s4_class(result, "HeatmapList")
     expect_true(any(grepl("not matched", messages)))
+})
+
+test_that("plot_upset_v groups terms by intersection order", {
+    enrich <- data.frame(
+        Cluster = rep(upset_v_comb, each = 2),
+        Description = c(
+            "term A", "term B", "term C", "term D", "term E", "term F"
+        ),
+        Count = c(6, 5, 4, 3, 2, 1),
+        p.adjust = c(0.01, 0.02, 0.01, 0.02, 0.01, 0.02),
+        stringsAsFactors = FALSE
+    )
+    result <- suppressMessages(plot_upset_v(
+        upset_v_sets,
+        enrich_list = list(BP = enrich),
+        enrich_category = "BP",
+        enrich_top_n = 2,
+        enrich_term_order = "intersection",
+        enrich_term_colours = c(
+            "term E" = "#E69F00", "term A" = "#009E73"
+        ),
+        intersection_order = rev(seq_along(upset_v_comb))
+    ))
+
+    dot_ht <- result@ht_list[[2L]]
+    expect_equal(
+        rownames(dot_ht@matrix),
+        paste("BP", c(
+            "term E", "term F", "term C", "term D", "term A", "term B"
+        ),
+            sep = "\r")
+    )
+    expect_equal(
+        dot_ht@row_names_param$gp$col,
+        c("#E69F00", "black", "black", "black", "#009E73", "black")
+    )
 })
 
 test_that("plot_upset_v accepts bare NA for dot outlines", {

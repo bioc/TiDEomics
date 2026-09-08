@@ -1,9 +1,13 @@
-#' UpSet plot with vertically aligned enrichment dot matrix
+#' UpSet plot of feature sets with vertically aligned enrichment dot matrix
 #'
 #' Draws a ComplexHeatmap UpSet plot with intersections as columns and a
 #' clusterProfiler-style enrichment dot matrix underneath. The two panels use
 #' the same intersection order, so each enrichment column is vertically
 #' aligned with its UpSet intersection.
+#'
+#' The binary combination pattern and displayed intersection label are
+#' printed when the function is called. These mappings can be used as keys
+#' for `intersection_labels` and `intersection_colours`.
 #'
 #' @param set_list A named list of character vectors of feature sets.
 #' @param enrich_list A named enrichment list for intersections, such as the
@@ -11,6 +15,12 @@
 #'   should be a data.frame with `Cluster`, `Description`, and the columns
 #'   named by `enrich_rank_by`, `dot_size_col`, and `dot_colour_col`. If NULL
 #'   (default), no enrichment terms are displayed.
+#'   The `Cluster` column may contain binary combination names or displayed
+#'   UpSet labels. Displayed labels are auto-generated from `names(set_list)`
+#'   by joining participating set names with `_`, and may be overridden with
+#'   `intersection_labels`.
+#'   When `enrich_category` is a vector, each category
+#'   is shown as a separate row section in the enrichment dot matrix.
 #' @param enrich_category Category name(s) of enrichment to display: a single
 #'   string (e.g. `"BP"`), or a vector for multiple categories (e.g.
 #'   `c("BP", "CC")`). Categories must be present in `enrich_list`.
@@ -25,19 +35,34 @@
 #'   each intersection. A single string (default: `"p.adjust"`) is recycled
 #'   for all categories in `enrich_category`. Supply a character vector of
 #'   matching length for per-category control.
-#' @param set_order Optional order of set rows.
-#' @param intersection_order Optional order of intersections, supplied as
-#'   combination names or a permutation of combination indices.
-#' @param intersection_labels Optional named mapping from combination patterns
-#'   to displayed intersection labels. Enrichment `Cluster` values may use
-#'   either the original combination patterns or the displayed labels.
-#' @param intersection_colours Optional named colours keyed by combination
-#'   patterns. Unspecified intersections remain neutral.
+#' @param enrich_term_order Controls how to order the enrichment term
+#'   rows. `"rank"` (default) orders terms by their best
+#'   `enrich_rank_by` value. `"intersection"` groups terms by
+#'   `intersection_order`, with terms within each intersection ordered by
+#'   `enrich_rank_by`.
+#' @param set_order Optional order of the sets. When
+#'   `NULL` (default), sets are ordered by decreasing size. Pass a character
+#'   vector of set names to control display order.
+#' @param intersection_order Optional order of intersection columns.
+#'   When `NULL` (default), intersections are ordered by decreasing
+#'   combination size. Pass a character vector of combination names
+#'   (as returned by `ComplexHeatmap::comb_name()`), or a numeric
+#'   permutation of their indices, to specify a custom order.
+#' @param intersection_labels Optional named character vector mapping
+#'   `comb_name` binary patterns to custom intersection names,
+#'   overriding the auto-generated defaults. E.g.,
+#'   `c("1010" = "Concordant_Up", "0101" = "Concordant_Down")`.
+#'   Entries for patterns not present in the combination matrix cause an
+#'   error.
+#' @param intersection_colours Optional named colour vector for intersections.
+#'   Names must match the binary combination patterns used by
+#'   `intersection_labels` (e.g. `"1010"`). Colours are used for the
+#'   intersection bars and combination marks.
+#' @param fontsize Base font size. Default is 8.
 #' @param dot_size_col Numeric column used for dot size in the enrichment
 #'   annotation. Default is `"Count"`.
 #' @param dot_colour_col Numeric column used for dot colour in the enrichment
 #'   annotation. Default is `"p.adjust"`.
-#' @param fontsize Base font size. Default is 8.
 #' @param dot_min_size Minimum dot radius in mm. Default is 1.
 #' @param dot_max_size Maximum dot radius in mm. Default is 3.
 #' @param dot_outline Outline colour for enrichment dots. Use `NA` to remove
@@ -48,25 +73,29 @@
 #' @param row_gap_mm Gap between enrichment categories in mm. Default is 2.
 #' @param show_dot_column_names Whether to show intersection labels on the
 #'   enrichment dot matrix. Default: `FALSE`.
+#' @param enrich_term_colours Optional named colour vector for enrichment
+#'   terms. Names are matched to enrichment `ID` values when available,
+#'   and then to `Description` values. Unspecified terms remain black.
 #' @param ... Additional arguments passed to `ComplexHeatmap::UpSet()`.
 #'
 #' @returns A ComplexHeatmap UpSet plot, with optional enrichment
 #'   dot annotations.
 #' @export
 #' @examples
+#' # Mock feature sets with reproducible intersections
 #' genes <- paste0("G", 1:200)
-#' set_list <- list(
-#'     Exp1_Up = genes[1:60],
-#'     Exp1_Down = genes[61:100],
-#'     Exp2_Up = genes[c(1:40, 101:115)],
-#'     Exp2_Down = genes[c(61:80, 116:130)]
-#' )
+#' set_list <- list(Exp1_Up = genes[1:60], Exp1_Down = genes[61:100],
+#'     Exp2_Up = genes[c(1:40, 101:115)], Exp2_Down = genes[c(61:80, 116:130)])
 #' enrich_list <- list(BP = data.frame(
 #'     Cluster = c("Exp1_Up_Exp2_Up", "Exp1_Down_Exp2_Down"),
-#'     Description = c("term A", "term B"), Count = c(20, 10),
-#'     p.adjust = c(0.001, 0.02), stringsAsFactors = FALSE))
+#'     Description = c("term A", "term B"), p.adjust = c(0.001, 0.04),
+#'     Count = c(10, 5)))
+#' intersection_colours <- c("1010" = "#0072B5", "0101" = "#D55E00")
 #' plot_upset_v(set_list, enrich_list = enrich_list,
-#'     enrich_category = "BP")
+#'     enrich_category = "BP", intersection_colours = intersection_colours)
+#' # Custom intersection order uses the binary combination patterns.
+#' plot_upset_v(set_list,
+#'     intersection_order = c("1010", "1000", "0101", "0100", "0010", "0001"))
 #' @references Dot matrix mimicking `clusterProfiler::dotplot()`
 plot_upset_v <- function(
     set_list,
@@ -79,9 +108,9 @@ plot_upset_v <- function(
     intersection_order = NULL,
     intersection_labels = NULL,
     intersection_colours = NULL,
+    fontsize = 8,
     dot_size_col = "Count",
     dot_colour_col = "p.adjust",
-    fontsize = 8,
     dot_min_size = 1,
     dot_max_size = 3,
     dot_outline = "black",
@@ -89,6 +118,8 @@ plot_upset_v <- function(
     term_wrap_width = 30,
     row_gap_mm = 2,
     show_dot_column_names = FALSE,
+    enrich_term_order = "rank",
+    enrich_term_colours = NULL,
     ...
 ) {
     .check_list(set_list, "set_list")
@@ -117,8 +148,7 @@ plot_upset_v <- function(
             anyNA(names(intersection_labels)) ||
             any(names(intersection_labels) == "") ||
             anyNA(intersection_labels) || any(intersection_labels == "")) {
-            stop("'intersection_labels' must be a named character ",
-                "vector.")
+            stop("'intersection_labels' must be a named character vector.")
         }
         if (anyDuplicated(names(intersection_labels))) {
             stop("'intersection_labels' names must be unique.")
@@ -129,8 +159,7 @@ plot_upset_v <- function(
             is.null(names(intersection_colours)) ||
             anyNA(names(intersection_colours)) ||
             any(names(intersection_colours) == "")) {
-            stop("'intersection_colours' must be a named colour ",
-                "vector.")
+            stop("'intersection_colours' must be a named colour vector.")
         }
         if (anyDuplicated(names(intersection_colours))) {
             stop("'intersection_colours' names must be unique.")
@@ -138,26 +167,30 @@ plot_upset_v <- function(
         invisible(grDevices::col2rgb(unname(intersection_colours)))
     }
 
-    # Remove empty sets before constructing the combination matrix.
+    # Remove empty sets (ComplexHeatmap errors on zero-size sets)
     set_sizes <- lengths(set_list)
     empty_sets <- names(set_list)[set_sizes == 0]
-    if (length(empty_sets) > 0L) {
+    if (length(empty_sets) > 0) {
         warning("Removing empty set(s): ", paste(empty_sets, collapse = ", "))
         set_list <- set_list[set_sizes > 0]
     }
-    if (length(set_list) < 1L) {
+    if (length(set_list) < 1) {
         stop("Need at least 1 non-empty set for an UpSet plot.")
     }
 
-    # Intersections are columns in the vertical layout.
+    # Intersections on columns
     m <- ComplexHeatmap::make_comb_mat(set_list, set_on_rows = TRUE)
     comb_names <- ComplexHeatmap::comb_name(m)
+
+    # Auto-generate human-readable intersection names from set names
+    # by parsing comb_name binary patterns (e.g. "1010" with set names
+    # c("Exp1_Up","Exp1_Down","Exp2_Up","Exp2_Down") -> "Exp1_Up_Exp2_Up")
     set_nms <- names(set_list)
     comb_labels <- vapply(comb_names, function(cn) {
         bits <- strsplit(cn, "")[[1]]
         paste(set_nms[bits == "1"], collapse = "_")
     }, character(1))
-
+    # intersection_labels overrides auto-generated names when provided
     if (!is.null(intersection_labels)) {
         unmatched <- setdiff(names(intersection_labels), comb_names)
         if (length(unmatched) > 0L) {
@@ -229,6 +262,9 @@ plot_upset_v <- function(
         comb_order = intersection_order,
         row_names_side = "left",
         show_column_names = TRUE,
+        column_names_gp = grid::gpar(
+            fontsize = fontsize, fontfamily = fontfamily
+        ),
         row_names_gp = grid::gpar(
             fontsize = fontsize, fontfamily = fontfamily
         )
@@ -237,8 +273,8 @@ plot_upset_v <- function(
     if (length(extra_upset_args) > 0L) {
         reserved_args <- c(
             "comb_col", "set_order", "comb_order", "row_names_side",
-            "show_column_names", "row_names_gp", "top_annotation",
-            "right_annotation"
+            "show_column_names", "column_names_gp", "row_names_gp",
+            "top_annotation", "right_annotation"
         )
         conflicts <- intersect(names(extra_upset_args), reserved_args)
         if (length(conflicts) > 0L) {
@@ -276,199 +312,260 @@ plot_upset_v <- function(
         ht
     }
 
-    if (is.null(enrich_list) || is.null(enrich_category) ||
-        length(enrich_category) == 0L) {
-        upset_ht <- build_upset(comb_col)
-        return(invisible(upset_ht))
-    }
-
-    # validate enrichment parameters
-    .check_logical(include_all, "include_all")
-    if (length(dot_min_size) != 1L || length(dot_max_size) != 1L) {
-        stop("'dot_min_size' and 'dot_max_size' must each contain one value.")
-    }
-    .check_positive(dot_min_size, "dot_min_size")
-    .check_positive(dot_max_size, "dot_max_size")
-    if (length(dot_outline) != 1L ||
-        (!is.character(dot_outline) &&
-            !(is.logical(dot_outline) && is.na(dot_outline)))) {
-        stop("'dot_outline' must contain one colour or NA.")
-    }
-    if (is.logical(dot_outline)) dot_outline <- NA_character_
-    if (length(dot_outline_width) != 1L || length(row_gap_mm) != 1L) {
-        stop("'dot_outline_width' and 'row_gap_mm' must each contain one ",
-            "value.")
-    }
-    .check_positive(dot_outline_width, "dot_outline_width")
-    .check_positive_int(term_wrap_width, "term_wrap_width")
-    .check_logical(show_dot_column_names, "show_dot_column_names")
-    if (!is.na(dot_outline)) {
-        invisible(grDevices::col2rgb(dot_outline))
-    }
-    if (dot_max_size < dot_min_size) {
-        stop("'dot_max_size' must be at least 'dot_min_size'.")
-    }
-    .check_positive(row_gap_mm, "row_gap_mm")
-    .check_character(dot_size_col, "dot_size_col")
-    .check_character(dot_colour_col, "dot_colour_col")
-    if (length(dot_size_col) != 1L || is.na(dot_size_col) ||
-        dot_size_col == "" || length(dot_colour_col) != 1L ||
-        is.na(dot_colour_col) || dot_colour_col == "") {
-        stop("'dot_size_col' and 'dot_colour_col' must each contain ",
-            "one value.")
-    }
-    .check_character(enrich_category, "enrich_category")
-    if (anyNA(enrich_category) || any(enrich_category == "")) {
-        stop("'enrich_category' must not contain missing or empty strings.")
-    }
-    if (anyDuplicated(enrich_category)) {
-        stop("'enrich_category' values must be unique.")
-    }
-    .check_list(enrich_list, "enrich_list")
-    if (is.null(names(enrich_list)) || anyNA(names(enrich_list)) ||
-        any(names(enrich_list) == "")) {
-        stop("'enrich_list' must be a named list.")
-    }
-    if (anyDuplicated(names(enrich_list))) {
-        stop("'enrich_list' names must be unique.")
-    }
-    missing_categories <- setdiff(enrich_category, names(enrich_list))
-    if (length(missing_categories) > 0L) {
-        stop("'enrich_category' contains categories not present in ",
-            "'enrich_list': ", paste(missing_categories, collapse = ", "))
-    }
-    .check_character(enrich_rank_by, "enrich_rank_by")
-    enrich_rank_by <- .recycle_enrich_param(
-        enrich_rank_by, "enrich_rank_by", length(enrich_category)
-    )
-    if (anyNA(enrich_rank_by) || any(enrich_rank_by == "")) {
-        stop("'enrich_rank_by' must not contain missing or empty strings.")
-    }
-    enrich_top_n <- .recycle_enrich_param(
-        enrich_top_n, "enrich_top_n", length(enrich_category)
-    )
-    if (!is.numeric(enrich_top_n) || any(!is.finite(enrich_top_n))) {
-        stop("'enrich_top_n' must contain positive integers.")
-    }
-    for (v in enrich_top_n) .check_positive_int(v, "enrich_top_n")
+    enrichment_requested <- !is.null(enrich_list) &&
+        !is.null(enrich_category) && length(enrich_category) > 0L
     dot_records <- list()
-    record_i <- 0L
-    for (ci in seq_along(enrich_category)) {
-        cate <- enrich_category[ci]
-        if (is.null(enrich_list[[cate]])) {
-            message("enrich_list[['", cate, "']] is NULL. Skipping.")
-            next
+    if (enrichment_requested) {
+        .check_character(enrich_category, "enrich_category")
+        if (anyNA(enrich_category) || any(enrich_category == "")) {
+            stop("'enrich_category' must not contain missing or empty strings.")
         }
-        enr_df <- as.data.frame(enrich_list[[cate]])
-        required <- c("Cluster", "Description", enrich_rank_by[ci],
-            dot_size_col, dot_colour_col)
-        missing_cols <- setdiff(required, colnames(enr_df))
-        if (length(missing_cols) > 0L) {
-            stop("enrich_list[['", cate,
-                "']] is missing required column(s): ",
-                paste(missing_cols, collapse = ", "))
+        if (anyDuplicated(enrich_category)) {
+            stop("'enrich_category' values must be unique.")
         }
-        if (!is.numeric(enr_df[[enrich_rank_by[ci]]])) {
-            stop("enrich_list[['", cate, "']][['",
-                enrich_rank_by[ci], "']] must be numeric.")
+        .check_list(enrich_list, "enrich_list")
+        if (is.null(names(enrich_list)) || anyNA(names(enrich_list)) ||
+            any(names(enrich_list) == "")) {
+            stop("'enrich_list' must be a named list.")
         }
-        if (!is.numeric(enr_df[[dot_size_col]])) {
-            stop("enrich_list[['", cate, "']][['", dot_size_col,
-                "']] must be numeric.")
+        if (anyDuplicated(names(enrich_list))) {
+            stop("'enrich_list' names must be unique.")
         }
-        if (!is.numeric(enr_df[[dot_colour_col]])) {
-            stop("enrich_list[['", cate, "']][['", dot_colour_col,
-                "']] must be numeric.")
+        missing_categories <- setdiff(enrich_category, names(enrich_list))
+        if (length(missing_categories) > 0L) {
+            stop("'enrich_category' contains categories not present in ",
+                "'enrich_list': ", paste(missing_categories, collapse = ", "))
         }
-        cluster_values <- as.character(enr_df$Cluster)
-        original_idx <- match(cluster_values, comb_names)
-        display_idx <- match(cluster_values, comb_labels)
-        matched_idx <- original_idx
-        use_display <- is.na(matched_idx)
-        matched_idx[use_display] <- display_idx[use_display]
-        matched <- !is.na(matched_idx)
-        unmatched <- unique(cluster_values[!matched])
-        if (length(unmatched) > 0L) {
-            message("In enrich_list[['", cate, "']], ",
-                length(unmatched), " Cluster value(s) were not matched: ",
-                paste(unmatched, collapse = ", "))
-        }
-        if (!any(matched)) {
-            message("No Cluster values in enrich_list[['", cate,
-                "']] matched an UpSet intersection.")
-            next
-        }
-        enr_df$Cluster <- cluster_values
-        enr_df$Cluster[matched] <- comb_labels[matched_idx[matched]]
-        enr_df <- enr_df[matched, , drop = FALSE]
-        if (nrow(enr_df) == 0L) next
-        rank_values <- enr_df[[enrich_rank_by[ci]]]
-        size_values <- enr_df[[dot_size_col]]
-        colour_values <- enr_df[[dot_colour_col]]
-        keep <- is.finite(rank_values) & is.finite(size_values) &
-            size_values > 0 & is.finite(colour_values) &
-            colour_values >= 0
-        enr_df <- enr_df[keep, , drop = FALSE]
-        if (nrow(enr_df) == 0L) next
-        rank_values <- rank_values[keep]
-        size_values <- size_values[keep]
-        colour_values <- colour_values[keep]
-        enr_df$.rank <- rank_values
-        enr_df$.size <- size_values
-        enr_df$.colour <- colour_values
-        term_ids <- as.character(enr_df$Description)
-        if ("ID" %in% colnames(enr_df)) {
-            id_values <- as.character(enr_df$ID)
-            use_description <- is.na(id_values) | id_values == ""
-            term_ids[!use_description] <- id_values[!use_description]
-        }
-        enr_df$.term_id <- term_ids
-        enr_df <- enr_df[order(enr_df$Cluster, enr_df$.rank), , drop = FALSE]
-        enr_df <- enr_df[!duplicated(
-            paste(enr_df$Cluster, enr_df$.term_id, sep = "\r")
-        ), , drop = FALSE]
-        selected_top <- do.call(rbind, lapply(comb_labels, function(cl) {
-            utils::head(enr_df[enr_df$Cluster == cl, , drop = FALSE],
-                enrich_top_n[ci])
-        }))
-        if (is.null(selected_top) || nrow(selected_top) == 0L) next
-        if (include_all) {
-            selected_ids <- unique(selected_top$.term_id)
-            selected <- enr_df[enr_df$.term_id %in% selected_ids,
-                , drop = FALSE]
-        } else {
-            selected <- selected_top
-        }
-        for (ri in seq_len(nrow(selected))) {
-            record_i <- record_i + 1L
-            dot_records[[record_i]] <- data.frame(
-                category = cate,
-                term = as.character(selected$Description[ri]),
-                cluster = as.character(selected$Cluster[ri]),
-                rank = selected$.rank[ri],
-                size = selected$.size[ri],
-                colour = selected$.colour[ri],
-                stringsAsFactors = FALSE
-            )
-        }
-    }
+        .check_character(enrich_rank_by, "enrich_rank_by")
 
+        # Recycle per-category parameters
+        n_categories <- length(enrich_category)
+        enrich_rank_by <- .recycle_enrich_param(
+            enrich_rank_by, "enrich_rank_by", n_categories)
+        if (anyNA(enrich_rank_by) || any(enrich_rank_by == "")) {
+            stop("'enrich_rank_by' must not contain missing or empty strings.")
+        }
+        enrich_top_n <- .recycle_enrich_param(
+            enrich_top_n, "enrich_top_n", n_categories)
+        if (!is.numeric(enrich_top_n) || any(!is.finite(enrich_top_n))) {
+            stop("'enrich_top_n' must contain positive integers.")
+        }
+        for (v in enrich_top_n) .check_positive_int(v, "enrich_top_n")
+        .check_character(enrich_term_order, "enrich_term_order")
+        if (length(enrich_term_order) != 1L ||
+            !enrich_term_order %in% c("rank", "intersection")) {
+            stop("'enrich_term_order' must be either 'rank' or ",
+                "'intersection'.")
+        }
+        record_i <- 0L
+
+        # validate enrichment parameters
+        if (!is.null(enrich_term_colours)) {
+            if (!is.character(enrich_term_colours) ||
+                is.null(names(enrich_term_colours)) ||
+                anyNA(names(enrich_term_colours)) ||
+                any(names(enrich_term_colours) == "") ||
+                anyNA(enrich_term_colours) ||
+                any(enrich_term_colours == "")) {
+                stop("'enrich_term_colours' must be a named colour vector.")
+            }
+            if (anyDuplicated(names(enrich_term_colours))) {
+                stop("'enrich_term_colours' names must be unique.")
+            }
+            invisible(grDevices::col2rgb(unname(enrich_term_colours)))
+        }
+        .check_logical(include_all, "include_all")
+        if (length(dot_min_size) != 1L || length(dot_max_size) != 1L) {
+            stop("'dot_min_size' and 'dot_max_size' must each contain one ",
+                "value.")
+        }
+        .check_positive(dot_min_size, "dot_min_size")
+        .check_positive(dot_max_size, "dot_max_size")
+        if (length(dot_outline) != 1L ||
+            (!is.character(dot_outline) &&
+                !(is.logical(dot_outline) && is.na(dot_outline)))) {
+            stop("'dot_outline' must contain one colour or NA.")
+        }
+        if (is.logical(dot_outline)) dot_outline <- NA_character_
+        if (length(dot_outline_width) != 1L || length(row_gap_mm) != 1L) {
+            stop("'dot_outline_width' and 'row_gap_mm' must each contain one ",
+                "value.")
+        }
+        .check_positive(dot_outline_width, "dot_outline_width")
+        .check_positive_int(term_wrap_width, "term_wrap_width")
+        .check_logical(show_dot_column_names, "show_dot_column_names")
+        if (!is.na(dot_outline)) {
+            invisible(grDevices::col2rgb(dot_outline))
+        }
+        if (dot_max_size < dot_min_size) {
+            stop("'dot_max_size' must be at least 'dot_min_size'.")
+        }
+        .check_positive(row_gap_mm, "row_gap_mm")
+        .check_character(dot_size_col, "dot_size_col")
+        .check_character(dot_colour_col, "dot_colour_col")
+        if (length(dot_size_col) != 1L || is.na(dot_size_col) ||
+            dot_size_col == "" || length(dot_colour_col) != 1L ||
+            is.na(dot_colour_col) || dot_colour_col == "") {
+            stop("'dot_size_col' and 'dot_colour_col' must each contain ",
+                "one value.")
+        }
+
+        # Build cat_terms
+        for (ci in seq_along(enrich_category)) {
+            cate <- enrich_category[ci]
+            if (is.null(enrich_list[[cate]])) {
+                message("enrich_list[['", cate, "']] is NULL. Skipping.")
+                next
+            }
+            enr_df <- as.data.frame(enrich_list[[cate]])
+            rank_by <- enrich_rank_by[ci]
+            top_n <- enrich_top_n[ci]
+            required <- c("Cluster", "Description", rank_by,
+                dot_size_col, dot_colour_col)
+            missing_cols <- setdiff(required, colnames(enr_df))
+            if (length(missing_cols) > 0L) {
+                stop("enrich_list[['", cate,
+                    "']] is missing required column(s): ",
+                    paste(missing_cols, collapse = ", "))
+            }
+            if (!is.numeric(enr_df[[rank_by]])) {
+                stop("enrich_list[['", cate, "']][['", rank_by,
+                    "']] must be numeric.")
+            }
+            if (!is.numeric(enr_df[[dot_size_col]])) {
+                stop("enrich_list[['", cate, "']][['", dot_size_col,
+                    "']] must be numeric.")
+            }
+            if (!is.numeric(enr_df[[dot_colour_col]])) {
+                stop("enrich_list[['", cate, "']][['", dot_colour_col,
+                    "']] must be numeric.")
+            }
+            cluster_values <- as.character(enr_df$Cluster)
+            original_idx <- match(cluster_values, comb_names)
+            display_idx <- match(cluster_values, comb_labels)
+            matched_idx <- original_idx
+            use_display <- is.na(matched_idx)
+            matched_idx[use_display] <- display_idx[use_display]
+            matched <- !is.na(matched_idx)
+            unmatched <- unique(cluster_values[!matched])
+            if (length(unmatched) > 0L) {
+                message("In enrich_list[['", cate, "']], ",
+                    length(unmatched), " Cluster value(s) were not matched: ",
+                    paste(unmatched, collapse = ", "))
+            }
+            if (!any(matched)) {
+                message("No Cluster values in enrich_list[['", cate,
+                    "']] matched an UpSet intersection.")
+                next
+            }
+            enr_df$Cluster <- cluster_values
+            enr_df$Cluster[matched] <- comb_labels[matched_idx[matched]]
+            enr_df <- enr_df[matched, , drop = FALSE]
+            if (nrow(enr_df) == 0L) next
+            rank_values <- enr_df[[rank_by]]
+            size_values <- enr_df[[dot_size_col]]
+            colour_values <- enr_df[[dot_colour_col]]
+            keep <- is.finite(rank_values) & is.finite(size_values) &
+                size_values > 0 & is.finite(colour_values) &
+                colour_values >= 0
+            enr_df <- enr_df[keep, , drop = FALSE]
+            if (nrow(enr_df) == 0L) next
+            rank_values <- rank_values[keep]
+            size_values <- size_values[keep]
+            colour_values <- colour_values[keep]
+            enr_df$.rank <- rank_values
+            enr_df$.size <- size_values
+            enr_df$.colour <- colour_values
+            term_ids <- as.character(enr_df$Description)
+            if ("ID" %in% colnames(enr_df)) {
+                id_values <- as.character(enr_df$ID)
+                use_description <- is.na(id_values) | id_values == ""
+                term_ids[!use_description] <- id_values[!use_description]
+            }
+            enr_df$.term_id <- term_ids
+            enr_df <- enr_df[order(
+                enr_df$Cluster, enr_df$.rank), , drop = FALSE]
+            enr_df <- enr_df[!duplicated(
+                paste(enr_df$Cluster, enr_df$.term_id, sep = "\r")
+            ), , drop = FALSE]
+            selected_top <- do.call(rbind, lapply(comb_labels, function(cl) {
+                utils::head(enr_df[enr_df$Cluster == cl, , drop = FALSE],
+                    top_n)
+            }))
+            if (is.null(selected_top) || nrow(selected_top) == 0L) next
+            if (include_all) {
+                selected_ids <- unique(selected_top$.term_id)
+                selected <- enr_df[enr_df$.term_id %in% selected_ids,
+                    , drop = FALSE]
+            } else {
+                selected <- selected_top
+            }
+            for (ri in seq_len(nrow(selected))) {
+                record_i <- record_i + 1L
+                dot_records[[record_i]] <- data.frame(
+                    category = cate,
+                    term = as.character(selected$Description[ri]),
+                    cluster = as.character(selected$Cluster[ri]),
+                    term_id = as.character(selected$.term_id[ri]),
+                    rank = selected$.rank[ri],
+                    size = selected$.size[ri],
+                    colour = selected$.colour[ri],
+                    stringsAsFactors = FALSE
+                )
+            }
+        }
+
+    }
+    upset_ht <- build_upset(comb_col)
     if (length(dot_records) == 0L) {
-        upset_ht <- build_upset(comb_col)
-        message("No matching enrichment terms, ",
-            "returning the UpSet plot only.")
+        if (enrichment_requested) {
+            message("No matching enrichment terms, ",
+                "returning the UpSet plot only.")
+        }
+        ComplexHeatmap::draw(upset_ht)
         return(invisible(upset_ht))
     }
     dots <- do.call(rbind, dot_records)
-    upset_ht <- build_upset(comb_col)
     dots$term_key <- paste(dots$category, dots$term, sep = "\r")
     term_info <- unique(dots[, c("term_key", "category", "term")])
     term_info$category <- factor(term_info$category, levels = enrich_category)
+    term_info$term_colour <- vapply(term_info$term_key, function(key) {
+        if (is.null(enrich_term_colours)) return("black")
+        key_i <- dots$term_key == key
+        match_values <- unique(c(
+            dots$term_id[key_i], dots$term[key_i]
+        ))
+        matched <- match_values[
+            match_values %in% names(enrich_term_colours)
+        ]
+        if (length(matched) == 0L) "black" else {
+            unname(enrich_term_colours[matched[1L]])
+        }
+    }, character(1))
     term_order <- unlist(lapply(enrich_category, function(cate) {
         keys <- term_info$term_key[term_info$category == cate]
-        keys[order(vapply(keys, function(key) {
-            min(dots$rank[dots$term_key == key], na.rm = TRUE)
-        }, numeric(1)))]
+        if (enrich_term_order == "rank") {
+            keys[order(vapply(keys, function(key) {
+                min(dots$rank[dots$term_key == key], na.rm = TRUE)
+            }, numeric(1)))]
+        } else {
+            intersection_ranks <- vapply(keys, function(key) {
+                key_i <- dots$term_key == key
+                min(match(
+                    dots$cluster[key_i], comb_labels[intersection_order]
+                ))
+            }, numeric(1))
+            term_ranks <- vapply(seq_along(keys), function(i) {
+                key_i <- dots$term_key == keys[i]
+                cluster_ranks <- match(
+                    dots$cluster[key_i], comb_labels[intersection_order]
+                )
+                min(dots$rank[key_i][
+                    cluster_ranks == intersection_ranks[i]
+                ])
+            }, numeric(1))
+            keys[order(intersection_ranks, term_ranks)]
+        }
     }), use.names = FALSE)
     term_info <- term_info[
         match(term_order, term_info$term_key), , drop = FALSE
@@ -567,7 +664,8 @@ plot_upset_v <- function(
         row_labels = term_labels,
         row_names_side = "left",
         row_names_gp = grid::gpar(
-            fontsize = fontsize, fontfamily = fontfamily
+            fontsize = fontsize, fontfamily = fontfamily, lineheight = 0.8,
+            col = term_info$term_colour
         ),
         row_names_max_width = grid::unit(8, "cm"),
         show_column_names = show_dot_column_names,

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot_upset_v.R
 \name{plot_upset_v}
 \alias{plot_upset_v}
-\title{UpSet plot with vertically aligned enrichment dot matrix}
+\title{UpSet plot of feature sets with vertically aligned enrichment dot matrix}
 \usage{
 plot_upset_v(
   set_list,
@@ -15,9 +15,9 @@ plot_upset_v(
   intersection_order = NULL,
   intersection_labels = NULL,
   intersection_colours = NULL,
+  fontsize = 8,
   dot_size_col = "Count",
   dot_colour_col = "p.adjust",
-  fontsize = 8,
   dot_min_size = 1,
   dot_max_size = 3,
   dot_outline = "black",
@@ -25,6 +25,8 @@ plot_upset_v(
   term_wrap_width = 30,
   row_gap_mm = 2,
   show_dot_column_names = FALSE,
+  enrich_term_order = "rank",
+  enrich_term_colours = NULL,
   ...
 )
 }
@@ -35,7 +37,13 @@ plot_upset_v(
 output of \code{enrichGO_list()$all} or \code{enrichR_list()}. Each named element
 should be a data.frame with \code{Cluster}, \code{Description}, and the columns
 named by \code{enrich_rank_by}, \code{dot_size_col}, and \code{dot_colour_col}. If NULL
-(default), no enrichment terms are displayed.}
+(default), no enrichment terms are displayed.
+The \code{Cluster} column may contain binary combination names or displayed
+UpSet labels. Displayed labels are auto-generated from \code{names(set_list)}
+by joining participating set names with \verb{_}, and may be overridden with
+\code{intersection_labels}.
+When \code{enrich_category} is a vector, each category
+is shown as a separate row section in the enrichment dot matrix.}
 
 \item{enrich_category}{Category name(s) of enrichment to display: a single
 string (e.g. \code{"BP"}), or a vector for multiple categories (e.g.
@@ -55,25 +63,35 @@ each intersection. A single string (default: \code{"p.adjust"}) is recycled
 for all categories in \code{enrich_category}. Supply a character vector of
 matching length for per-category control.}
 
-\item{set_order}{Optional order of set rows.}
+\item{set_order}{Optional order of the sets. When
+\code{NULL} (default), sets are ordered by decreasing size. Pass a character
+vector of set names to control display order.}
 
-\item{intersection_order}{Optional order of intersections, supplied as
-combination names or a permutation of combination indices.}
+\item{intersection_order}{Optional order of intersection columns.
+When \code{NULL} (default), intersections are ordered by decreasing
+combination size. Pass a character vector of combination names
+(as returned by \code{ComplexHeatmap::comb_name()}), or a numeric
+permutation of their indices, to specify a custom order.}
 
-\item{intersection_labels}{Optional named mapping from combination patterns
-to displayed intersection labels. Enrichment \code{Cluster} values may use
-either the original combination patterns or the displayed labels.}
+\item{intersection_labels}{Optional named character vector mapping
+\code{comb_name} binary patterns to custom intersection names,
+overriding the auto-generated defaults. E.g.,
+\code{c("1010" = "Concordant_Up", "0101" = "Concordant_Down")}.
+Entries for patterns not present in the combination matrix cause an
+error.}
 
-\item{intersection_colours}{Optional named colours keyed by combination
-patterns. Unspecified intersections remain neutral.}
+\item{intersection_colours}{Optional named colour vector for intersections.
+Names must match the binary combination patterns used by
+\code{intersection_labels} (e.g. \code{"1010"}). Colours are used for the
+intersection bars and combination marks.}
+
+\item{fontsize}{Base font size. Default is 8.}
 
 \item{dot_size_col}{Numeric column used for dot size in the enrichment
 annotation. Default is \code{"Count"}.}
 
 \item{dot_colour_col}{Numeric column used for dot colour in the enrichment
 annotation. Default is \code{"p.adjust"}.}
-
-\item{fontsize}{Base font size. Default is 8.}
 
 \item{dot_min_size}{Minimum dot radius in mm. Default is 1.}
 
@@ -92,6 +110,16 @@ before wrapping to a new line. Default is 30.}
 \item{show_dot_column_names}{Whether to show intersection labels on the
 enrichment dot matrix. Default: \code{FALSE}.}
 
+\item{enrich_term_order}{Controls how to order the enrichment term
+rows. \code{"rank"} (default) orders terms by their best
+\code{enrich_rank_by} value. \code{"intersection"} groups terms by
+\code{intersection_order}, with terms within each intersection ordered by
+\code{enrich_rank_by}.}
+
+\item{enrich_term_colours}{Optional named colour vector for enrichment
+terms. Names are matched to enrichment \code{ID} values when available,
+and then to \code{Description} values. Unspecified terms remain black.}
+
 \item{...}{Additional arguments passed to \code{ComplexHeatmap::UpSet()}.}
 }
 \value{
@@ -104,20 +132,26 @@ clusterProfiler-style enrichment dot matrix underneath. The two panels use
 the same intersection order, so each enrichment column is vertically
 aligned with its UpSet intersection.
 }
+\details{
+The binary combination pattern and displayed intersection label are
+printed when the function is called. These mappings can be used as keys
+for \code{intersection_labels} and \code{intersection_colours}.
+}
 \examples{
+# Mock feature sets with reproducible intersections
 genes <- paste0("G", 1:200)
-set_list <- list(
-    Exp1_Up = genes[1:60],
-    Exp1_Down = genes[61:100],
-    Exp2_Up = genes[c(1:40, 101:115)],
-    Exp2_Down = genes[c(61:80, 116:130)]
-)
+set_list <- list(Exp1_Up = genes[1:60], Exp1_Down = genes[61:100],
+    Exp2_Up = genes[c(1:40, 101:115)], Exp2_Down = genes[c(61:80, 116:130)])
 enrich_list <- list(BP = data.frame(
     Cluster = c("Exp1_Up_Exp2_Up", "Exp1_Down_Exp2_Down"),
-    Description = c("term A", "term B"), Count = c(20, 10),
-    p.adjust = c(0.001, 0.02), stringsAsFactors = FALSE))
+    Description = c("term A", "term B"), p.adjust = c(0.001, 0.04),
+    Count = c(10, 5)))
+intersection_colours <- c("1010" = "#0072B5", "0101" = "#D55E00")
 plot_upset_v(set_list, enrich_list = enrich_list,
-    enrich_category = "BP")
+    enrich_category = "BP", intersection_colours = intersection_colours)
+# Custom intersection order uses the binary combination patterns.
+plot_upset_v(set_list,
+    intersection_order = c("1010", "1000", "0101", "0100", "0010", "0001"))
 }
 \references{
 Dot matrix mimicking \code{clusterProfiler::dotplot()}
