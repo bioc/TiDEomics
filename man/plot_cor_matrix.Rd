@@ -69,16 +69,17 @@ only applies when \code{se_obj} is a list of multiple datasets)}
 titles. Default: NULL, i.e. the names of \code{se_obj} (when a list).
 Only applies when \code{se_obj} is a list of multiple datasets.}
 
-\item{plot_cophenetic}{Logical, whether to include the cophenetic
-correlation in the combined plot title (default is FALSE) in addition
-to reporting by text.}
+\item{plot_cophenetic}{Logical, whether to include the pairwise Pearson
+correlations of cophenetic distances in the combined plot title
+(default is FALSE) in addition to reporting by text.}
 
 \item{...}{Additional arguments to be passed to \code{ComplexHeatmap::Heatmap()}}
 }
 \value{
 A heatmap showing the correlation between samples. With a named
 list of datasets, all heatmaps share the same colour scale,
-include a cophenetic-correlation subtitle when \code{plot_cophenetic} is TRUE,
+including pairwise correlations of cophenetic distances in the
+combined title when \code{plot_cophenetic} is TRUE,
 and are returned invisibly as a named list of Heatmap objects.
 }
 \description{
@@ -86,8 +87,8 @@ Plot correlation matrix between samples as a heatmap
 }
 \details{
 With a named list of datasets that share the same samples,
-the per-dataset dendrograms are compared pairwise with the
-cophenetic correlation.
+the per-dataset dendrograms are compared pairwise using Pearson
+correlations of their cophenetic distances (see \code{?stats::cophenetic}).
 }
 \examples{
 data(example_obj)

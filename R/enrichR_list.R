@@ -151,8 +151,9 @@ enrichR_list <- function(
 
     count_overlap <- function(x) {
         if (length(x) != 1L || is.na(x)) return(NA_integer_)
-        value <- sub("/.*$", "", trimws(as.character(x)))
-        value <- suppressWarnings(as.integer(value))
+        value <- trimws(sub("/.*$", "", trimws(as.character(x))))
+        if (!grepl("^[0-9]+$", value)) return(NA_integer_)
+        value <- as.integer(value)
         if (is.na(value) || value < 0L) return(NA_integer_)
         value
     }

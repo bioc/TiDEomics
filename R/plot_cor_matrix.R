@@ -3,8 +3,8 @@
 #' @description Plot correlation matrix between samples as a heatmap
 #'
 #' @details With a named list of datasets that share the same samples,
-#'   the per-dataset dendrograms are compared pairwise with the
-#'   cophenetic correlation.
+#'   the per-dataset dendrograms are compared pairwise using Pearson
+#'   correlations of their cophenetic distances (see `?stats::cophenetic`).
 #'
 #' @param se_obj A SummarizedExperiment object created by `create_input()`,
 #'   or a named list of SummarizedExperiment objects (one per dataset).
@@ -33,16 +33,17 @@
 #' @param names Optional character vector of dataset names for the per-heatmap
 #'   titles. Default: NULL, i.e. the names of `se_obj` (when a list).
 #'   Only applies when `se_obj` is a list of multiple datasets.
-#' @param plot_cophenetic Logical, whether to include the cophenetic
-#'   correlation in the combined plot title (default is FALSE) in addition
-#'   to reporting by text.
+#' @param plot_cophenetic Logical, whether to include the pairwise Pearson
+#'   correlations of cophenetic distances in the combined plot title
+#'   (default is FALSE) in addition to reporting by text.
 #' @param ... Additional arguments to be passed to `ComplexHeatmap::Heatmap()`
 #'
 #' @import SummarizedExperiment
 #'
 #' @returns A heatmap showing the correlation between samples. With a named
 #'   list of datasets, all heatmaps share the same colour scale,
-#'   include a cophenetic-correlation subtitle when `plot_cophenetic` is TRUE,
+#'   including pairwise correlations of cophenetic distances in the
+#'   combined title when `plot_cophenetic` is TRUE,
 #'   and are returned invisibly as a named list of Heatmap objects.
 #' @export
 #' @examples
@@ -160,14 +161,17 @@ plot_cor_matrix <- function(
             })
             r_str <- sprintf("%.2f", r_vals)
             if (length(r_vals) == 1) {
-                sim_text <- paste0("Cophenetic r = ", r_str)
+                sim_text <- paste0(
+                    "Cophenetic correlation between datasets (Pearson): ",
+                    r_str)
             } else {
                 pair_text <- paste0(pair_names, " = ", r_str)
                 chunks <- split(pair_text,
                     ceiling(seq_along(pair_text) / 3))
                 lines <- vapply(chunks, paste, character(1),
                     collapse = ", ")
-                sim_text <- paste0("Cophenetic r: ",
+                sim_text <- paste0(
+                    "Cophenetic correlation between datasets (Pearson): ",
                     paste(lines, collapse = "\n"))
             }
             message(sim_text)

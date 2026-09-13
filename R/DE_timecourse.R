@@ -86,7 +86,7 @@
 #'     group = c("IFNbeta", "IFNgamma"),
 #'     group_mode = "joint_group", reference_group = "IFNgamma"
 #' )
-#' head(joint_result$results$global_time_effect)
+#' utils::head(joint_result$results$global_time_effect)
 DE_timecourse <- function(
     se_obj,
     group = NULL,
@@ -802,7 +802,8 @@ DE_timecourse <- function(
     result_list <- list()
     fit_list <- list()
     design_list <- list()
-    time_levels_by_group <- setNames(vector("list", length(group)), group)
+    time_levels_by_group <-
+        stats::setNames(vector("list", length(group)), group)
 
     if (group_mode == "per_group") {
         for (current_group in group) {

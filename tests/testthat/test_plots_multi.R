@@ -224,14 +224,16 @@ test_that("plot_cor_matrix multiple datasets: shared_only subsets features", {
 
 test_that("plot_cor_matrix multiple datasets: cophenetic similarity message", {
     expect_message(plot_cor_matrix(list(Exp1 = se, Exp2 = se)),
-        "Cophenetic r = 1.00")
+        "Cophenetic correlation between datasets \\(Pearson\\): 1.00")
     expect_message(
         plot_cor_matrix(list(Exp1 = se, Exp2 = se, Exp3 = se)),
-        paste0("Cophenetic r: Exp1-Exp2 = 1.00, Exp1-Exp3 = 1.00, ",
+        paste0("Cophenetic correlation between datasets \\(Pearson\\): ",
+            "Exp1-Exp2 = 1.00, Exp1-Exp3 = 1.00, ",
             "Exp2-Exp3 = 1.00"))
     expect_message(
         plot_cor_matrix(list(A = se, B = se, C = se, D = se)),
-        paste0("Cophenetic r: A-B = 1.00, A-C = 1.00, A-D = 1.00",
+        paste0("Cophenetic correlation between datasets \\(Pearson\\): ",
+            "A-B = 1.00, A-C = 1.00, A-D = 1.00",
             "\\nB-C = 1.00, B-D = 1.00, C-D = 1.00"))
 })
 
@@ -239,7 +241,7 @@ test_that("plot_cor_matrix multiple datasets: same samples any column
     order", {
     se_rev <- se[, rev(seq_len(ncol(se)))]
     expect_message(plot_cor_matrix(list(Exp1 = se, Exp2 = se_rev)),
-        "Cophenetic r = 1.00")
+        "Cophenetic correlation between datasets \\(Pearson\\): 1.00")
 })
 
 test_that("plot_cor_matrix multiple datasets: unmatched samples skip

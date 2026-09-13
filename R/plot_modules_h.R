@@ -124,7 +124,7 @@
     textbox_width_mm = 0,
     textbox_gap_mm = 2,
     link_gp = grid::gpar(
-        fill = "grey98", col = "grey50", lwd = 0.5
+        fill = "grey98", col = "grey50", lwd = 1
     )
 ) {
     has_text <- !is.null(text_panel_fun) &&
@@ -157,7 +157,6 @@
             grid::unit(1, "npc"),
             grid::unit(profile_width_mm, "mm")
         )
-        panel_extend <- -grid::unit.c(panel_gap, panel_gap)
     } else {
         panel_height_mm <- max(
             profile_height_mm, max_text_height_mm
@@ -177,7 +176,37 @@
         profile_panel_height <- grid::unit(
             profile_height_mm, "mm"
         )
-        panel_extend <- -grid::unit.c(panel_gap, panel_gap)
+    }
+    panel_extend <- if (n_panels == 1L) {
+        grid::unit(c(0, 0), "mm")
+    } else {
+        -grid::unit.c(panel_gap, panel_gap)
+    }
+    anno_zoom_fun <- ComplexHeatmap::anno_zoom
+    if (n_panels == 1L) {
+        replace_mean_pos <- function(x) {
+            if (!is.call(x)) {
+                return(x)
+            }
+            if (length(x) > 2L &&
+                (identical(x[[1]], as.name("=")) ||
+                    identical(x[[1]], as.name("<-"))) &&
+                identical(x[[2]], as.name("mean_pos"))) {
+                original_mean_pos <- x[[3]]
+                x[[3]] <- bquote(
+                    if (which == "row" && n_boxes == 1) {
+                        0.5
+                    } else {
+                        .(original_mean_pos)
+                    }
+                )
+                return(x)
+            }
+            as.call(lapply(x, replace_mean_pos))
+        }
+        body(anno_zoom_fun) <- replace_mean_pos(
+            body(anno_zoom_fun)
+        )
     }
     content_width_mm <- profile_width_mm +
         if (has_text) textbox_gap_mm + textbox_width_mm else 0
@@ -213,7 +242,7 @@
         }
     }
 
-    ComplexHeatmap::anno_zoom(
+    anno_zoom_fun(
         align_to = profile_row_groups,
         which = "row",
         side = "right",
@@ -764,9 +793,7 @@ plot_modules_h <- function(
         }
     }
 
-    enrich_legend_colours <- stats::setNames(
-        vector("list", length(enrich_category)), enrich_category
-    )
+    enrich_legend_colours <- new.env(parent = emptyenv())
 
     # Use a shared mapping so the same group has the same colour across
     # datasets, including when group sets or their ordering differ.
@@ -835,7 +862,7 @@ plot_modules_h <- function(
                 g <- profile_grobs[[nm]]
                 g <- grid::grid.grabExpr(grid::grid.draw(g))
                 grid::grid.rect(gp = grid::gpar(
-                    fill = "transparent", col = "grey50", lwd = 0.5
+                    fill = "transparent", col = "grey50", lwd = 1
                 ))
                 grid::grid.draw(g)
                 if (nm == last_mod) {
@@ -881,7 +908,7 @@ plot_modules_h <- function(
                     axis.title = element_blank(),
                     axis.ticks = element_blank(),
                     panel.border = element_rect(
-                        fill = NA, colour = "grey50", linewidth = 0.5
+                        fill = NA, colour = "grey50", linewidth = 1
                     ),
                     legend.position = "none",
                     plot.margin = margin(0, 0, 0, 0, unit = "cm")
@@ -939,7 +966,7 @@ plot_modules_h <- function(
                 width = unit(profile_width, "cm"),
                 side = "right",
                 link_gp = grid::gpar(
-                    fill = "grey98", col = "grey50", lwd = 0.5
+                    fill = "grey98", col = "grey50", lwd = 1
                 ),
                 link_width = unit(profile_link_width, "cm")
             )
@@ -1013,7 +1040,7 @@ plot_modules_h <- function(
 
                 if (nrow(termanno) == 0) next
 
-                enrich_legend_colours[[cate]] <<- intersect(
+                enrich_legend_colours[[cate]] <- intersect(
                     c("black", "grey50"), unique(termanno$col)
                 )
 
@@ -1139,7 +1166,7 @@ plot_modules_h <- function(
                         textbox_layout,
                         background_gp = grid::gpar(
                             fill = "grey98", col = "grey50", lty = 1,
-                            lwd = 0.5
+                            lwd = 1
                         ),
                         show_headers = TRUE,
                         header_gp = grid::gpar(
@@ -1207,7 +1234,7 @@ plot_modules_h <- function(
                             col = cols, fontsize = fontsize,
                             fontfamily = fontfamily
                         ),
-                        link_gp = grid::gpar(col = "grey50", lwd = 0.5),
+                        link_gp = grid::gpar(col = "grey50", lwd = 1),
                         padding = unit(2, "mm")
                     )
                 )

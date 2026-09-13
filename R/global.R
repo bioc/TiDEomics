@@ -11,7 +11,8 @@ utils::globalVariables(c(
     "Exp_ratio", "SYMBOL", "CV", "value", "Missing",
     "Adjusted.P.value", "name", ".", "Breakpoint", "Freq", "Color",
     "Database", "MeanConn", "Power", "SignedR2",
-    "Combined.Score", "Genes", "Term"
+    "Combined.Score", "Genes", "Term", "x", "y", "quadrant",
+    "label", "segment_colour"
 ))
 
 #' Resolve assay argument

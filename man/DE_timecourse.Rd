@@ -119,5 +119,5 @@ joint_result <- DE_timecourse(
     group = c("IFNbeta", "IFNgamma"),
     group_mode = "joint_group", reference_group = "IFNgamma"
 )
-head(joint_result$results$global_time_effect)
+utils::head(joint_result$results$global_time_effect)
 }

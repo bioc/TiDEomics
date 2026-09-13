@@ -16,7 +16,7 @@
   text_heights_mm = numeric(0),
   textbox_width_mm = 0,
   textbox_gap_mm = 2,
-  link_gp = grid::gpar(fill = "grey98", col = "grey50", lwd = 0.5)
+  link_gp = grid::gpar(fill = "grey98", col = "grey50", lwd = 1)
 )
 }
 \value{

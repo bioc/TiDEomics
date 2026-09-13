@@ -417,7 +417,7 @@ plot_scatter <- function(
                     drop = FALSE]
                 if (nrow(df_q) > 0) {
                     dist_origin <- sqrt(df_q$x^2 + df_q$y^2)
-                    top_q <- head(df_q[order(-dist_origin), ,
+                    top_q <- utils::head(df_q[order(-dist_origin), ,
                         drop = FALSE], n_q)
                     label_data <- rbind(label_data, top_q)
                 }

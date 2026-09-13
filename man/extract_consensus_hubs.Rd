@@ -37,6 +37,6 @@ with \code{multiExpr} and \code{parameters}.
 \examples{
 data(example_cons)
 hubs <- extract_consensus_hubs(example_cons, top_n = 1)
-head(hubs)
+utils::head(hubs)
 
 }

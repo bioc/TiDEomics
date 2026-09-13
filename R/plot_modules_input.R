@@ -143,9 +143,11 @@
             )
         }
         verb <- if (sum(missing_per_dataset) == 1L) "is" else "are"
-        warning(paste0(parts, " ", verb,
+        warning(
+            parts, " ", verb,
             " not shared by input se_obj_merged, and therefore excluded ",
-            "from plotting."), call. = FALSE)
+            "from plotting.", call. = FALSE
+        )
     }
     module[module$Feature %in% common_feats, , drop = FALSE]
 }
