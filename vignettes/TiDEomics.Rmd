@@ -57,10 +57,10 @@ local({
 
 ## Introduction
 
-[**TiDEomics**](https://github.com/hte123/TiDEomics) (Time-course Differential
-Expression analysis of omics data) is an R package for
+[**TiDEomics**](https://bioconductor.org/packages/TiDEomics) (Time-course 
+Differential Expression analysis of omics data) is an R package for
 **multi-group time-course omics analysis** built on `SummarizedExperiment`,
-especially for comparison of more than two conditions across time.
+with a particular focus on comparing more than two conditions across time.
 
 `TiDEomics` provides:
 
@@ -79,6 +79,12 @@ especially for comparison of more than two conditions across time.
     traditional filtering by total variance or coefficient of variation is less
     appropriate when biological variation across groups and time course is
     expected.
+    
+This vignette demonstrates the workflow on a single dataset with 
+multiple groups. TiDEomics also supports **multi-dataset / multi-omics** 
+analyses, covered in a separate vignette: 
+`TiDEomics Tutorial: Multi-Dataset/Multi-Omics Analysis` 
+(`browseVignettes("TiDEomics")`).
 
 Existing packages on time-course omics analysis are available, typically focus
 on particular data types or analytical tasks. Some packages are limited to
@@ -112,9 +118,10 @@ Key features covered:
     global structure and major sources of variance, check for batch effects,
     and identify features driving PCs.
 
-- *Pairwise differential expression (by time or group)*: Identify DE features
+- *Differential expression (pairwise and model-based)*: Identify DE features
     between pairs of time points within each group, and between pairs of groups
-    at each time point.
+    at each time point, or model changes over the whole time course within or 
+    across groups.
 
 - *Classification by feature property (randomness and overall fold change)*:
     Classify features into different categories (e.g., non-random vs. random,
@@ -508,6 +515,33 @@ plot_volcano(DE_between_group_out,
     logFC_thres = 0.5, adjP_thres = 0.05, label = TRUE)
 ```
 
+### Model-based temporal differential expression
+
+`DE_timecourse()` provides a model-based alternative to pairwise comparisons.
+
+- `group_mode = "per_group"` tests temporal changes separately per group.
+    `group_mode = "joint_group"` fits one Group x Time model for all groups.
+
+- `time_mode = "factor"` treats time points as categories and tests whether
+    a feature changes across time overall, `time_mode = "numeric"` treats
+    time as continuous and tests for a linear trend, and `time_mode = "spline"`
+    models smooth non-linear changes.
+
+- If `Subject` exists in the input, repeated measurements are
+    modelled using `limma::duplicateCorrelation()`.
+
+```{r de-timecourse}
+DE_timecourse_out <- DE_timecourse(
+    data_obj,
+    assay = 1,
+    group = c("untreated", "IFNbeta"),
+    group_mode = "per_group",
+    time_mode = "factor"
+)
+
+DE_timecourse_out$results$time_effect |> utils::head()
+```
+
 ### Feature properties and classification
 
 `calc_feature_property()` computes per-feature properties:
@@ -830,7 +864,7 @@ gse_group <- enrichGO_rank(var_decomp,
     keyType = "SYMBOL", category = "BP",
     go_rank_by = "p.adjust")
 
-enrichplot::gseaplot2(gse_group[["BP"]], geneSetID = 1:3, base_size = 8)
+enrichplot::gseaplot2(gse_group$all[["BP"]], geneSetID = 1:3, base_size = 8)
 ```
 
 For multiple defined gene sets (e.g. WGCNA modules, DE genes by feature

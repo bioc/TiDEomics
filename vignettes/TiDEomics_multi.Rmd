@@ -1,0 +1,452 @@
+---
+title: "TiDEomics Tutorial: Multi-Dataset/Multi-Omics Analysis"
+author:
+  - name: Tianen He
+    affiliation:
+    - University of Oxford
+    email: tianen.he@ndm.ox.ac.uk
+output:
+  BiocStyle::html_document:
+    self_contained: true
+    toc: true
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+    toc_depth: 3
+    number_sections: true
+    code_folding: show
+    highlight: tango
+    df_print: paged
+date: "`r BiocStyle::doc_date()`"
+package: "`r BiocStyle::pkg_ver('TiDEomics')`"
+vignette: >
+  %\VignetteIndexEntry{TiDEomics Tutorial: Multi-Dataset/Multi-Omics Analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: references.bib
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+    collapse = TRUE,
+    comment = "#>",
+    crop = NULL,
+    # Related to https://stat.ethz.ch/pipermail/bioc-devel/
+    # 2020-April/016656.html
+    dpi = 96,
+    fig.width = 6,
+    fig.height = 4,
+    fig.keep = "all",
+    max.height = "300px"
+)
+
+local({
+    hook_output <- knitr::knit_hooks$get("output")
+    knitr::knit_hooks$set(output = function(x, options) {
+        if (!is.null(options$max.height)) {
+            options$attr.output <- c(
+                options$attr.output,
+                sprintf('style="max-height: %s;"', options$max.height)
+            )
+        }
+        hook_output(x, options)
+    })
+})
+```
+
+```{r load-packages}
+library(TiDEomics)
+library(org.Mm.eg.db)
+```
+
+## Introduction
+
+This tutorial demonstrates the **multi-dataset/multi-omics** workflow of
+[**TiDEomics**](https://bioconductor.org/packages/TiDEomics). It complements the
+single-dataset workflow in the `TiDEomics Tutorial` vignette
+(`browseVignettes("TiDEomics")`).
+
+Key features covered:
+
+- *Preparation of multiple datasets*: prepare, filter and combine datasets,
+    retaining shared and dataset-specific features.
+
+- *Multi-dataset exploratory visualisation*: plot temporal profiles, PCA, UMAP,
+    and sample correlation matrices across datasets or omics layers.
+
+- *Consensus co-expression module analysis*: identify and interpret consensus
+    WGCNA modules across datasets, including integrated visualisation with
+    functional enrichment.
+
+- *Feature level comparison*: compare feature properties or feature set
+    overlaps within or across datasets, with optional functional annotation.
+
+In TiDEomics, a dataset is one `SummarizedExperiment` object. Multiple
+datasets or omics layers are provided as a named list, e.g.
+`list(Exp1 = se1, Exp2 = se2)`.
+
+## Example input
+
+The tutorial dataset was derived from GSE263759 [@Traxler2025] as described 
+in the `TiDEomics Tutorial` vignette. `tutorial_data` and
+`tutorial_sample_info` provide the sample expression and annotations:
+
+```{r load-example}
+data(tutorial_data, package = "TiDEomics")
+data(tutorial_sample_info, package = "TiDEomics")
+
+tutorial_data[1:5, 1:5]
+```
+
+Exp1 uses `tutorial_data` directly. Exp2 is generated from the same table
+by adding noise and suffixing its first 50 feature names with `_Exp2`, to
+simulate differences between datasets or omics layers.
+
+```{r input-data}
+tutorial_data_2 <- tutorial_data
+exp1_values <- as.matrix(tutorial_data[, -1])
+gene_sd <- apply(exp1_values, 1, sd)
+
+set.seed(5678)
+noise <- matrix(
+    rnorm(length(exp1_values)),
+    nrow = nrow(exp1_values)
+)
+tutorial_data_2[, -1] <- exp1_values + noise * 0.5 * gene_sd
+tutorial_data_2$Feature[seq_len(50)] <- paste0(
+    tutorial_data_2$Feature[seq_len(50)], "_Exp2"
+)
+```
+
+The two datasets each have 50 dataset-specific features, while all other 
+features are shared:
+
+```{r overlap-summary}
+shared_features <- intersect(tutorial_data$Feature, tutorial_data_2$Feature)
+length(shared_features)
+```
+
+## Workflow
+
+### Multi-dataset preparation
+
+`combine_tide()` accepts a list of `prepare_tide()` outputs and returns the 
+filtered objects including all features or shared features only.
+
+```{r combine-tide}
+tide_results <- list()
+tide_results[["Exp1"]] <- prepare_tide(
+    data = tutorial_data, sample_ann = tutorial_sample_info,
+    feature_threshold = 0, keep = "threshold", residual_threshold = 100)
+tide_results[["Exp2"]] <- prepare_tide(
+    data = tutorial_data_2, sample_ann = tutorial_sample_info,
+    feature_threshold = 0, keep = "threshold", residual_threshold = 100)
+
+combined <- combine_tide(tide_results, assay = 2)
+names(combined)
+combined$filter_summary
+```
+
+The returned `filter_summary` reports the number and percentage of features
+retained in each dataset. The `se_list_filtered` and `se_list_merged` objects 
+include data-set specific features, while `se_list_filtered_shared` and
+`se_list_merged_shared` contain only features retained by every dataset.
+
+### Multi-dataset visualisation
+
+`plot_trend()` plots the mean and standard deviation of selected
+features over time. The `multi_layout` argument
+controls the arrangement of datasets and features, while `independent_y`
+controls whether panels use independent or shared y-axis ranges:
+
+```{r trend, fig.width = 5}
+plot_trend(combined$se_list_filtered,
+    features = combined$shared_features[1:4], assay = 2,
+    multi_layout = "wrap", independent_y = FALSE, ncol = 2
+)
+
+plot_trend(combined$se_list_filtered,
+    features = combined$shared_features[1:4], assay = 2,
+    multi_layout = "overlay", independent_y = TRUE, ncol = 2
+)
+
+plot_trend(combined$se_list_filtered,
+    features = combined$shared_features[1:4], assay = 2,
+    multi_layout = "vertical", independent_y = FALSE
+)
+
+plot_trend(combined$se_list_filtered,
+    features = combined$shared_features[1:4], assay = 2,
+    multi_layout = "horizontal", independent_y = TRUE
+)
+```
+
+`plot_pca()`, `plot_umap()`, and `plot_cor_matrix()` accept the dataset list
+and plot the datasets side by side. With `shared_only = TRUE`, PCA, UMAP, and
+correlation matrices are computed on the features shared by all datasets,
+otherwise all eligible features are used.
+
+```{r pca, fig.width = 8, fig.height = 3}
+PC <- plot_pca(combined$se_list_filtered,
+    assay = 2,
+    shared_only = TRUE,
+    plot_screeplot = TRUE,
+    plot_loadings = FALSE,
+    plot_morepc = FALSE
+)
+PC$plot
+```
+
+```{r umap, fig.width = 8, fig.height = 3}
+umap_out <- plot_umap(combined$se_list_filtered,
+    seed = 1234, assay = 2,
+    shared_only = FALSE
+)
+umap_out$plot
+```
+
+```{r cormat, fig.width = 8, fig.height = 4}
+plot_cor_matrix(combined$se_list_filtered,
+    method = "spearman",
+    assay = 2,
+    shared_only = FALSE,
+    label_rep = TRUE, label_batch = TRUE,
+    cellwidth = 1.5, cellheight = 1.5
+)
+```
+
+When datasets contain the same samples, `plot_cor_matrix()` reports
+clustering similarity using correlation of cophenetic distances.
+
+The other TiDEomics functions can be applied separately to each dataset 
+(e.g. `combined$se_list_filtered$Exp1` and `combined$se_list_filtered$Exp2`),
+as described in the main tutorial.
+
+### Consensus WGCNA
+
+Consensus WGCNA identifies co-expression modules that are present
+across all or most datasets [@WGCNA_0; @WGCNA_1; @WGCNA_2].
+Only features shared by all datasets are included,
+so the `se_list_filtered_shared` from `combine_tide()` output is used.
+
+First, scale-free topology fit is assessed and the suitable power is picked
+for each dataset with `prepare_WGCNA()`:
+
+```{r wgcna-prep, fig.width = 4}
+inp1 <- prepare_WGCNA(combined$se_list_filtered_shared$Exp1,
+    assay = 2, powers = seq(1, 20),
+    networkType = "signed", RsquaredCut = 0.8
+)
+inp1$plot
+
+inp2 <- prepare_WGCNA(combined$se_list_filtered_shared$Exp2,
+    assay = 2, powers = seq(1, 20),
+    networkType = "signed", RsquaredCut = 0.8
+)
+inp2$plot
+```
+
+`run_consensus_WGCNA()` then computes consensus network and modules across the
+datasets.
+
+```{r consensus}
+cons <- run_consensus_WGCNA(
+    nets = list(Exp1 = inp1, Exp2 = inp2),
+    powers = c(
+        Exp1 = inp1$custom_powerEstimate,
+        Exp2 = inp2$custom_powerEstimate
+    ),
+    minModuleSize = 10
+)
+```
+
+The features with the highest module membership (kME) per module
+can be extracted with `extract_consensus_hubs()`. The result is a table
+containing consensus and dataset-specific hub feature sets:
+
+```{r consensus-hubs}
+hubs <- extract_consensus_hubs(cons, top_n = 1)
+head(hubs)
+```
+
+Module feature counts and module membership summaries can be
+reported with `summarise_module_metrics()`:
+
+```{r consensus-metrics}
+module_metrics <- summarise_module_metrics(cons)
+module_metrics$Consensus
+```
+
+### Visualisation of co-expressed modules
+
+The feature-module assignment can be extracted with
+`WGCNA_module()` and visualised by heatmap, using the replicate-merged 
+expression data of each dataset, as the `se_list_merged_shared` output 
+from `combine_tide()`:
+
+```{r module-table}
+cons_module <- WGCNA_module(cons$network, exclude_grey = TRUE)
+```
+
+`plot_modules_v()` stacks the per-dataset module profiles vertically:
+
+```{r modules-v, fig.width = 8, fig.height = 9}
+plot_modules_v(cons_module, combined$se_list_merged_shared,
+    assay = 2, scale = TRUE,
+    height_ratio = 2)
+```
+
+`plot_modules_h()` provides the horizontal layout with optional
+enrichment annotations, similar to the single dataset usage. Module
+profile y-axis scaling, group annotations, marked features, and legend
+position can also be customised.
+
+In the below example, the hub features are coloured by categories,
+and the module profiles use shared y-axis across all modules and datasets.
+
+```{r modules-h, fig.width = 10, fig.height = 5}
+hub_colours <- c(
+    "Consensus hub" = "#0072B2",
+    "Exp1 hub" = "#D55E00",
+    "Exp2 hub" = "#009E73"
+)
+
+plot_modules_h(cons_module, combined$se_list_merged_shared,
+    assay = 2, scale = TRUE,
+    mark_features = hubs,
+    feature_colours = hub_colours,
+    profile_scale = "shared", # or "dataset", "free"
+    group_annotation = "both", # or "name", "colour", "none"
+    legend_position = "right", # or "bottom"
+    heatmap_width = 5, heatmap_height = 8,
+    profile_width = 3
+)
+```
+
+`plot_modules_h()` also supports selection of specific modules to display
+with `selected_modules` and wrapping long enrichment terms with
+`enrich_wrap_width`:
+
+```{r modules-h-selected, fig.width = 10, fig.height = 5}
+module_background <- WGCNA_module(cons$network, exclude_grey = FALSE)$Feature
+
+go_modules <- enrichGO_list(cons_module,
+    OrgDb = org.Mm.eg.db,
+    universe = module_background,
+    category = "BP",
+    pvalueCutoff = 1, qvalueCutoff = 1) # keep all terms for visualisation
+
+plot_modules_h(cons_module, combined$se_list_merged_shared,
+    assay = 2, scale = TRUE,
+    mark_features = hubs,
+    feature_colours = hub_colours,
+    enrich_list = go_modules$all,
+    enrich_category = c("BP", "Features"),
+    enrich_wrap_width = 4,
+    profile_scale = "free", # or "dataset", "shared"
+    group_annotation = "colour", # or "name", "both", "none"
+    legend_position = "right",
+    heatmap_width = 3, heatmap_height = 8,
+    profile_width = 3,
+    selected_modules = c(2, 5)
+)
+```
+
+### Feature overlap or property comparison
+
+Feature overlap or property comparisons can be across datasets or omics layers,
+or within a single dataset. For example, one can compare specific contrasts
+or properties of different modules from one dataset.
+
+The feature overlap can be visualised with `plot_upset_h()` and
+`plot_upset_v()`, based on `ComplexHeatmap::UpSet()` 
+[@complexheatmap_1; @complexheatmap_2].
+
+For `plot_upset_h()`, functional enrichment terms
+[@clusterProfiler_1; @clusterProfiler_2; @clusterProfiler_3; @clusterProfiler_4]
+for the feature set intersections can be added as a horizontally
+aligned textbox:
+
+```{r upset-h, fig.width = 7, fig.height = 3.5}
+set_list <- lapply(combined$se_list_filtered, rownames)
+background_features <- unique(unlist(set_list))
+
+feature_sets <- list(
+    Exp1_Exp2 = intersect(set_list$Exp1, set_list$Exp2),
+    Exp1 = setdiff(set_list$Exp1, set_list$Exp2),
+    Exp2 = setdiff(set_list$Exp2, set_list$Exp1)
+)
+
+go_all <- enrichGO_list(feature_sets,
+    OrgDb = org.Mm.eg.db,
+    universe = background_features,
+    category = "BP",
+    pvalueCutoff = 1, qvalueCutoff = 1) # keep all terms for visualisation
+
+plot_upset_h(set_list,
+    enrich_list = go_all$all,
+    enrich_category = "BP",
+    enrich_top_n = 2,
+    enrich_wrap_width = 7
+)
+```
+
+`plot_upset_v()` allows a vertically aligned enrichment term dot matrix
+below the Upset plot. The term ordering and colours can be customised with
+`enrich_term_order` and `enrich_term_colours`, and `term_wrap_width`
+controls term wrapping (similar to `enrich_wrap_width` for `plot_upset_h()`).
+
+```{r upset-v, fig.width = 5, fig.height = 5}
+bp_terms <- unique(as.data.frame(go_all$all$BP)$ID)
+enrich_term_colours <- stats::setNames(
+    rep(c("#0072B2", "#D55E00", "#009E73", "black"),
+        length.out = length(bp_terms)),
+    bp_terms
+)
+
+plot_upset_v(set_list,
+    enrich_list = go_all$all,
+    enrich_category = "BP",
+    enrich_top_n = 2,
+    term_wrap_width = 50,
+    enrich_term_order = "intersection", # or "rank"
+    enrich_term_colours = enrich_term_colours,
+    include_all = FALSE # see clusterProfiler::dotplot `includeAll` usage
+)
+```
+
+Per-feature properties can be compared with `plot_scatter()`.
+Here the feature mean abundance is compared between the two datasets:
+
+```{r scatter, fig.width = 5, fig.height = 4}
+exp1_stat <- data.frame(
+    Feature = rownames(combined$se_list_filtered$Exp1),
+    Mean = rowMeans(
+        SummarizedExperiment::assay(combined$se_list_filtered$Exp1, 2),
+        na.rm = TRUE
+    )
+)
+exp2_stat <- data.frame(
+    Feature = rownames(combined$se_list_filtered$Exp2),
+    Mean = rowMeans(
+        SummarizedExperiment::assay(combined$se_list_filtered$Exp2, 2),
+        na.rm = TRUE
+    )
+)
+
+plot_scatter(exp1_stat, exp2_stat,
+    col1 = "Mean", col2 = "Mean",
+    name1 = "Exp1 mean abundance",
+    name2 = "Exp2 mean abundance",
+    colour_threshold = c(x = 1, y = 1),
+    label_threshold = c(x = 2.5, y = 2.5)
+)
+```
+
+## Session information
+
+```{r session-info}
+sessionInfo()
+```
+
+## References
