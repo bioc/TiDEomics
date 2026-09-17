@@ -112,14 +112,15 @@ plot_volcano <- function(DE_out,
             dplyr::mutate(Color = ifelse(Feature %in% de_tb$Feature,
                 ifelse(logFC > 0, "Red", "Blue"), "Grey"))
 
+        xlab_text <- paste0("fold change (", group2, "-",
+                group1, ", time ", time, ")")
         p <- volcano_tb |>
             ggplot(aes(x = logFC, y = -log10(adj.P.Val))) +
             geom_point(aes(color = Color)) +
             theme_custom(base_size = fontsize) +
             scale_color_identity() +
-            xlab(paste0("Log2 fold change (", group2, "-", group1,
-                ", time ", time, ")")) +
-            ylab("-Log10 adjusted p-value")
+            xlab(bquote(Log[2]~.(xlab_text))) +
+            ylab(expression(-Log[10]~"adjusted"~italic(P)*"-value"))
 
     } else {
         # DE_between_time
@@ -154,14 +155,15 @@ plot_volcano <- function(DE_out,
             dplyr::mutate(Color = ifelse(Feature %in% de_tb$Feature,
                 ifelse(logFC > 0, "Red", "Blue"), "Grey"))
 
+        xlab_text <- paste0("fold change (", time2, "-", time1,
+            ", group ", group, ")")
         p <- volcano_tb |>
             ggplot(aes(x = logFC, y = -log10(adj.P.Val))) +
             geom_point(aes(color = Color)) +
             theme_custom(base_size = fontsize) +
             scale_color_identity() +
-            xlab(paste0("Log2 fold change (", time2, "-", time1,
-                ", group ", group, ")")) +
-            ylab("-Log10 adjusted p-value")
+            xlab(bquote(Log[2]~.(xlab_text))) +
+            ylab(expression(-Log[10]~"adjusted"~italic(P)*"-value"))
     }
 
     if (!is.null(logFC_thres)) {

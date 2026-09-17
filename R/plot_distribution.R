@@ -41,7 +41,7 @@ plot_distribution <- function(se_obj, facet_by = NULL, fontsize = 8) {
         p <- ggplot(data_long, aes(x = value)) +
             geom_density(aes(group = name)) +
             ggtitle("Abundance distribution") +
-            labs(x = "Log2 Abundance", y = "Density")
+            labs(x = expression(Log[2]~"Abundance"), y = "Density")
 
         if (!is.null(facet_by)) {
             p <- p + facet_wrap(~name) +
@@ -64,7 +64,7 @@ plot_distribution <- function(se_obj, facet_by = NULL, fontsize = 8) {
             ggridges::geom_density_ridges(color = "black", alpha = 0.3) +
             facet_wrap(vars(.data[[facet_by]]), nrow = 1) +
             ggtitle("Abundance distribution") +
-            xlab("Log2 Abundance") +
+            xlab(expression(Log[2]~"Abundance")) +
             theme_custom(base_size = fontsize)
     }
 

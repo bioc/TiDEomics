@@ -689,7 +689,7 @@
                 else background_gp$col
 
             grid::grid.rect(gp = grid::gpar(
-                fill = bg_fill, col = bg_col,
+                fill = bg_fill, col = "transparent",
                 lty = background_gp$lty, lwd = background_gp$lwd
             ))
             if (!is_empty) {

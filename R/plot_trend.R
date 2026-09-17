@@ -237,6 +237,7 @@ plot_trend <- function(se_obj, assay = 1, groups = NULL, features,
         )) +
             ggh4x::facet_grid2(Dataset ~ Feature,
                 scales = "free_y", independent = independent,
+                render_empty = FALSE,
                 strip = ggh4x::strip_themed(
                     background_y = ggh4x::elem_list_rect(
                         fill = strip_fills
@@ -250,6 +251,7 @@ plot_trend <- function(se_obj, assay = 1, groups = NULL, features,
         )) +
             ggh4x::facet_grid2(Feature ~ Dataset,
                 scales = "free_y", independent = independent,
+                render_empty = FALSE,
                 strip = ggh4x::strip_themed(
                     background_x = ggh4x::elem_list_rect(
                         fill = strip_fills

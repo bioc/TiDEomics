@@ -1,3 +1,75 @@
+# TiDEomics 0.99.6
+
+NEW FEATURES
+
+* TiDEomics now supports multi-dataset / multi-omics analysis:
+  * `combine_tide()` combines multiple `prepare_tide()` outputs, identifies
+    features shared by the datasets, and returns all-feature filtered data, shared-feature subsets, and filtering summaries.
+  * `run_consensus_WGCNA()` performs consensus WGCNA across datasets
+    using the shared features.
+  * `extract_consensus_hubs()` returns consensus and dataset-specific
+    features with highest kME to their modules.
+  * Examples and documentations now include a second simulated dataset to
+    demonstrate the multi-dataset / multi-omics workflows.
+
+* Some existing functions now accept multi-dataset / multi-omics input:
+  * `plot_trend()` supports multiple layouts for multi-dataset input,
+    with shared or independent y-axis scales.
+  * `plot_pca()` and `plot_umap()` calculate and plot per dataset
+    using all available complete features or shared features, and
+    combine the plots with shared legends.
+  * `plot_cor_matrix()` plots correlation heatmaps per dataset side by side
+    with shared legends, and reports pairwise correlations of cophenetic
+    distances when samples are shared across datasets.
+  * `plot_modules_v()` vertically stacks module heatmaps and mean
+    profile views for multi-dataset input.
+  * `plot_modules_h()` horizontally aligns module heatmaps and mean
+    profile views for multi-dataset input, with the optional enrichment
+    annotation on the right and shared legends.
+  * `summarise_module_metrics()` accepts both individual and consensus
+    WGCNA results, reporting metrics including kME distribution summaries.
+
+* New analysis and visualisation functions:
+  * `DE_timecourse()` performs limma-based temporal differential-expression
+    analysis within selected groups or jointly across groups.
+  * `plot_scatter()` compares per-feature properties between datasets or
+    within one table, with quadrant labelling and correlation summaries.
+  * `plot_upset_h()` provides Upset plot of feature set intersections with
+    optional horizontally aligned per-intersection enrichment textboxes.
+  * `plot_upset_v()` provides Upset plot of feature set intersections with
+    optional vertically aligned enrichment dot matrices with configurable dot
+    size and colour, term ordering, and custom term colours.
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+* Enrichment workflows now provide more consistent result structures.
+  `enrichR_list()` reports feature counts. `enrichGO_rank()` follows
+  `enrichGO_list`, returns full results under `all` and optionally adds
+  simplified terms under `simplified`.
+
+* WGCNA workflows are improved. In addition to the multi-dataset / multi-omics
+  compatibility, `prepare_WGCNA()` now reports a custom power estimate, and
+  `plot_modules_h()` has improved display controls, including feature marking
+  with custom colours, enrichment term wrapping, and selected module profiles.
+
+* `prepare_tide()` has filtering mode `below_quantile` renamed to `quantile`,
+  and reports residual cutoffs.
+
+* `decomp_variance()` now reports numbers of evaluated features, including
+  successes, errors, warnings, and skippings.
+
+* `calc_feature_property()` adds `Net_FC`, reporting signed
+  abundance difference between last and first time points.
+
+* `theme_custom()` supports font family control.
+
+BUG FIXES
+
+* `plot_WGCNA()` now plots dendrogram for every feature block.
+* `prepare_tide()` now accepts `feature_threshold = NULL`.
+* Enrichment legends in `plot_modules_h()` and `plot_upset_h()` now
+  omit unused colours.
+
 # TiDEomics 0.99.5
 
 SIGNIFICANT USER-VISIBLE CHANGES

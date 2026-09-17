@@ -188,38 +188,70 @@ decomp_variance <- function(
                 res <- data.frame(table(df1[, featureSet[i]]))
                 sum(res$Freq > 1)
             }, numeric(1))
-            if (any(gene_group == 0)) return(NULL)
+            if (any(gene_group == 0)) {
+                return(list(status = "insufficient", result = NULL))
+            }
 
             # Skip features with near-zero variance (lmer cannot decompose)
             resp_var <- stats::var(df$exp, na.rm = TRUE)
-            if (is.na(resp_var) || resp_var < 1e-12) return(NULL)
+            if (is.na(resp_var) || resp_var < 1e-12) {
+                return(list(status = "insufficient", result = NULL))
+            }
 
             form1 <- stats::as.formula(paste("exp ~ ", form, sep = ""))
-            lmem <- suppressMessages(
+            fit_state <- new.env(parent = emptyenv())
+            fit_state$warning <- FALSE
+            lmem <- withCallingHandlers(
                 tryCatch(
                     lme4::lmer(formula = form1, data = df,
                         control = lme4::lmerControl(
                             optimizer = "bobyqa", calc.derivs = FALSE)),
                     error = function(e) NULL
-                )
+                ),
+                message = function(m) {
+                    invokeRestart("muffleMessage")
+                },
+                warning = function(w) {
+                    fit_state$warning <- TRUE
+                    invokeRestart("muffleWarning")
+                }
             )
-            if (is.null(lmem)) return(NULL)
+            if (is.null(lmem)) {
+                return(list(status = "failed", result = NULL))
+            }
 
             lmem_re <- as.data.frame(lme4::VarCorr(lmem))
             row.names(lmem_re) <- lmem_re$grp
             lmem_re <- lmem_re[featureList, ]
 
-            c(
+            result <- c(
                 geneName, mean(df$exp, na.rm = TRUE),
                 stats::median(df$exp, na.rm = TRUE),
                 stats::sd(df$exp, na.rm = TRUE),
                 max(df$exp, na.rm = TRUE),
                 (lmem_re$vcov) / sum(lmem_re$vcov)
             )
+            status <- if (fit_state$warning || lme4::isSingular(lmem)) {
+                "flagged"
+            } else {
+                "success"
+            }
+            list(status = status, result = result)
         }
     )
     pbapply::pboptions(op)
 
+    fit_status <- vapply(lmem_res, `[[`, character(1), "status")
+    msg <- paste0(length(rowN), " features evaluated: ",
+        sum(fit_status == "success"), " successful; ",
+        sum(fit_status == "failed"), " errors; ",
+        sum(fit_status == "flagged"), " warnings; ",
+        sum(fit_status == "insufficient"),
+        " skipped before fitting for insufficient observations or variance.")
+    message(msg)
+
+    lmem_res <- lapply(lmem_res, `[[`, "result")
+    lmem_res <- Filter(Negate(is.null), lmem_res)
     lmem_res <- do.call(rbind, lmem_res)
     lmem_res <- data.frame(lmem_res, check.names = FALSE,
         stringsAsFactors = FALSE)
