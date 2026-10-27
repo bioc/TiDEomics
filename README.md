@@ -50,7 +50,7 @@ tasks or experimental designs, while TiDEomics provides a comprehensive
 workflow with multi-group and multi-omics support.
 
 <img src="man/figures/TiDEomics_workflow_v0.99.6.png"
-style="width:70.0%" />
+style="width:100.0%" />
 
 Example applications include:
 

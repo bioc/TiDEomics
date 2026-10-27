@@ -54,7 +54,7 @@ Existing tools for time-course analysis often focus on specific
 analysis tasks or experimental designs, while TiDEomics provides a
 comprehensive workflow with multi-group and multi-omics support.
 
-![](man/figures/TiDEomics_workflow_v0.99.6.png){width="70%"}
+![](man/figures/TiDEomics_workflow_v0.99.6.png){width="100%"}
 
 Example applications include:
 
