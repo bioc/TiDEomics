@@ -57,7 +57,7 @@ local({
 
 ## Introduction
 
-[**TiDEomics**](https://bioconductor.org/packages/TiDEomics) (Time-course 
+[**TiDEomics**](https://bioconductor.org/packages/TiDEomics) (Time-course
 Differential Expression analysis of omics data) is an R package for
 **multi-group time-course omics analysis** built on `SummarizedExperiment`,
 with a particular focus on comparing more than two conditions across time.
@@ -69,7 +69,7 @@ with a particular focus on comparing more than two conditions across time.
     handling of missing values.
 
 - An approach to separate **time-dominant**, **group-dominant**, and
-    **group-specific temporal** effects through the combination of pairwise
+    **group-specific temporal** effects through the combination of limma-based
     differential expression, variance decomposition, and co-expression module
     analysis (WGCNA).
 
@@ -79,18 +79,18 @@ with a particular focus on comparing more than two conditions across time.
     traditional filtering by total variance or coefficient of variation is less
     appropriate when biological variation across groups and time course is
     expected.
-    
-This vignette demonstrates the workflow on a single dataset with 
-multiple groups. TiDEomics also supports **multi-dataset / multi-omics** 
-analyses, covered in a separate vignette: 
-`TiDEomics Tutorial: Multi-Dataset/Multi-Omics Analysis` 
+
+This vignette demonstrates the workflow on a single dataset with
+multiple groups. TiDEomics also supports **multi-dataset / multi-omics**
+analyses, covered in a separate vignette:
+`TiDEomics Tutorial: Multi-Dataset/Multi-Omics Analysis`
 (`browseVignettes("TiDEomics")`).
 
 Existing packages on time-course omics analysis are available, typically focus
 on particular data types or analytical tasks. Some packages are limited to
 two-group comparisons (e.g. `splineTimeR`) or expect raw sequencing counts (e.g.
 `ImpulseDE2`, `TCseq`). `maSigPro` and `timeOmics` focus on temporal modelling
-and profile clustering, complementary to `TiDEomics`.`maSigPro` supports
+and profile clustering, complementary to `TiDEomics`. `maSigPro` supports
 multi-group time-course DE analysis via polynomial regression, while
 `timeOmics` supports multi-omics integration. `TiDEomics` also integrates QC,
 filtering and downstream functional enrichment within the same workflow.
@@ -100,8 +100,8 @@ series to estimate breakpoints per group per feature,
 and derived variance decomposition from `PALMO` [@PALMO] and introduced
 residual variance as a filtering criterion.
 
-This tutorial demonstrates a basic workflow, explains key parameters, and gives
-practical tips.
+This tutorial demonstrates the basic workflow, explains key parameters, and
+provides practical tips.
 
 Key features covered:
 
@@ -118,9 +118,9 @@ Key features covered:
     global structure and major sources of variance, check for batch effects,
     and identify features driving PCs.
 
-- *Differential expression (pairwise and model-based)*: Identify DE features
+- *Differential expression (pairwise and time-course)*: Identify DE features
     between pairs of time points within each group, and between pairs of groups
-    at each time point, or model changes over the whole time course within or 
+    at each time point, or model changes over the whole time course within or
     across groups.
 
 - *Classification by feature property (randomness and overall fold change)*:
@@ -204,8 +204,8 @@ For the most common scenarios in transcriptomics and proteomics:
 
 - RNA-seq data should be normalised for sequencing depth and composition bias
     before TiDEomics, e.g. with TMM. The tutorial uses `log2(CPM + 1)` for
-    simplicity. For pairwise differential expression, `trend = TRUE` can be used
-    to account for the mean-variance relationship. See below section on
+    simplicity. For limma-based differential expression, `trend = TRUE` can be
+    used to account for the mean-variance relationship. See below section on
     [pairwise differential expression](#pairwise-de) for details.
 
 - MS-based proteomics data processing software may include normalisation when
@@ -515,9 +515,10 @@ plot_volcano(DE_between_group_out,
     logFC_thres = 0.5, adjP_thres = 0.05, label = TRUE)
 ```
 
-### Model-based temporal differential expression
+### Model-based time course differential expression
 
-`DE_timecourse()` provides a model-based alternative to pairwise comparisons.
+`DE_timecourse()` provides a model-based alternative to pairwise comparisons
+    by testing temporal changes across the whole time course.
 
 - `group_mode = "per_group"` tests temporal changes separately per group.
     `group_mode = "joint_group"` fits one Group x Time model for all groups.
@@ -530,16 +531,21 @@ plot_volcano(DE_between_group_out,
 - If `Subject` exists in the input, repeated measurements are
     modelled using `limma::duplicateCorrelation()`.
 
+See `?DE_timecourse` for more details about the tests and output.
+
 ```{r de-timecourse}
 DE_timecourse_out <- DE_timecourse(
     data_obj,
     assay = 1,
     group = c("untreated", "IFNbeta"),
-    group_mode = "per_group",
+    group_mode = "joint_group",
     time_mode = "factor"
 )
 
-DE_timecourse_out$results$time_effect |> utils::head()
+DE_timecourse_out$results$group_effect |> utils::head()
+DE_timecourse_out$results$reference_time_effect |> utils::head()
+DE_timecourse_out$results$global_time_effect |> utils::head()
+DE_timecourse_out$results$group_time_interaction |> utils::head()
 ```
 
 ### Feature properties and classification
@@ -861,10 +867,11 @@ decomposition), use `enrichGO_rank()` and plot with `enrichplot::gseaplot2()`.
 gse_group <- enrichGO_rank(var_decomp,
     gene_rank_by = "Group",
     OrgDb = org.Mm.eg.db,
-    keyType = "SYMBOL", category = "BP",
+    keyType = "SYMBOL", category = "CC",
+    pvalueCutoff = 1,
     go_rank_by = "p.adjust")
 
-enrichplot::gseaplot2(gse_group$all[["BP"]], geneSetID = 1:3, base_size = 8)
+enrichplot::gseaplot2(gse_group$all[["CC"]], geneSetID = 1:3, base_size = 8)
 ```
 
 For multiple defined gene sets (e.g. WGCNA modules, DE genes by feature
@@ -918,7 +925,7 @@ be performed with `enrichR_list()`, which wraps `enrichR::enrichr()`.
 Available databases can be checked with `enrichR::listEnrichrDbs()`.
 
 `enrichGO_list()`, `enrich_msigdb()` and `enrichR_list()` all
-return a named list of data.frames (one per category for `enrichGO_list`,
+return a named list of data frames (one per category for `enrichGO_list`,
 one for `enrich_msigdb()`, one per database for `enrichR_list()`) with
 `Cluster` and `Description` columns, compatible with `plot_modules_h()`.
 
@@ -1039,7 +1046,7 @@ assays. The returned list `tide` contains:
 
 | Element | Description | Use for | Step-by-step equivalent in the tutorial |
 |---------|-------------|---------|-------------------------|
-| `tide$se` | Unmerged SE, all features | Correlation matrix, PCA, UMAP, Pairwise DE, plot_trend | `data_obj` |
+| `tide$se` | Unmerged SE, all features | Correlation matrix, PCA, UMAP, DE, plot_trend | `data_obj` |
 | `tide$se_filtered$orig/norm` | Unmerged SE, filtered features | WGCNA | `data_obj_wgcna` |
 | `tide$merged_list` | Per-group merged SEs, all features | calc_feature_property, run_Trendy | `data_obj_merged_list` |
 | `tide$merged_list_filtered$orig/norm` | Per-group merged SEs, filtered features | - | - |

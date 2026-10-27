@@ -69,6 +69,8 @@ BUG FIXES
 * `prepare_tide()` now accepts `feature_threshold = NULL`.
 * Enrichment legends in `plot_modules_h()` and `plot_upset_h()` now
   omit unused colours.
+* `enrichGO_list()` now omits universe when no background is supplied,
+  rather than passing an explicit NULL to `clusterProfiler::enrichGO()`.
 
 # TiDEomics 0.99.5
 

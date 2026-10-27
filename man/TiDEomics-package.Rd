@@ -9,38 +9,46 @@
 TiDEomics provides a workflow for \strong{multi-group
 time-course} omics data analysis, analysing
 \strong{time-dominant}, \strong{group-dominant}, and \strong{group-specific
-temporal} effects through pairwise differential expression,
+temporal} effects through pairwise and time-course differential expression,
 variance decomposition, and co-expression module analysis (WGCNA).
 A \strong{residual variance} filtering strategy prioritises features
 with structured differential expression.
-It supports datasets with missing values (e.g. mass
+Multi-dataset/multi-omics analysis uses shared features for
+cross-dataset/omics comparison and consensus module identification.
+The package supports datasets with missing values (e.g. mass
 spectrometry-based proteomics) and operates on
 \code{SummarizedExperiment} objects for
 compatibility with the Bioconductor ecosystem.
 }
 \details{
-Key functionality:
+Key functionalities:
 \itemize{
 \item \strong{Data preparation & normalisation:} \code{\link[=create_input]{create_input()}},
-\code{\link[=prepare_tide]{prepare_tide()}}, \code{\link[=combine_tide]{combine_tide()}}, \code{\link[=split_groups]{split_groups()}}, \code{\link[=merge_replicates]{merge_replicates()}},
+\code{\link[=prepare_tide]{prepare_tide()}}, \code{\link[=split_groups]{split_groups()}}, \code{\link[=merge_replicates]{merge_replicates()}},
 \code{\link[=merge_groups]{merge_groups()}}, \code{\link[=normalise_to_start]{normalise_to_start()}}, \code{\link[=impute_groups]{impute_groups()}}
 \item \strong{Quality control & exploration:} \code{\link[=plot_missing]{plot_missing()}},
 \code{\link[=plot_distribution]{plot_distribution()}}, \code{\link[=plot_ID]{plot_ID()}}, \code{\link[=plot_cv]{plot_cv()}},
 \code{\link[=plot_cor_matrix]{plot_cor_matrix()}}, \code{\link[=plot_pca]{plot_pca()}}, \code{\link[=plot_pca_3D]{plot_pca_3D()}},
 \code{\link[=plot_pca_arrows]{plot_pca_arrows()}}, \code{\link[=plot_pca_by_group]{plot_pca_by_group()}},
 \code{\link[=plot_umap]{plot_umap()}}, \code{\link[=plot_umap_by_group]{plot_umap_by_group()}}
-\item \strong{Feature properties & variance decomposition:} \code{\link[=calc_feature_property]{calc_feature_property()}},
+\item \strong{Feature properties & variance decomposition:} \code{\link[=calc_mean_sd]{calc_mean_sd()}},
+\code{\link[=calc_feature_property]{calc_feature_property()}},
 \code{\link[=summarise_feature_property]{summarise_feature_property()}}, \code{\link[=group_specific_features]{group_specific_features()}},
 \code{\link[=decomp_variance]{decomp_variance()}}, \code{\link[=plot_variance]{plot_variance()}}, \code{\link[=plot_trend]{plot_trend()}}
-\item \strong{Pairwise differential expression:} \code{\link[=DE_between_group]{DE_between_group()}},
-\code{\link[=DE_between_time]{DE_between_time()}}, \code{\link[=plot_DE_between_group]{plot_DE_between_group()}},
+\item \strong{Differential expression (pairwise and time-course):}
+\code{\link[=DE_between_group]{DE_between_group()}}, \code{\link[=DE_between_time]{DE_between_time()}}, \code{\link[=DE_timecourse]{DE_timecourse()}},
+\code{\link[=plot_DE_between_group]{plot_DE_between_group()}},
 \code{\link[=plot_DE_between_time]{plot_DE_between_time()}}, \code{\link[=plot_volcano]{plot_volcano()}}
 \item \strong{Segmentation regression with Trendy:} \code{\link[=run_Trendy]{run_Trendy()}},
-\code{\link[=summarise_Trendy]{summarise_Trendy()}}, \code{\link[=plot_segments]{plot_segments()}}, \code{\link[=plot_breakpoints]{plot_breakpoints()}}
+\code{\link[=summarise_Trendy]{summarise_Trendy()}}, \code{\link[=extract_segment_trends]{extract_segment_trends()}}, \code{\link[=plot_segments]{plot_segments()}},
+\code{\link[=plot_breakpoints]{plot_breakpoints()}}
 \item \strong{Co-expression module identification with WGCNA:} \code{\link[=prepare_WGCNA]{prepare_WGCNA()}},
 \code{\link[=run_WGCNA]{run_WGCNA()}}, \code{\link[=WGCNA_module]{WGCNA_module()}}, \code{\link[=extract_hubs]{extract_hubs()}}, \code{\link[=plot_WGCNA]{plot_WGCNA()}},
 \code{\link[=plot_modules_h]{plot_modules_h()}}, \code{\link[=plot_modules_v]{plot_modules_v()}},
 \code{\link[=summarise_module_pattern]{summarise_module_pattern()}}, \code{\link[=summarise_module_metrics]{summarise_module_metrics()}}
+\item \strong{Multi-dataset/multi-omics integration:} \code{\link[=combine_tide]{combine_tide()}},
+\code{\link[=run_consensus_WGCNA]{run_consensus_WGCNA()}}, \code{\link[=extract_consensus_hubs]{extract_consensus_hubs()}},
+\code{\link[=plot_scatter]{plot_scatter()}}, \code{\link[=plot_upset_h]{plot_upset_h()}}, \code{\link[=plot_upset_v]{plot_upset_v()}}
 \item \strong{Functional enrichment:} \code{\link[=enrichGO_list]{enrichGO_list()}}, \code{\link[=enrichGO_rank]{enrichGO_rank()}},
 \code{\link[=enrichR_list]{enrichR_list()}}, \code{\link[=enrich_msigdb]{enrich_msigdb()}}, \code{\link[=plot_GO]{plot_GO()}}
 \item \strong{Interoperability & settings:} \code{\link[=flatten_DE]{flatten_DE()}},
@@ -51,11 +59,13 @@ Key functionality:
 Two experimental designs are auto-detected from the sample
 annotation: independent samples and repeated measures.
 
-See \code{vignette("TiDEomics")} for a step-by-step tutorial.
+See \code{vignette("TiDEomics")} for the main tutorial and
+\code{vignette("TiDEomics_multi")} for multi-dataset/multi-omics analysis.
 }
 \seealso{
 Useful links:
 \itemize{
+\item \url{https://bioconductor.org/packages/TiDEomics}
 \item \url{https://hte123.github.io/TiDEomics}
 \item \url{https://github.com/hte123/TiDEomics}
 \item Report bugs at \url{https://github.com/hte123/TiDEomics/issues}

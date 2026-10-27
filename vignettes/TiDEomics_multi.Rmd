@@ -87,7 +87,7 @@ datasets or omics layers are provided as a named list, e.g.
 
 ## Example input
 
-The tutorial dataset was derived from GSE263759 [@Traxler2025] as described 
+The tutorial dataset was derived from GSE263759 [@Traxler2025] as described
 in the `TiDEomics Tutorial` vignette. `tutorial_data` and
 `tutorial_sample_info` provide the sample expression and annotations:
 
@@ -118,7 +118,7 @@ tutorial_data_2$Feature[seq_len(50)] <- paste0(
 )
 ```
 
-The two datasets each have 50 dataset-specific features, while all other 
+The two datasets each have 50 dataset-specific features, while all other
 features are shared:
 
 ```{r overlap-summary}
@@ -130,7 +130,7 @@ length(shared_features)
 
 ### Multi-dataset preparation
 
-`combine_tide()` accepts a list of `prepare_tide()` outputs and returns the 
+`combine_tide()` accepts a list of `prepare_tide()` outputs and returns the
 filtered objects including all features or shared features only.
 
 ```{r combine-tide}
@@ -148,8 +148,8 @@ combined$filter_summary
 ```
 
 The returned `filter_summary` reports the number and percentage of features
-retained in each dataset. The `se_list_filtered` and `se_list_merged` objects 
-include data-set specific features, while `se_list_filtered_shared` and
+retained in each dataset. The `se_list_filtered` and `se_list_merged` objects
+include dataset specific features, while `se_list_filtered_shared` and
 `se_list_merged_shared` contain only features retained by every dataset.
 
 ### Multi-dataset visualisation
@@ -218,7 +218,7 @@ plot_cor_matrix(combined$se_list_filtered,
 When datasets contain the same samples, `plot_cor_matrix()` reports
 clustering similarity using correlation of cophenetic distances.
 
-The other TiDEomics functions can be applied separately to each dataset 
+The other TiDEomics functions can be applied separately to each dataset
 (e.g. `combined$se_list_filtered$Exp1` and `combined$se_list_filtered$Exp2`),
 as described in the main tutorial.
 
@@ -280,8 +280,8 @@ module_metrics$Consensus
 ### Visualisation of co-expressed modules
 
 The feature-module assignment can be extracted with
-`WGCNA_module()` and visualised by heatmap, using the replicate-merged 
-expression data of each dataset, as the `se_list_merged_shared` output 
+`WGCNA_module()` and visualised by heatmap, using the replicate-merged
+expression data of each dataset, as the `se_list_merged_shared` output
 from `combine_tide()`:
 
 ```{r module-table}
@@ -359,7 +359,7 @@ or within a single dataset. For example, one can compare specific contrasts
 or properties of different modules from one dataset.
 
 The feature overlap can be visualised with `plot_upset_h()` and
-`plot_upset_v()`, based on `ComplexHeatmap::UpSet()` 
+`plot_upset_v()`, based on `ComplexHeatmap::UpSet()`
 [@complexheatmap_1; @complexheatmap_2].
 
 For `plot_upset_h()`, functional enrichment terms

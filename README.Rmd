@@ -22,44 +22,52 @@ knitr::opts_chunk$set(
 [![GitHub issues](https://img.shields.io/github/issues/hte123/TiDEomics)](https://github.com/hte123/TiDEomics/issues)
 [![GitHub pulls](https://img.shields.io/github/issues-pr/hte123/TiDEomics)](https://github.com/hte123/TiDEomics/pulls)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-<!-- [![Bioc release status](http://www.bioconductor.org/shields/build/release/bioc/TiDEomics.svg)](https://bioconductor.org/checkResults/release/bioc-LATEST/TiDEomics) -->
-<!-- [![Bioc devel status](http://www.bioconductor.org/shields/build/devel/bioc/TiDEomics.svg)](https://bioconductor.org/checkResults/devel/bioc-LATEST/TiDEomics) -->
-<!-- [![Bioc downloads rank](https://bioconductor.org/shields/downloads/release/TiDEomics.svg)](http://bioconductor.org/packages/stats/bioc/TiDEomics/) -->
-<!-- [![Bioc support](https://bioconductor.org/shields/posts/TiDEomics.svg)](https://support.bioconductor.org/tag/TiDEomics) -->
-<!-- [![Bioc history](https://bioconductor.org/shields/years-in-bioc/TiDEomics.svg)](https://bioconductor.org/packages/release/bioc/html/TiDEomics.html#since) -->
-<!-- [![Bioc last commit](https://bioconductor.org/shields/lastcommit/devel/bioc/TiDEomics.svg)](http://bioconductor.org/checkResults/devel/bioc-LATEST/TiDEomics/) -->
+[![Bioc devel status](http://www.bioconductor.org/shields/build/devel/bioc/TiDEomics.svg)](https://bioconductor.org/checkResults/devel/bioc-LATEST/TiDEomics)
+[![Bioc history](https://bioconductor.org/shields/years-in-bioc/TiDEomics.svg)](https://bioconductor.org/packages/release/bioc/html/TiDEomics.html#since)
+[![Bioc last commit](https://bioconductor.org/shields/lastcommit/devel/bioc/TiDEomics.svg)](http://bioconductor.org/checkResults/devel/bioc-LATEST/TiDEomics/)
 <!-- [![Bioc dependencies](https://bioconductor.org/shields/dependencies/release/TiDEomics.svg)](https://bioconductor.org/packages/release/bioc/html/TiDEomics.html#since) -->
 <!-- [![check-bioc](https://github.com/hte123/TiDEomics/actions/workflows/check-bioc.yml/badge.svg)](https://github.com/hte123/TiDEomics/actions/workflows/check-bioc.yml) -->
 <!-- [![Codecov test coverage](https://codecov.io/gh/hte123/TiDEomics/graph/badge.svg)](https://app.codecov.io/gh/hte123/TiDEomics) -->
+<!-- [![Bioc release status](http://www.bioconductor.org/shields/build/release/bioc/TiDEomics.svg)](https://bioconductor.org/checkResults/release/bioc-LATEST/TiDEomics) -->
+<!-- [![Bioc downloads rank](https://bioconductor.org/shields/downloads/release/TiDEomics.svg)](http://bioconductor.org/packages/stats/bioc/TiDEomics/) -->
+<!-- [![Bioc support](https://bioconductor.org/shields/posts/TiDEomics.svg)](https://support.bioconductor.org/tag/TiDEomics) -->
 <!-- badges: end -->
 
-`TiDEomics` provides an integrated framework for **Ti**me-course **D**ifferential **E**xpression analysis of **omics** data with **multiple experimental groups / conditions**. 
+`TiDEomics` provides an integrated framework for **Ti**me-course **D**ifferential
+**E**xpression analysis of **omics** data with **multiple experimental groups / conditions**,
+including integration across datasets or omics layers.
 
 `TiDEomics` enables:
 
 - Analysis of feature x sample format data from different omics technologies.
-- Comparison of multiple (more than two) time courses systematically.
+- Comparison of ≥2 time courses systematically.
 - Filtering of features by residual variance, accounting for group and temporal structure.
-- Identification of features (e.g. genes, proteins) and pathways differentially 
-    expressed by **time**, **group**, and **both** factors (time x group interactions).
-- Integration of quality control, data processing, sample-level and 
-    feature-level analysis, tailored for time-course multi-condition data.
-- Functional enrichment with high-quality visualisation.
+- Identification of features (e.g. genes, proteins) differentially
+    expressed by **time**, **group**, and **group-by-time** effects.
+- Integration of quality control, data processing, sample-level and
+    feature-level analysis, tailored for time-course multi-group data.
+- Functional enrichment with integrated visualisation.
+- **Multi-dataset/multi-omics** comparison and consensus module identification
+    using shared features.
 
-Existing time-course analysis tools typically focus on a single analysis step 
-or are limited to two-group designs or transcriptomics input, and do not provide an integrated workflow.
+Existing tools for time-course analysis often focus on specific
+analysis tasks or experimental designs, while TiDEomics provides a
+comprehensive workflow with multi-group and multi-omics support.
 
-![](man/figures/TiDEomics_workflow_v1.png){width="70%"}
+![](man/figures/TiDEomics_workflow_v0.99.6.png){width="70%"}
 
 Example applications include:
 
-- Transcriptomics analysis of a cell type's response to different stimuli over time.
-- Proteomics analysis of wild type and multiple mutant cell lines sampled at several time points.
+- Transcriptomics analysis of a cell line's response to different stimuli over time.
+- Transcriptomics + proteomics analysis of multiple cell lines sampled at several time points.
 
 `TiDEomics` supports datasets with missing values (e.g. mass spectrometry-based
 proteomics), and operates on `SummarizedExperiment` objects to ensure compatibility with the Bioconductor ecosystem.
 
-`TiDEomics` supports both independent-sample designs (e.g. cell culture) and repeated-measures designs (e.g. patient longitudinal studies, via `subject_col` in `create_input()`). Downstream functions auto-detect the data structure.
+`TiDEomics` supports both independent samples (e.g. cell culture) and
+repeated measurements (e.g. patient longitudinal studies). Subject ID can be
+supplied in `create_input()` and used in subject-aware functions,
+e.g. `DE_timecourse()`, `decomp_variance()`.
 
 ## Installation
 
@@ -83,7 +91,9 @@ remotes::install_github("hte123/TiDEomics")
 
 ## Example
 
-For detailed examples and explanations, please refer to the [tutorial](https://hte123.github.io/TiDEomics/articles/TiDEomics.html), applications and other package documentation.
+For detailed examples and explanations, please refer to the
+[tutorials, applications](https://hte123.github.io/TiDEomics/articles/),
+and other package documentation.
 
 ## Citation
 
@@ -94,7 +104,9 @@ run this yourself to check for any updates on how to cite __TiDEomics__.
 print(citation("TiDEomics"), bibtex = TRUE)
 ```
 
-Please note that the `TiDEomics` was only made possible thanks to many other R and bioinformatics software authors, which are cited either in the vignettes and/or the paper(s) describing this package.
+Please note that the `TiDEomics` was only made possible thanks to many other R and bioinformatics software authors,
+<!-- which are cited either in the vignettes and/or the paper(s) describing this package. -->
+which are cited in the vignettes.
 
 ## Code of Conduct
 
@@ -102,10 +114,11 @@ Please note that the `TiDEomics` project is released with a [Contributor Code of
 
 ## Development tools
 
-* Continuous code testing is possible thanks to [GitHub actions](https://www.tidyverse.org/blog/2020/04/usethis-1-6-0/)  through `r BiocStyle::CRANpkg('usethis')`, `r BiocStyle::CRANpkg('remotes')`, and `r BiocStyle::CRANpkg('rcmdcheck')` customized to use [Bioconductor's docker containers](https://www.bioconductor.org/help/docker/) and `r BiocStyle::Biocpkg('BiocCheck')`.
+<!-- * Continuous code testing is possible thanks to [GitHub actions](https://www.tidyverse.org/blog/2020/04/usethis-1-6-0/)  through `r BiocStyle::CRANpkg('usethis')`, `r BiocStyle::CRANpkg('remotes')`, and `r BiocStyle::CRANpkg('rcmdcheck')` customized to use [Bioconductor's docker containers](https://www.bioconductor.org/help/docker/) and `r BiocStyle::Biocpkg('BiocCheck')`. -->
+* Code testing is possible thanks to `r BiocStyle::CRANpkg('rcmdcheck')` and `r BiocStyle::Biocpkg('BiocCheck')`.
 * Code coverage assessment is possible thanks to [codecov](https://codecov.io/gh) and `r BiocStyle::CRANpkg('covr')`.
-* The [documentation website](http://hte123.github.io/TiDEomics) is automatically updated thanks to `r BiocStyle::CRANpkg('pkgdown')`.
-* The code is styled automatically thanks to `r BiocStyle::CRANpkg('styler')`.
+* The [documentation website](http://hte123.github.io/TiDEomics) is updated thanks to `r BiocStyle::CRANpkg('pkgdown')`.
+<!-- * The code is styled automatically thanks to `r BiocStyle::CRANpkg('styler')`. -->
 * The documentation is formatted thanks to `r BiocStyle::CRANpkg('devtools')` and `r BiocStyle::CRANpkg('roxygen2')`.
 
 This package was developed using `r BiocStyle::Biocpkg('biocthis')`.

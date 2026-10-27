@@ -4,37 +4,45 @@
 #' TiDEomics provides a workflow for **multi-group
 #' time-course** omics data analysis, analysing
 #' **time-dominant**, **group-dominant**, and **group-specific
-#' temporal** effects through pairwise differential expression,
+#' temporal** effects through pairwise and time-course differential expression,
 #' variance decomposition, and co-expression module analysis (WGCNA).
 #' A **residual variance** filtering strategy prioritises features
 #' with structured differential expression.
-#' It supports datasets with missing values (e.g. mass
+#' Multi-dataset/multi-omics analysis uses shared features for
+#' cross-dataset/omics comparison and consensus module identification.
+#' The package supports datasets with missing values (e.g. mass
 #' spectrometry-based proteomics) and operates on
 #' `SummarizedExperiment` objects for
 #' compatibility with the Bioconductor ecosystem.
 #'
 #' @details
-#' Key functionality:
+#' Key functionalities:
 #' - **Data preparation & normalisation:** [create_input()],
-#'   [prepare_tide()], [combine_tide()], [split_groups()], [merge_replicates()],
+#'   [prepare_tide()], [split_groups()], [merge_replicates()],
 #'   [merge_groups()], [normalise_to_start()], [impute_groups()]
 #' - **Quality control & exploration:** [plot_missing()],
 #'   [plot_distribution()], [plot_ID()], [plot_cv()],
 #'   [plot_cor_matrix()], [plot_pca()], [plot_pca_3D()],
 #'   [plot_pca_arrows()], [plot_pca_by_group()],
 #'   [plot_umap()], [plot_umap_by_group()]
-#' - **Feature properties & variance decomposition:** [calc_feature_property()],
+#' - **Feature properties & variance decomposition:** [calc_mean_sd()],
+#'   [calc_feature_property()],
 #'   [summarise_feature_property()], [group_specific_features()],
 #'   [decomp_variance()], [plot_variance()], [plot_trend()]
-#' - **Pairwise differential expression:** [DE_between_group()],
-#'   [DE_between_time()], [plot_DE_between_group()],
+#' - **Differential expression (pairwise and time-course):**
+#'   [DE_between_group()], [DE_between_time()], [DE_timecourse()],
+#'   [plot_DE_between_group()],
 #'   [plot_DE_between_time()], [plot_volcano()]
 #' - **Segmentation regression with Trendy:** [run_Trendy()],
-#'   [summarise_Trendy()], [plot_segments()], [plot_breakpoints()]
+#'   [summarise_Trendy()], [extract_segment_trends()], [plot_segments()],
+#'   [plot_breakpoints()]
 #' - **Co-expression module identification with WGCNA:** [prepare_WGCNA()],
 #'   [run_WGCNA()], [WGCNA_module()], [extract_hubs()], [plot_WGCNA()],
 #'   [plot_modules_h()], [plot_modules_v()],
 #'   [summarise_module_pattern()], [summarise_module_metrics()]
+#' - **Multi-dataset/multi-omics integration:** [combine_tide()],
+#'   [run_consensus_WGCNA()], [extract_consensus_hubs()],
+#'   [plot_scatter()], [plot_upset_h()], [plot_upset_v()]
 #' - **Functional enrichment:** [enrichGO_list()], [enrichGO_rank()],
 #'   [enrichR_list()], [enrich_msigdb()], [plot_GO()]
 #' - **Interoperability & settings:** [flatten_DE()],
@@ -44,10 +52,12 @@
 #' Two experimental designs are auto-detected from the sample
 #' annotation: independent samples and repeated measures.
 #'
-#' See `vignette("TiDEomics")` for a step-by-step tutorial.
+#' See `vignette("TiDEomics")` for the main tutorial and
+#' `vignette("TiDEomics_multi")` for multi-dataset/multi-omics analysis.
 #'
 #' @seealso
 #' Useful links:
+#' - \url{https://bioconductor.org/packages/TiDEomics}
 #' - \url{https://hte123.github.io/TiDEomics}
 #' - \url{https://github.com/hte123/TiDEomics}
 #' - Report bugs at \url{https://github.com/hte123/TiDEomics/issues}

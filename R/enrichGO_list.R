@@ -133,16 +133,22 @@ enrichGO_list <- function(gene_list, keyType = "SYMBOL",
                 message("Processing gene list: ", clus)
             }
 
-            go_list[[cate]][[clus]] <- clusterProfiler::enrichGO(
+            enrich_args <- list(
                 gene = gene_list[[clus]],
                 OrgDb = OrgDb,
                 ont = cate,
                 keyType = keyType,
-                universe = universe_list[[clus]],
                 pAdjustMethod = pAdjustMethod,
                 pvalueCutoff = pvalueCutoff,
-                qvalueCutoff = qvalueCutoff,
-                ...
+                qvalueCutoff = qvalueCutoff
+            )
+            if (!is.null(universe_list[[clus]])) {
+                enrich_args$universe <- universe_list[[clus]]
+            }
+            enrich_args <- c(enrich_args, list(...))
+            go_list[[cate]][[clus]] <- do.call(
+                clusterProfiler::enrichGO,
+                enrich_args
             )
         }
 
