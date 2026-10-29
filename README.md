@@ -108,8 +108,8 @@ print(citation("TiDEomics"), bibtex = TRUE)
 #> To cite package 'TiDEomics' in publications use:
 #> 
 #>   He T (2026). _TiDEomics: Time-course Differential Expression analysis
-#>   of omics data_. R package version 0.99.6,
-#>   <https://github.com/hte123/TiDEomics>.
+#>   of omics data_. R package version 0.99.7,
+#>   <https://bioconductor.org/packages/TiDEomics/>.
 #> 
 #> A BibTeX entry for LaTeX users is
 #> 
@@ -117,8 +117,8 @@ print(citation("TiDEomics"), bibtex = TRUE)
 #>     title = {TiDEomics: Time-course Differential Expression analysis of omics data},
 #>     author = {Tianen He},
 #>     year = {2026},
-#>     note = {R package version 0.99.6},
-#>     url = {https://github.com/hte123/TiDEomics},
+#>     note = {R package version 0.99.7},
+#>     url = {https://bioconductor.org/packages/TiDEomics/},
 #>   }
 ```
 
