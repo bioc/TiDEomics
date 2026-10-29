@@ -1,3 +1,27 @@
+# TiDEomics 0.99.7
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+* `plot_scatter()` now shows the dashed `y = x` line by default only
+  when comparing same-named properties from two data frames. This can
+  be overridden by `show_diagonal`.
+* `DE_timecourse()` uses clearer unified column names in result tables, the
+  changes are summarised as below.
+  `fits` and `design` retain the original model coefficient names.
+
+  | Test | 0.99.6 result-column name | 0.99.7 result-column name |
+  | --- | --- | --- |
+  | Factor time effect | `TimeFactor<time>`, or `logFC` when two time points | `logFC_TimeFactor<time>` |
+  | Numeric time effect | `TimeNumeric` in `global_time_effect`, or `logFC` in `time_effect` and `reference_time_effect` | `logFC_TimeSlope` |
+  | Spline time effect | `splines::ns(...)<basis>` terms converted by `make.names()` | `SplineBasis_1`, `SplineBasis_2`, etc. |
+  | Factor group-time interaction | `GroupX.TimeFactor<time>`, or `logFC` when one interaction | `delta_logFC_GroupX_TimeFactor<time>` |
+  | Numeric group-time interaction | `GroupX.TimeNumeric`, or `logFC` when two groups | `delta_logFC_GroupX_TimeSlope` |
+  | Spline group-time interaction | `GroupX:splines::ns(...)<basis>` terms converted by `make.names()` | `delta_SplineBasis_GroupX_1`, etc. |
+  | Group contrast at reference time | `GroupX_at_reference_time`, or `logFC` when two groups | `logFC_GroupX_at_reference_time` |
+
+  `X` represents a non-reference group; `<time>` represents a non-reference
+  time level.
+
 # TiDEomics 0.99.6
 
 NEW FEATURES

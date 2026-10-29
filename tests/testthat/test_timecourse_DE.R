@@ -44,15 +44,40 @@ test_that("DE_timecourse supports numeric and spline time models", {
         expect_false("t" %in% names(time_result))
     }
     expect_false("TimeNumeric" %in% names(time_results$numeric))
-    expect_true("logFC" %in% names(time_results$numeric))
-    spline_coefficients <- grep(
-        "^splines", names(time_results$spline), value = TRUE
-    )
+    expect_true("logFC_TimeSlope" %in% names(time_results$numeric))
+    expect_false("logFC" %in% names(time_results$numeric))
+    spline_coefficients <- c("SplineBasis_1", "SplineBasis_2")
+    expect_true(all(spline_coefficients %in% names(time_results$spline)))
+    expect_false(any(grepl(
+        "splines", names(time_results$spline), fixed = TRUE
+    )))
     expect_equal(length(spline_coefficients), 2L)
     expect_true(all(colSums(
         !is.na(time_results$spline[spline_coefficients])
     ) > 0L))
     expect_false("fitted_range" %in% names(time_results$spline))
+    spline_designs <- spline_result$design[["IFNbeta"]]
+    if (is.matrix(spline_designs)) spline_designs <- list(spline_designs)
+    spline_fits <- spline_result$fits[["IFNbeta"]]
+    if (inherits(spline_fits, "MArrayLM")) spline_fits <- list(spline_fits)
+    spline_design_names <- unlist(lapply(
+        spline_designs,
+        function(design) if (is.null(design)) character() else {
+            colnames(design)
+        }
+    ), use.names = FALSE)
+    spline_fit_names <- unlist(lapply(
+        spline_fits,
+        function(fit) if (is.null(fit)) character() else {
+            colnames(fit$coefficients)
+        }
+    ), use.names = FALSE)
+    expect_true(any(grepl(
+        "splines::ns", spline_design_names, fixed = TRUE
+    )))
+    expect_true(any(grepl(
+        "splines::ns", spline_fit_names, fixed = TRUE
+    )))
 
     numeric_fit <- numeric_result$fits[["IFNbeta"]]
     numeric_table <- limma::topTable(
@@ -282,6 +307,19 @@ test_that("DE_timecourse reports missing sample replication", {
     )
 })
 
+test_that("DE_timecourse reports the default joint reference group", {
+    result <- NULL
+    expect_message(
+        result <- DE_timecourse(
+            example_obj, assay = 2,
+            group = c("IFNbeta", "IFNgamma"),
+            group_mode = "joint_group", time_mode = "numeric"
+        ),
+        "Using 'IFNbeta' as the reference group"
+    )
+    expect_equal(result$metadata$reference_group, "IFNbeta")
+})
+
 test_that("DE_timecourse returns estimable joint Group-Time tests", {
     result <- DE_timecourse(
         example_obj, assay = 2, group = c("IFNbeta", "IFNgamma"),
@@ -298,9 +336,20 @@ test_that("DE_timecourse returns estimable joint Group-Time tests", {
     expect_true(all(result$results$group_effect$ReferenceTime == 0))
     expect_result_statistics(result$results$group_effect)
     expect_result_statistics(result$results$global_group_effect)
-    expect_true("logFC" %in% names(result$results$group_effect))
-    expect_true(all(c("GroupIFNbeta", "GroupIFNbeta.TimeFactor2") %in%
+    expect_true("logFC_GroupIFNbeta_at_reference_time" %in%
+        names(result$results$group_effect))
+    expect_true(all(c(
+        "GroupIFNbeta", "delta_logFC_GroupIFNbeta_TimeFactor2"
+    ) %in%
         names(result$results$global_group_effect)))
+    expect_true("logFC_TimeFactor2" %in%
+        names(result$results$reference_time_effect))
+    expect_true("delta_logFC_GroupIFNbeta_TimeFactor2" %in%
+        names(result$results$group_time_interaction))
+    expect_true("GroupIFNbeta:TimeFactor2" %in%
+        colnames(result$design$design))
+    expect_true("GroupIFNbeta:TimeFactor2" %in%
+        colnames(result$fits$fit$coefficients))
     expect_equal(nrow(result$results$group_time_interaction), 100L)
     expect_true(any(grepl("TimeFactor", names(
         result$results$group_time_interaction
@@ -316,6 +365,28 @@ test_that("DE_timecourse returns estimable joint Group-Time tests", {
     expect_true(all(nzchar(
         incomplete_result$results$group_time_interaction$TimePointsTested
     )))
+})
+
+test_that("DE_timecourse names single factor contrasts by effect", {
+    keep <- colData(example_obj)$Group %in% c("IFNbeta", "IFNgamma") &
+        colData(example_obj)$Time %in% c(0, 2)
+    result <- DE_timecourse(
+        example_obj[, keep], assay = 2,
+        group = c("IFNbeta", "IFNgamma"),
+        group_mode = "joint_group", time_mode = "factor",
+        reference_group = "IFNgamma"
+    )
+
+    expect_true("logFC_TimeFactor2" %in%
+        names(result$results$reference_time_effect))
+    expect_true("logFC_GroupIFNbeta_at_reference_time" %in%
+        names(result$results$group_effect))
+    expect_true("delta_logFC_GroupIFNbeta_TimeFactor2" %in%
+        names(result$results$group_time_interaction))
+    expect_true("GroupIFNbeta:TimeFactor2" %in%
+        colnames(result$design$design))
+    expect_true("GroupIFNbeta:TimeFactor2" %in%
+        colnames(result$fits$fit$coefficients))
 })
 
 test_that("DE_timecourse tests joint group effects across time modes", {
@@ -338,6 +409,24 @@ test_that("DE_timecourse tests joint group effects across time modes", {
         expect_result_statistics(
             global_group_result, require_finite = TRUE
         )
+        if (current_time_mode == "spline") {
+            spline_names <- c("SplineBasis_1", "SplineBasis_2")
+            interaction_names <- c(
+                "delta_SplineBasis_GroupIFNbeta_1",
+                "delta_SplineBasis_GroupIFNbeta_2"
+            )
+            expect_true(all(spline_names %in% names(
+                result$results$reference_time_effect
+            )))
+            expect_true(all(interaction_names %in% names(
+                result$results$group_time_interaction
+            )))
+            expect_true(all(c(spline_names, interaction_names) %in% names(
+                result$results$global_time_effect
+            )))
+            expect_true(all(c("GroupIFNbeta", interaction_names) %in%
+                names(global_group_result)))
+        }
     }
 
     numeric_result <- DE_timecourse(
@@ -355,14 +444,23 @@ test_that("DE_timecourse tests joint group effects across time modes", {
         rownames(group_table),
         numeric_result$results$group_effect$Feature
     )
+    group_effect_estimates <- numeric_result$results$group_effect[[
+        "logFC_GroupIFNbeta_at_reference_time"
+    ]]
     expect_equal(
-        numeric_result$results$group_effect$logFC[result_rows],
+        group_effect_estimates[result_rows],
         group_table$logFC
     )
     expect_equal(
         numeric_result$results$group_effect$F[result_rows],
         group_table$t^2
     )
+    expect_true("logFC_TimeSlope" %in%
+        names(numeric_result$results$reference_time_effect))
+    expect_true("logFC_TimeSlope" %in%
+        names(numeric_result$results$global_time_effect))
+    expect_true("delta_logFC_GroupIFNbeta_TimeSlope" %in%
+        names(numeric_result$results$group_time_interaction))
 })
 
 test_that("DE_timecourse uses omnibus group tests for multiple groups", {
@@ -374,12 +472,13 @@ test_that("DE_timecourse uses omnibus group tests for multiple groups", {
     )
 
     expect_true(all(c(
-        "GroupIFNbeta_at_reference_time",
-        "GroupLPS_at_reference_time"
+        "logFC_GroupIFNbeta_at_reference_time",
+        "logFC_GroupLPS_at_reference_time"
     ) %in% names(result$results$group_effect)))
     expect_true(all(c(
-        "GroupIFNbeta", "GroupLPS", "GroupIFNbeta.TimeNumeric",
-        "GroupLPS.TimeNumeric"
+        "GroupIFNbeta", "GroupLPS",
+        "delta_logFC_GroupIFNbeta_TimeSlope",
+        "delta_logFC_GroupLPS_TimeSlope"
     ) %in% names(result$results$global_group_effect)))
     expect_result_statistics(
         result$results$group_effect, require_finite = TRUE

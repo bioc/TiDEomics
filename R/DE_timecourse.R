@@ -8,7 +8,8 @@
 #' @param group A character vector specifying which groups to analyse. If NULL,
 #'   all groups in the `Group` column are used.
 #' @param reference_group A single reference group for a `joint_group` model.
-#'   If NULL, the first group in `group` or `colData(se_obj)$Group` is used.
+#'   If NULL, the first group in `group` or `colData(se_obj)$Group` is used
+#'   and reported by a message.
 #' @param assay The assay to use in the SummarizedExperiment object: a numeric
 #'   index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
 #'   for time 0 normalised data. The selected assay should contain
@@ -16,7 +17,7 @@
 #'   appears to be un-logged raw counts.
 #' @param group_mode `"per_group"` or `"joint_group"`.
 #'   - `"per_group"` tests each group separately.
-#'   - `"joint_group"` fits one Group-by-Time model across the selected groups.
+#'   - `"joint_group"` fits one group-by-time model across the selected groups.
 #' @param time_mode `"factor"`, `"numeric"`, or `"spline"`.
 #'   - `"factor"` treats time as a categorical variable. The earliest available
 #'     time point is the reference, and each later time point is compared with
@@ -40,36 +41,74 @@
 #'   `stats::p.adjust.methods`. Default: `"BH"`.
 #' @details If `colData(se_obj)` contains `Subject`, repeated measurements are
 #'   modelled with `limma::duplicateCorrelation()`.
+#'
 #'   Missingness patterns are defined by whether each Group-Time combination
 #'   contains at least one finite value.
-#'   In a joint model, `reference_time_effect` tests whether the reference
-#'   group changes over time; `group_time_interaction` tests whether the other
-#'   groups have different temporal patterns; `global_time_effect` tests all
-#'   time and Group-by-Time terms jointly, asking whether any selected group
-#'   has a temporal effect; `group_effect` tests selected group differences
-#'   at the earliest (reference) time point used by each missingness pattern;
-#'   `global_group_effect` tests all Group and Group-by-Time terms jointly,
-#'   asking whether group trajectories differ anywhere in the fitted time
-#'   course. The joint model is fit on the shared time points
+#'
+#'   The joint model is fit on the shared time points
 #'   and shared features of all selected groups.
 #'   Excluded or non-estimable features are retained in the results with `NA`.
+#'
 #'   Multiple testing correction is applied within each group for
 #'   `per_group` results and separately within each `joint_group` result table,
 #'   after combining all missingness patterns.
+#'
 #'   `ReferenceTime` is the earliest time point available in each fitting
 #'   pattern and is used for `group_effect`
 #'   in all time modes and for temporal comparisons in factor mode.
 #'   It is `NA` for numeric and spline temporal tests.
 #'
-#' @returns A list with `results`, `fits`, `design`, and `metadata`. In a
-#'   `per_group` model, `results` contains `time_effect`. In a
-#'   `joint_group` model, `results` contains `reference_time_effect`,
-#'   `global_time_effect`, `group_effect`, `global_group_effect`, and
-#'   `group_time_interaction`. Result tables report
-#'   an omnibus `F` statistic, `P.Value`, and `adj.P.Val` for the selected
-#'   terms. When one coefficient is tested, `F = t^2` and the corresponding
-#'   limma coefficient estimate (`logFC`) is retained. `ReferenceTime`
-#'   identifies the time used for `group_effect`. Features with missing values
+#'   In a joint model,
+#'   - `reference_time_effect` tests whether the reference
+#'   group changes over time
+#'   - `group_time_interaction` tests whether the other
+#'   groups have different temporal patterns
+#'   - `global_time_effect` tests all
+#'   time and group-by-time terms jointly, asking whether any selected group
+#'   has a temporal effect
+#'   - `group_effect` tests selected group differences
+#'   at the earliest (reference) time point used by each missingness pattern
+#'   - `global_group_effect` tests all group and group-by-time terms jointly,
+#'   asking whether group trajectories differ anywhere in the fitted time
+#'   course.
+#'
+#' @returns A list with `results`, `fits`, `design`, and `metadata`.
+#'
+#'   In a `per_group` model, `results` contains a table named `time_effect`.
+#'
+#'   In a `joint_group` model, `results` contains tables named
+#'   `reference_time_effect`, `global_time_effect`, `group_effect`,
+#'   `global_group_effect`, and `group_time_interaction`.
+#'
+#'   Result tables report
+#'   an omnibus `F` statistic, `P.Value`, and `adj.P.Val`.
+#'   For a table testing a single model term, `F = t^2`.
+#'
+#'   Columns in `results` tables have effect-specific names.
+#'   For time effect tables,
+#'   - `time_mode = "factor"` uses `logFC_TimeFactor<time>` (log-scale
+#'   changes relative to the reference time)
+#'   - `time_mode = "numeric"` uses `logFC_TimeSlope` (log-scale changes per
+#'   time unit)
+#'   - `time_mode = "spline"` uses `SplineBasis_1`, `SplineBasis_2`, etc.
+#'
+#'   In `joint_group` results, group-by-time differences use names such as
+#'   - `time_mode = "factor"`: `delta_logFC_GroupX_TimeFactor<time>`
+#'   - `time_mode = "numeric"`: `delta_logFC_GroupX_TimeSlope`
+#'   - `time_mode = "spline"`: `delta_SplineBasis_GroupX_1`, etc.
+#'
+#'   The `global_group_effect` table reports
+#'   group main-effect model coefficients as `GroupX` (`X` is a
+#'   non-reference group), alongside group-by-time terms; `group_effect` table
+#'   reports each non-reference group's estimated difference from the
+#'   reference group at the reference time (`ReferenceTime`)
+#'   by columns of `logFC_GroupX_at_reference_time`.
+#'
+#'   These names apply only to `results`
+#'   table columns; `fits` and `design` retain the original model coefficient
+#'   names.
+#'
+#'   Features with missing values
 #'   are fitted using their available observations when the model remains
 #'   estimable. Features with insufficient observations or non-estimable
 #'   designs return in the results with `NA` for model coefficients, test
@@ -164,6 +203,10 @@ DE_timecourse <- function(
     }
     if (group_mode == "joint_group" && length(group) < 2L) {
         stop("'joint_group' requires at least two groups.")
+    }
+    if (group_mode == "joint_group" && is.null(reference_group)) {
+        message("'reference_group' not specified. Using '",
+            group[1], "' as the reference group.")
     }
 
     time_levels <- sort(unique(sample_data$TimeNumeric))
@@ -359,6 +402,15 @@ DE_timecourse <- function(
             fit, coef = columns, number = Inf, sort.by = "none",
             adjust.method = "none"
         )
+        original_names <- if (length(columns) == 1L) {
+            "logFC"
+        } else {
+            make.names(columns, unique = TRUE)
+        }
+        coefficient_positions <- match(original_names, colnames(table))
+        present_positions <- which(!is.na(coefficient_positions))
+        colnames(table)[coefficient_positions[present_positions]] <-
+            result_coefficient_names(columns)[present_positions]
         # limma returns a t-statistic for one coefficient. Convert it to the
         # equivalent one-df F-statistic so every result table uses F.
         if (!"F" %in% colnames(table) && "t" %in% colnames(table)) {
@@ -452,17 +504,68 @@ DE_timecourse <- function(
         result
     }
 
+    # Use effect-specific result names; fit and design names stay unchanged.
+    result_coefficient_names <- function(coefficients) {
+        result_names <- make.names(coefficients, unique = TRUE)
+        if (time_mode == "factor") {
+            factor_terms <- startsWith(coefficients, "TimeFactor")
+            factor_interactions <- grepl(
+                ":TimeFactor", coefficients, fixed = TRUE
+            )
+            factor_levels <- sub("^.*TimeFactor", "", coefficients)
+            result_names[factor_terms] <- paste0(
+                "logFC_TimeFactor", factor_levels[factor_terms]
+            )
+            result_names[factor_interactions] <- paste0(
+                "delta_logFC_",
+                make.names(sub(
+                    ":TimeFactor.*$", "", coefficients[factor_interactions]
+                )),
+                "_TimeFactor", factor_levels[factor_interactions]
+            )
+        } else if (time_mode == "numeric") {
+            numeric_terms <- coefficients == "TimeNumeric"
+            numeric_interactions <- grepl(
+                ":TimeNumeric", coefficients, fixed = TRUE
+            )
+            result_names[numeric_terms] <- "logFC_TimeSlope"
+            result_names[numeric_interactions] <- paste0(
+                "delta_logFC_",
+                make.names(sub(
+                    ":TimeNumeric.*$", "", coefficients[numeric_interactions]
+                )),
+                "_TimeSlope"
+            )
+        } else {
+            spline_terms <- startsWith(coefficients, "splines::ns")
+            spline_interactions <- grepl(
+                ":splines::ns", coefficients, fixed = TRUE
+            )
+            basis_index <- sub(
+                ".*[^0-9]([0-9]+)$", "\\1", coefficients
+            )
+            result_names[spline_terms] <- paste0(
+                "SplineBasis_", basis_index[spline_terms]
+            )
+            result_names[spline_interactions] <- paste0(
+                "delta_SplineBasis_",
+                make.names(sub(
+                    ":splines::ns.*$", "",
+                    coefficients[spline_interactions]
+                )),
+                "_", basis_index[spline_interactions]
+            )
+        }
+        group_contrasts <- grepl("_at_reference_time$", coefficients)
+        result_names[group_contrasts] <- paste0(
+            "logFC_", make.names(coefficients[group_contrasts])
+        )
+        make.names(result_names, unique = TRUE)
+    }
+
     complete_result_schema <- function(result, coefficients) {
         summary_columns <- c("AveExpr", "F", "P.Value", "adj.P.Val", "B")
-        # limma uses names e.g. `GroupIFNbeta.TimeNumeric` for multiple
-        # coefficients, or as `logFC` for single tested coefficient
-        schema_coefficients <- if (length(coefficients) > 1L) {
-            make.names(coefficients, unique = TRUE)
-        } else if (length(coefficients) == 1L) {
-            "logFC"
-        } else {
-            character()
-        }
+        schema_coefficients <- result_coefficient_names(coefficients)
         expected_columns <- c(
             "Feature", "Group", "Test", "TimePointsTested", "ReferenceTime",
             schema_coefficients, summary_columns

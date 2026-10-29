@@ -43,6 +43,9 @@
 #'   values meet their respective thresholds; points below either threshold
 #'   are shown as grey. Default: NULL (colour all points).
 #' @param fontsize Base font size (default: 8).
+#' @param show_diagonal If NULL (default), show the dashed `y = x`
+#'   line when comparing the same property across two data frames.
+#'   Set TRUE or FALSE to override this behaviour.
 #' @param ... Additional arguments passed to `ggrepel::geom_text_repel()`
 #'   for controlling label appearance.
 #'
@@ -87,6 +90,7 @@ plot_scatter <- function(
     cor_method = c("spearman", "pearson", "kendall"),
     colour_threshold = NULL,
     fontsize = 8,
+    show_diagonal = NULL,
     ...
 ) {
     .check_df(df1, "df1")
@@ -116,6 +120,9 @@ plot_scatter <- function(
     }
     .check_positive(fontsize, "fontsize")
     .check_logical(show_cor, "show_cor")
+    if (!is.null(show_diagonal)) {
+        .check_logical(show_diagonal, "show_diagonal")
+    }
     if (!is.null(highlight_features)) {
         .check_character(highlight_features, "highlight_features")
     }
@@ -168,6 +175,9 @@ plot_scatter <- function(
     }
     if (!is.numeric(df2[[col2]])) {
         stop("Column '", col2, "' in df2 must be numeric.")
+    }
+    if (is.null(show_diagonal)) {
+        show_diagonal <- !one_df && identical(col1, col2)
     }
     if (anyDuplicated(df1$Feature) || anyDuplicated(df2$Feature)) {
         stop("'Feature' values must be unique within each data frame.")
@@ -278,11 +288,14 @@ plot_scatter <- function(
     }
 
     # ---- Plot ----
-    p <- ggplot(df, aes(x = x, y = y)) +
-        geom_abline(
+    p <- ggplot(df, aes(x = x, y = y))
+    if (show_diagonal) {
+        p <- p + geom_abline(
             slope = 1, intercept = 0, linewidth = 0.3,
             linetype = "dashed", color = "grey50"
-        ) +
+)
+    }
+    p <- p +
         geom_hline(yintercept = 0, linewidth = 0.2, color = "grey80") +
         geom_vline(xintercept = 0, linewidth = 0.2, color = "grey80")
 

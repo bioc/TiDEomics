@@ -23,7 +23,8 @@ DE_timecourse(
 all groups in the \code{Group} column are used.}
 
 \item{reference_group}{A single reference group for a \code{joint_group} model.
-If NULL, the first group in \code{group} or \code{colData(se_obj)$Group} is used.}
+If NULL, the first group in \code{group} or \code{colData(se_obj)$Group} is used
+and reported by a message.}
 
 \item{assay}{The assay to use in the SummarizedExperiment object: a numeric
 index or character name, e.g. 1 or "orig" for original data, 2 or "norm"
@@ -34,7 +35,7 @@ appears to be un-logged raw counts.}
 \item{group_mode}{\code{"per_group"} or \code{"joint_group"}.
 \itemize{
 \item \code{"per_group"} tests each group separately.
-\item \code{"joint_group"} fits one Group-by-Time model across the selected groups.
+\item \code{"joint_group"} fits one group-by-time model across the selected groups.
 }}
 
 \item{time_mode}{\code{"factor"}, \code{"numeric"}, or \code{"spline"}.
@@ -65,15 +66,47 @@ data unless diagnostics support modelling a mean-variance trend.}
 \code{stats::p.adjust.methods}. Default: \code{"BH"}.}
 }
 \value{
-A list with \code{results}, \code{fits}, \code{design}, and \code{metadata}. In a
-\code{per_group} model, \code{results} contains \code{time_effect}. In a
-\code{joint_group} model, \code{results} contains \code{reference_time_effect},
-\code{global_time_effect}, \code{group_effect}, \code{global_group_effect}, and
-\code{group_time_interaction}. Result tables report
-an omnibus \code{F} statistic, \code{P.Value}, and \code{adj.P.Val} for the selected
-terms. When one coefficient is tested, \code{F = t^2} and the corresponding
-limma coefficient estimate (\code{logFC}) is retained. \code{ReferenceTime}
-identifies the time used for \code{group_effect}. Features with missing values
+A list with \code{results}, \code{fits}, \code{design}, and \code{metadata}.
+
+In a \code{per_group} model, \code{results} contains a table named \code{time_effect}.
+
+In a \code{joint_group} model, \code{results} contains tables named
+\code{reference_time_effect}, \code{global_time_effect}, \code{group_effect},
+\code{global_group_effect}, and \code{group_time_interaction}.
+
+Result tables report
+an omnibus \code{F} statistic, \code{P.Value}, and \code{adj.P.Val}.
+For a table testing a single model term, \code{F = t^2}.
+
+Columns in \code{results} tables have effect-specific names.
+For time effect tables,
+\itemize{
+\item \code{time_mode = "factor"} uses \verb{logFC_TimeFactor<time>} (log-scale
+changes relative to the reference time)
+\item \code{time_mode = "numeric"} uses \code{logFC_TimeSlope} (log-scale changes per
+time unit)
+\item \code{time_mode = "spline"} uses \code{SplineBasis_1}, \code{SplineBasis_2}, etc.
+}
+
+In \code{joint_group} results, group-by-time differences use names such as
+\itemize{
+\item \code{time_mode = "factor"}: \verb{delta_logFC_GroupX_TimeFactor<time>}
+\item \code{time_mode = "numeric"}: \code{delta_logFC_GroupX_TimeSlope}
+\item \code{time_mode = "spline"}: \code{delta_SplineBasis_GroupX_1}, etc.
+}
+
+The \code{global_group_effect} table reports
+group main-effect model coefficients as \code{GroupX} (\code{X} is a
+non-reference group), alongside group-by-time terms; \code{group_effect} table
+reports each non-reference group's estimated difference from the
+reference group at the reference time (\code{ReferenceTime})
+by columns of \code{logFC_GroupX_at_reference_time}.
+
+These names apply only to \code{results}
+table columns; \code{fits} and \code{design} retain the original model coefficient
+names.
+
+Features with missing values
 are fitted using their available observations when the model remains
 estimable. Features with insufficient observations or non-estimable
 designs return in the results with \code{NA} for model coefficients, test
@@ -87,26 +120,38 @@ variable for linear or spline models.
 \details{
 If \code{colData(se_obj)} contains \code{Subject}, repeated measurements are
 modelled with \code{limma::duplicateCorrelation()}.
+
 Missingness patterns are defined by whether each Group-Time combination
 contains at least one finite value.
-In a joint model, \code{reference_time_effect} tests whether the reference
-group changes over time; \code{group_time_interaction} tests whether the other
-groups have different temporal patterns; \code{global_time_effect} tests all
-time and Group-by-Time terms jointly, asking whether any selected group
-has a temporal effect; \code{group_effect} tests selected group differences
-at the earliest (reference) time point used by each missingness pattern;
-\code{global_group_effect} tests all Group and Group-by-Time terms jointly,
-asking whether group trajectories differ anywhere in the fitted time
-course. The joint model is fit on the shared time points
+
+The joint model is fit on the shared time points
 and shared features of all selected groups.
 Excluded or non-estimable features are retained in the results with \code{NA}.
+
 Multiple testing correction is applied within each group for
 \code{per_group} results and separately within each \code{joint_group} result table,
 after combining all missingness patterns.
+
 \code{ReferenceTime} is the earliest time point available in each fitting
 pattern and is used for \code{group_effect}
 in all time modes and for temporal comparisons in factor mode.
 It is \code{NA} for numeric and spline temporal tests.
+
+In a joint model,
+\itemize{
+\item \code{reference_time_effect} tests whether the reference
+group changes over time
+\item \code{group_time_interaction} tests whether the other
+groups have different temporal patterns
+\item \code{global_time_effect} tests all
+time and group-by-time terms jointly, asking whether any selected group
+has a temporal effect
+\item \code{group_effect} tests selected group differences
+at the earliest (reference) time point used by each missingness pattern
+\item \code{global_group_effect} tests all group and group-by-time terms jointly,
+asking whether group trajectories differ anywhere in the fitted time
+course.
+}
 }
 \examples{
 data(example_obj)

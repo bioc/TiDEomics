@@ -18,6 +18,7 @@ plot_scatter(
   cor_method = c("spearman", "pearson", "kendall"),
   colour_threshold = NULL,
   fontsize = 8,
+  show_diagonal = NULL,
   ...
 )
 }
@@ -74,6 +75,10 @@ values meet their respective thresholds; points below either threshold
 are shown as grey. Default: NULL (colour all points).}
 
 \item{fontsize}{Base font size (default: 8).}
+
+\item{show_diagonal}{If NULL (default), show the dashed \code{y = x}
+line when comparing the same property across two data frames.
+Set TRUE or FALSE to override this behaviour.}
 
 \item{...}{Additional arguments passed to \code{ggrepel::geom_text_repel()}
 for controlling label appearance.}

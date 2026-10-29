@@ -10,6 +10,14 @@ df_exp2 <- data.frame(
     Signed_Max_FC = stats::rnorm(100, 0, 2),
     stringsAsFactors = FALSE
 )
+df_one_table <- df_exp1
+df_one_table$Variance <- abs(df_one_table$Signed_Max_FC)
+
+has_diagonal <- function(plot) {
+    any(vapply(plot$layers, function(layer) {
+        inherits(layer$geom, "GeomAbline")
+    }, logical(1)))
+}
 
 # ---- Tests ----
 
@@ -21,6 +29,12 @@ test_that("plot_scatter works", {
     expect_equal(p$labels$title, "Exp1 vs Exp2")
     expect_match(p$labels$subtitle, "100 shared features")
     expect_match(p$labels$subtitle, "\\+\\+:\\d+")
+    expect_true(has_diagonal(p))
+
+    p_no_diagonal <- plot_scatter(df_exp1, df_exp2,
+        col1 = "Signed_Max_FC", col2 = "Signed_Max_FC",
+        name1 = "Exp1", name2 = "Exp2", show_diagonal = FALSE)
+    expect_false(has_diagonal(p_no_diagonal))
 })
 
 test_that("plot_scatter derives default axis labels", {
@@ -33,13 +47,17 @@ test_that("plot_scatter derives default axis labels", {
 })
 
 test_that("plot_scatter compares two properties in one data frame", {
-    one_table <- df_exp1
-    one_table$Variance <- abs(one_table$Signed_Max_FC)
-    p <- plot_scatter(one_table,
+    p <- plot_scatter(df_one_table,
         col1 = "Signed_Max_FC", col2 = "Variance")
     expect_s3_class(p, "ggplot")
     expect_equal(p$labels$x, "Dataset 1: Signed_Max_FC")
     expect_equal(p$labels$y, "Dataset 1: Variance")
+    expect_false(has_diagonal(p))
+
+    p_forced <- plot_scatter(df_one_table,
+        col1 = "Signed_Max_FC", col2 = "Variance",
+        show_diagonal = TRUE)
+    expect_true(has_diagonal(p_forced))
 })
 
 test_that("plot_scatter threshold and label_top_n", {
@@ -185,6 +203,9 @@ test_that("plot_scatter errors", {
     expect_error(plot_scatter(df_exp1, df_exp2,
         col1 = "Signed_Max_FC", col2 = "Signed_Max_FC",
         show_cor = "TRUE"), "TRUE or FALSE")
+    expect_error(plot_scatter(df_exp1, df_exp2,
+        col1 = "Signed_Max_FC", col2 = "Signed_Max_FC",
+        show_diagonal = NA), "TRUE or FALSE")
     df_duplicate <- df_exp1
     df_duplicate$Feature[2] <- df_duplicate$Feature[1]
     expect_error(plot_scatter(df_duplicate, df_exp2,
