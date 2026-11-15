@@ -1,3 +1,7 @@
+# TiDEomics 0.99.8
+
+* Minor visual improvement in `plot_trend()` and `plot_umap()`.
+
 # TiDEomics 0.99.7
 
 SIGNIFICANT USER-VISIBLE CHANGES

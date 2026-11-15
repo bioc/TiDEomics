@@ -202,6 +202,8 @@ plot_umap <- function(
             scale_fill_manual(values =
                 get_custom_palette(unique(colData(se)$Group))) +
             scale_size_discrete() +
+            scale_x_continuous(expand = expansion(mult = 0.10)) +
+            scale_y_continuous(expand = expansion(mult = 0.10)) +
             guides(fill = guide_legend(override.aes = list(size = 4))) +
             theme_custom(base_size = fontsize) +
             ggtitle(umap_title)

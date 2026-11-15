@@ -142,9 +142,8 @@ plot_trend <- function(se_obj, assay = 1, groups = NULL, features,
             ncol = ncol)
 
     if (errorbar) {
-        p <- p + geom_errorbar(aes(ymin = Mean - SD, ymax = Mean + SD),
-            width = 0.5,
-            linewidth = 0.5,
+        p <- p + geom_linerange(aes(ymin = Mean - SD, ymax = Mean + SD),
+            linewidth = 0.5, show.legend = FALSE,
             position = position_dodge(0.05)
         )
     }
@@ -293,9 +292,9 @@ plot_trend <- function(se_obj, assay = 1, groups = NULL, features,
             paste(groups, collapse = ", ")))
 
     if (errorbar) {
-        p <- p + geom_errorbar(
+        p <- p + geom_linerange(
             aes(ymin = Mean - SD, ymax = Mean + SD),
-            width = 0.5, linewidth = 0.5,
+            linewidth = 0.5, show.legend = FALSE,
             position = position_dodge(0.05)
         )
     }
