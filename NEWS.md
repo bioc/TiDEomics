@@ -1,3 +1,8 @@
+# TiDEomics 0.99.9
+
+* Fix `plot_upset_h()` and `plot_upset_v()` errors in R-devel by replacing
+  `ComplexHeatmap` combination matrix functions with local helpers.
+
 # TiDEomics 0.99.8
 
 * Minor visual improvement in `plot_trend()` and `plot_umap()`.
