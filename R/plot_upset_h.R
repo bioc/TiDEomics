@@ -155,8 +155,8 @@ plot_upset_h <- function(
 
     # ---- Build combination matrix ----
     # (intersections on rows for right_annotation)
-    m <- ComplexHeatmap::make_comb_mat(set_list, set_on_rows = FALSE)
-    comb_names <- ComplexHeatmap::comb_name(m)
+    m <- .make_comb_mat(set_list, set_on_rows = FALSE)
+    comb_names <- .comb_name(m)
 
     # Auto-generate human-readable intersection names from set names
     # by parsing comb_name binary patterns (e.g. "1010" with set names
@@ -195,7 +195,7 @@ plot_upset_h <- function(
 
     if (is.null(intersection_order)) {
         intersection_order <- order(
-            ComplexHeatmap::comb_size(m), decreasing = TRUE
+            .comb_size(m), decreasing = TRUE
         )
     } else if (is.character(intersection_order)) {
         if (!setequal(intersection_order, comb_names) ||
@@ -242,8 +242,9 @@ plot_upset_h <- function(
                 paste(conflicts, collapse = ", "))
         }
     }
-    top_ann <- ComplexHeatmap::upset_top_annotation(
+    top_ann <- .comb_annotation(
         m,
+        position = "top",
         gp = grid::gpar(fill = upset_bar_col),
         annotation_name_gp = grid::gpar(
             fontsize = fontsize, fontface = "bold",
@@ -253,8 +254,9 @@ plot_upset_h <- function(
             fontsize = fontsize, fontfamily = fontfamily
         ))
     )
-    right_ann <- ComplexHeatmap::upset_right_annotation(
+    right_ann <- .comb_annotation(
         m,
+        position = "right",
         gp = grid::gpar(fill = upset_bar_col),
         annotation_name_side = "bottom",
         annotation_name_gp = grid::gpar(

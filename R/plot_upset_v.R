@@ -179,8 +179,8 @@ plot_upset_v <- function(
     }
 
     # Intersections on columns
-    m <- ComplexHeatmap::make_comb_mat(set_list, set_on_rows = TRUE)
-    comb_names <- ComplexHeatmap::comb_name(m)
+    m <- .make_comb_mat(set_list, set_on_rows = TRUE)
+    comb_names <- .comb_name(m)
 
     # Auto-generate human-readable intersection names from set names
     # by parsing comb_name binary patterns (e.g. "1010" with set names
@@ -219,7 +219,7 @@ plot_upset_v <- function(
 
     if (is.null(intersection_order)) {
         intersection_order <- order(
-            ComplexHeatmap::comb_size(m), decreasing = TRUE
+            .comb_size(m), decreasing = TRUE
         )
     } else if (is.character(intersection_order)) {
         if (!setequal(intersection_order, comb_names) ||
@@ -253,21 +253,26 @@ plot_upset_v <- function(
         comb_col[names(intersection_colours)] <- unname(intersection_colours)
     }
 
-    upset_args <- list(
+    annotation_gp <- grid::gpar(
+        fontsize = fontsize, fontface = "bold",
+        fontfamily = fontfamily
+    )
+    axis_param <- list(gp = grid::gpar(
+        fontsize = fontsize, fontfamily = fontfamily
+    ))
+    top_ann <- .comb_annotation(
         m,
-        comb_col = unname(comb_col),
-        pt_size = grid::unit(2.5, "mm"),
-        bg_pt_col = "#D9D9D9",
-        set_order = set_order,
-        comb_order = intersection_order,
-        row_names_side = "left",
-        show_column_names = TRUE,
-        column_names_gp = grid::gpar(
-            fontsize = fontsize, fontfamily = fontfamily
-        ),
-        row_names_gp = grid::gpar(
-            fontsize = fontsize, fontfamily = fontfamily
-        )
+        position = "top",
+        gp = grid::gpar(fill = upset_bar_col),
+        annotation_name_gp = annotation_gp,
+        axis_param = axis_param
+    )
+    right_ann <- .comb_annotation(
+        m,
+        position = "right",
+        gp = grid::gpar(fill = upset_bar_col),
+        annotation_name_gp = annotation_gp,
+        axis_param = axis_param
     )
     extra_upset_args <- list(...)
     if (length(extra_upset_args) > 0L) {
@@ -281,35 +286,27 @@ plot_upset_v <- function(
             stop("Reserved UpSet argument(s) cannot be overridden: ",
                 paste(conflicts, collapse = ", "))
         }
-        upset_args[names(extra_upset_args)] <- extra_upset_args
     }
     build_upset <- function(colours) {
-        current_args <- upset_args
-        current_args$comb_col <- unname(colours)
-        ht <- do.call(ComplexHeatmap::UpSet, current_args)
-        ht@top_annotation <- ComplexHeatmap::upset_top_annotation(
+        ComplexHeatmap::UpSet(
             m,
-            gp = grid::gpar(fill = upset_bar_col),
-            annotation_name_gp = grid::gpar(
-                fontsize = fontsize, fontface = "bold",
-                fontfamily = fontfamily
-            ),
-            axis_param = list(gp = grid::gpar(
+            comb_col = unname(colours),
+            pt_size = grid::unit(2.5, "mm"),
+            bg_pt_col = "#D9D9D9",
+            set_order = set_order,
+            comb_order = intersection_order,
+            top_annotation = top_ann,
+            right_annotation = right_ann,
+            row_names_side = "left",
+            show_column_names = TRUE,
+            column_names_gp = grid::gpar(
                 fontsize = fontsize, fontfamily = fontfamily
-            ))
-        )
-        ht@right_annotation <- ComplexHeatmap::upset_right_annotation(
-            m,
-            gp = grid::gpar(fill = upset_bar_col),
-            annotation_name_gp = grid::gpar(
-                fontsize = fontsize, fontface = "bold",
-                fontfamily = fontfamily
             ),
-            axis_param = list(gp = grid::gpar(
+            row_names_gp = grid::gpar(
                 fontsize = fontsize, fontfamily = fontfamily
-            ))
+            ),
+            ...
         )
-        ht
     }
 
     enrichment_requested <- !is.null(enrich_list) &&

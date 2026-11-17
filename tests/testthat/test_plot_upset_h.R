@@ -18,6 +18,10 @@ enrich_mock$CC <- data.frame(
     p.adjust = c(0.002, 0.03),
     stringsAsFactors = FALSE
 )
+comb_h_mat <- TiDEomics:::.make_comb_mat(
+    set_list, set_on_rows = FALSE
+)
+comb_h_names <- TiDEomics:::.comb_name(comb_h_mat)
 
 # ---- Tests ----
 
@@ -184,16 +188,14 @@ test_that("plot_upset_h intersection labels, colours, and order", {
     expect_no_error(plot_upset_h(set_list,
         set_order = names(set_list),
         intersection_order = order(
-            ComplexHeatmap::comb_size(
-                ComplexHeatmap::make_comb_mat(
-                    set_list, set_on_rows = FALSE)), decreasing = TRUE)))
+            TiDEomics:::.comb_size(comb_h_mat),
+            decreasing = TRUE)))
     expect_s4_class(plot_upset_h(set_list,
         intersection_order = c(
             "1010", "1000", "0101",
             "0100", "0010", "0001")), "Heatmap")
 
-    m <- ComplexHeatmap::make_comb_mat(set_list, set_on_rows = FALSE)
-    comb_names <- ComplexHeatmap::comb_name(m)
+    comb_names <- comb_h_names
     intersection_colours <- stats::setNames("#0072B5", comb_names[1])
     expect_s4_class(
         plot_upset_h(
@@ -207,8 +209,7 @@ test_that("plot_upset_h intersection labels, colours, and order", {
 })
 
 test_that("plot_upset_h rejects duplicate intersection labels", {
-    m <- ComplexHeatmap::make_comb_mat(set_list, set_on_rows = FALSE)
-    comb_names <- ComplexHeatmap::comb_name(m)
+    comb_names <- comb_h_names
     expect_gte(length(comb_names), 2)
     duplicate_labels <- stats::setNames(
         c("Duplicate", "Duplicate"), comb_names[seq_len(2)]
@@ -221,8 +222,7 @@ test_that("plot_upset_h rejects duplicate intersection labels", {
 })
 
 test_that("plot_upset_h rejects duplicate mapping names", {
-    m <- ComplexHeatmap::make_comb_mat(set_list, set_on_rows = FALSE)
-    comb_names <- ComplexHeatmap::comb_name(m)
+    comb_names <- comb_h_names
     expect_gte(length(comb_names), 2)
 
     duplicate_labels <- stats::setNames(

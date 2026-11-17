@@ -4,9 +4,10 @@ upset_v_sets <- list(
     RNA = paste0("G", 1:6),
     Protein = paste0("G", 4:9)
 )
-upset_v_comb <- ComplexHeatmap::comb_name(
-    ComplexHeatmap::make_comb_mat(upset_v_sets, set_on_rows = TRUE)
+upset_v_mat <- TiDEomics:::.make_comb_mat(
+    upset_v_sets, set_on_rows = TRUE
 )
+upset_v_comb <- TiDEomics:::.comb_name(upset_v_mat)
 upset_v_labels <- stats::setNames(
     paste0("Intersection_", seq_along(upset_v_comb)),
     upset_v_comb
