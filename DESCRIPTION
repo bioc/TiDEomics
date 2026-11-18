@@ -65,6 +65,7 @@ Suggests:
     enrichR,
     org.Hs.eg.db,
     org.Mm.eg.db,
+    GO.db,
     msigdbr,
     DeeDeeExperiment
 VignetteBuilder: knitr
