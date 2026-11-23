@@ -1,6 +1,6 @@
 Package: TiDEomics
 Title: Time-course Differential Expression analysis of omics data
-Version: 0.99.9
+Version: 1.0.0
 Date: 2026-11-17
 Authors@R:
     person("Tianen", "He",
